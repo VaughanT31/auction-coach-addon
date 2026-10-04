@@ -29,6 +29,7 @@ Scan\FullScan.lua
 Scan\ItemCheck.lua
 
 Advice\Phrases.lua
+Advice\Styles.lua
 Advice\Rules.lua
 Advice\Treasure.lua
 Advice\Sell.lua

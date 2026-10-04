@@ -18,7 +18,6 @@ ns.SellChance = SellChance
 
 -- A live list of other sellers' listings older than this is not used.
 local FRESH = 15 * 60
-SellChance.WINDOW_HOURS = 24
 
 -- Session only: item key -> { t = time, rows = { { unitPrice, quantity }, ... } }
 local ladders = {}
@@ -74,7 +73,8 @@ end
 function SellChance:Chance(key, price, quantity, salesPerDay)
     local rows = self:GetLadder(key)
     if not rows or not salesPerDay or salesPerDay <= 0 or not price then return nil end
-    local expected = salesPerDay * self.WINDOW_HOURS / 24
+    -- The window is the time until the player is likely back (seller style).
+    local expected = salesPerDay * ns.Styles:WindowHours() / 24
     return SellChance.AtLeast(Ahead(rows, price) + math.max(1, quantity or 1), expected)
 end
 

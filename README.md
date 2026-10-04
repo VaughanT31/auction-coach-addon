@@ -15,6 +15,7 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 - **Hidden treasure (My Stuff tab):** the AH value of everything sellable across all your characters and your warband bank.
 - **What to sell (Sell tab):** every tradeable item in your bags with one suggested price, how fast it sells and whether to post, hold or vendor it. At the AH, click a row to put the item in the sell box.
 - **Post helper:** when you put an item in the AH sell box, a panel beside it suggests a price. "Use this price" fills it in; you still click Post. With the desktop app's sales data it also shows the chance your stack sells within 24 hours at the suggested price, just under the next seller and at the usual price.
+- **Seller styles:** tell Auction Coach how you sell (casual, active or camper) in the options. Items that get undercut faster than you check back are marked "Post (contested)" and ranked lower, and the chance to sell is shown for the time until you are likely back.
 - **Deals tab:** items listed well below what their lowest listing normally is, with the profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
 - **Vendor and delete protection:** tooltips at a merchant warn before you sell something valuable. If you sell it anyway, a popup offers to buy it straight back. Deleting a valuable item shows a warning above the confirmation.
 

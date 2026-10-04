@@ -43,28 +43,36 @@ function Phrases.Competition(score)
     return text
 end
 
+-- "12 min", "an hour", "3 hours".
+local function Span(seconds)
+    if seconds < 3600 then
+        return Util.FormatDuration(seconds)
+    elseif seconds < 5400 then
+        return L.UNDERCUT_HOUR
+    end
+    return L.UNDERCUT_HOURS:format(math.floor(seconds / 3600 + 0.5))
+end
+
 -- Undercuts:Typical result as a sentence.
 function Phrases.Undercut(typical)
-    local seconds = typical.seconds
-    if seconds < 60 then
+    if typical.seconds < 60 then
         return L.UNDERCUT_FAST:format(typical.undercut, typical.posts)
     end
-    local span
-    if seconds < 3600 then
-        span = Util.FormatDuration(seconds)
-    elseif seconds < 5400 then
-        span = L.UNDERCUT_HOUR
-    else
-        span = L.UNDERCUT_HOURS:format(math.floor(seconds / 3600 + 0.5))
-    end
-    return L.UNDERCUT_TYPICAL:format(span, typical.undercut, typical.posts)
+    return L.UNDERCUT_TYPICAL:format(Span(typical.seconds), typical.undercut, typical.posts)
+end
+
+-- Why an item is contested for the player's seller style, or nil.
+function Phrases.Contested(s)
+    if not s.contested or s.contested == "NONE" or not s.undercutEvery then return nil end
+    local text = s.contested == "HEAVY" and L.STYLE_HEAVY or L.STYLE_SOME
+    return text:format(Span(s.undercutEvery), L["STYLE_WHO_" .. ns.Styles:Current():upper()])
 end
 
 -- SellChance:Options result as sentences, or nil.
 function Phrases.SellChances(options, quantity, money)
     if not options or #options == 0 then return nil end
     money = money or Util.FormatMoney
-    local hours = ns.SellChance.WINDOW_HOURS
+    local hours = ns.Styles:WindowHours()
     local lines = {
         quantity > 1 and L.CHANCE_HEADER_MANY:format(quantity, hours) or L.CHANCE_HEADER_ONE:format(hours),
     }
@@ -122,6 +130,9 @@ function Phrases.Sell(s, money)
     if s.undercut then
         lines[#lines + 1] = Phrases.Undercut(s.undercut)
     end
+    if s.action == "POST" then
+        lines[#lines + 1] = Phrases.Contested(s)
+    end
     if s.lowestAt and Util.Now() - s.lowestAt > 2 * 3600 then
         lines[#lines + 1] = L.SELL_CHECK_LIVE:format(Util.FormatAge(s.lowestAt))
     end
@@ -130,6 +141,9 @@ end
 
 -- One or two words for the Sell tab's advice column.
 function Phrases.SellShort(s)
+    if s.action == "POST" and s.contested and s.contested ~= "NONE" then
+        return L.SELL_SHORT_CONTESTED
+    end
     return L["SELL_SHORT_" .. s.action]
 end
 

@@ -18,6 +18,7 @@ local COLUMNS = {
 }
 
 local ADVICE_COLORS = {
+    CONTESTED = { 1, 0.82, 0 },
     POST = { 0.4, 1, 0.4 },
     HOLD = { 1, 0.65, 0.2 },
     VENDOR = { 0.7, 0.7, 0.7 },
@@ -102,7 +103,8 @@ local function SetRow(row, item)
     else
         row.speed:SetText("")
     end
-    local c = ADVICE_COLORS[s.action]
+    local c = (s.action == "POST" and s.contested and s.contested ~= "NONE") and ADVICE_COLORS.CONTESTED
+        or ADVICE_COLORS[s.action]
     row.advice:SetText(Phrases.SellShort(s))
     row.advice:SetTextColor(c[1], c[2], c[3])
     row:Show()

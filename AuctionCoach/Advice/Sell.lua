@@ -12,7 +12,8 @@ local ORDER = { POST = 1, HOLD = 2, VENDOR = 3, NO_DATA = 4 }
 --   total = copper after cut for everything worth posting (POST and HOLD),
 --   items = { { key, link, count, suggestion, value }, ... }
 --           value = suggested price x count after the AH cut
--- } sorted best first: worth posting by value, then vendor, then unpriced.
+-- } sorted best first: worth posting by value (lowered for items that are
+-- contested for the player's seller style), then vendor, then unpriced.
 function Sell:List()
     local result = { total = 0, items = {} }
     local char = ns.db and ns.db.characters[ns.charKey]
@@ -33,7 +34,9 @@ function Sell:List()
     table.sort(result.items, function(a, b)
         local oa, ob = ORDER[a.suggestion.action], ORDER[b.suggestion.action]
         if oa ~= ob then return oa < ob end
-        if a.value ~= b.value then return a.value > b.value end
+        local wa = a.value * ns.Styles.Factor(a.suggestion.contested)
+        local wb = b.value * ns.Styles.Factor(b.suggestion.contested)
+        if wa ~= wb then return wa > wb end
         return a.key < b.key
     end)
     return result

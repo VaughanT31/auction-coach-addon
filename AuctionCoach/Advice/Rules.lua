@@ -81,6 +81,8 @@ end
 --   salesPerDay  estimated sales per day, when known
 --   competition  Competition:Score result, when known
 --   undercut     Undercuts:Typical result, when known
+--   contested    "NONE" | "SOME" | "HEAVY": undercut faster than the player
+--                checks back (Styles), with undercutEvery in seconds
 -- }
 function Rules:SuggestPrice(key, link)
     local vendor = Compat.GetVendorPrice(link or Util.ItemIDFromKey(key))
@@ -99,6 +101,7 @@ function Rules:SuggestPrice(key, link)
         competition = ns.Competition:Score(key),
         undercut = ns.Undercuts:Typical(key),
     }
+    result.contested, result.undercutEvery = ns.Styles:Contested(result.competition, result.undercut)
 
     -- Just under the lowest listing. Buyers take the cheapest first, so
     -- matching it means waiting behind everyone else at that price.

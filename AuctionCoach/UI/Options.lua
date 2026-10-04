@@ -50,6 +50,24 @@ local function Slider(field, name, tooltip, default, min, max, step, toDisplay, 
 end
 
 -- Section headings are a nicety: skipped if this client lacks the helpers.
+-- A dropdown for ns.db.settings[field]. choices = { { value, label }, ... }
+local function Dropdown(field, name, tooltip, default, choices, onChange)
+    if not (Settings.CreateDropdown and Settings.CreateControlTextContainer) then return end
+    local function Get() return ns.db.settings[field] or default end
+    local function Set(value)
+        ns.db.settings[field] = value
+        if onChange then onChange(value) end
+    end
+    local setting = Settings.RegisterProxySetting(category, "AuctionCoach_" .. field,
+        Settings.VarType.String, name, default, Get, Set)
+    local function Choices()
+        local container = Settings.CreateControlTextContainer()
+        for _, choice in ipairs(choices) do container:Add(choice[1], choice[2]) end
+        return container:GetData()
+    end
+    Settings.CreateDropdown(category, setting, Choices, tooltip)
+end
+
 local function Header(text)
     if not (SettingsPanel and SettingsPanel.GetLayout and CreateSettingsListSectionHeaderInitializer) then
         return
@@ -68,6 +86,11 @@ local function Build()
     category = Settings.RegisterVerticalLayoutCategory(L.ADDON_TITLE)
 
     Header(L.OPT_GENERAL)
+    Dropdown("sellerStyle", L.OPT_STYLE, L.OPT_STYLE_TIP, "casual", {
+        { "casual", L.OPT_STYLE_CASUAL },
+        { "active", L.OPT_STYLE_ACTIVE },
+        { "camper", L.OPT_STYLE_CAMPER },
+    }, Changed)
     Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP, true)
     Checkbox("autoScan", L.OPT_AUTOSCAN, L.OPT_AUTOSCAN_TIP, true)
     Checkbox("saleMessages", L.OPT_SALES, L.OPT_SALES_TIP, true)

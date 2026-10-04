@@ -103,6 +103,19 @@ L.SELL_SHORT_POST = "Post"
 L.SELL_SHORT_HOLD = "Hold: prices low"
 L.SELL_SHORT_VENDOR = "Vendor it"
 L.SELL_SHORT_NO_DATA = "No price"
+L.SELL_SHORT_CONTESTED = "Post (contested)"
+
+-- Seller styles
+L.STYLE_WHO_CASUAL = "as a casual seller you check the AH a few times a day"
+L.STYLE_WHO_ACTIVE = "as an active seller you check about every hour"
+L.STYLE_WHO_CAMPER = "you sit at the AH"
+L.STYLE_SOME = "Others undercut this about every %s, and %s, so your listing may spend a while behind cheaper ones."
+L.STYLE_HEAVY = "Others undercut this about every %s, and %s, so you will rarely stay the cheapest. Post it when you can check back often, or sell less contested items first."
+L.OPT_STYLE = "How do you sell?"
+L.OPT_STYLE_TIP = "Changes which items are suggested first, and the time the chance to sell is shown for."
+L.OPT_STYLE_CASUAL = "Casual: I check the AH a few times a day"
+L.OPT_STYLE_ACTIVE = "Active: I check about every hour"
+L.OPT_STYLE_CAMPER = "Camper: I sit at the AH and repost"
 
 -- Sell tab
 L.TAB_SELL = "Sell"
