@@ -22,6 +22,7 @@ Data\Prices.lua
 Data\Competition.lua
 Data\Undercuts.lua
 Data\Sales.lua
+Data\SellChance.lua
 Data\Share.lua
 
 Scan\FullScan.lua

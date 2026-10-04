@@ -60,6 +60,28 @@ function Phrases.Undercut(typical)
     return L.UNDERCUT_TYPICAL:format(span, typical.undercut, typical.posts)
 end
 
+-- SellChance:Options result as sentences, or nil.
+function Phrases.SellChances(options, quantity, money)
+    if not options or #options == 0 then return nil end
+    money = money or Util.FormatMoney
+    local hours = ns.SellChance.WINDOW_HOURS
+    local lines = {
+        quantity > 1 and L.CHANCE_HEADER_MANY:format(quantity, hours) or L.CHANCE_HEADER_ONE:format(hours),
+    }
+    for _, o in ipairs(options) do
+        local chance
+        if o.chance >= 0.955 then
+            chance = L.CHANCE_HIGH
+        elseif o.chance < 0.045 then
+            chance = L.CHANCE_LOW
+        else
+            chance = L.CHANCE_ABOUT:format(math.floor(o.chance * 20 + 0.5) * 5)
+        end
+        lines[#lines + 1] = L.CHANCE_LINE:format(money(o.price), L["CHANCE_" .. o.label], chance)
+    end
+    return lines
+end
+
 function Phrases.NoPrice()
     return L.TT_NO_PRICE
 end

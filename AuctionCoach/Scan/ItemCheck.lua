@@ -25,18 +25,26 @@ local function CheckCommodity(itemID)
     if not key then return end
     local num = C_AuctionHouse.GetNumCommoditySearchResults(itemID) or 0
     if num == 0 then return end
+    -- Other sellers' listings (unit price, quantity), for the sell chance.
+    local rows, lowest = {}, nil
     for i = 1, num do
         local info = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, i)
         if info and info.unitPrice and info.unitPrice > 0 then
             local own = info.containsOwnerItem or info.containsAccountItem
-            if not own or (info.quantity or 0) > (info.numOwnerItems or 0) then
-                RecordSample(key, info.unitPrice)
-                return
+            local others = (info.quantity or 0) - (own and (info.numOwnerItems or 0) or 0)
+            if others > 0 then
+                rows[#rows + 1] = { info.unitPrice, others }
+                lowest = lowest or info.unitPrice
             end
         end
     end
-    -- Only the player's own listings: nobody else sells it right now.
-    ns.Undercuts:Observe(ns.realmGroup, key, nil, Util.Now())
+    ns.SellChance:SetLadder(key, rows)
+    if lowest then
+        RecordSample(key, lowest)
+    else
+        -- Only the player's own listings: nobody else sells it right now.
+        ns.Undercuts:Observe(ns.realmGroup, key, nil, Util.Now())
+    end
 end
 
 -- Items (gear, pets, other non-stackables): one search can return several
@@ -56,11 +64,12 @@ local function CheckItem(itemKey)
             local unitPrice = math.floor(info.buyoutAmount / math.max(1, info.quantity or 1))
             local entry = byKey[key]
             if not entry then
-                entry = { min = unitPrice, owners = {} }
+                entry = { min = unitPrice, owners = {}, rows = {} }
                 byKey[key] = entry
             elseif unitPrice < entry.min then
                 entry.min = unitPrice
             end
+            entry.rows[#entry.rows + 1] = { unitPrice, math.max(1, info.quantity or 1) }
             for _, owner in ipairs(info.owners or {}) do
                 entry.owners[owner] = true
             end
@@ -70,6 +79,7 @@ local function CheckItem(itemKey)
     for key, entry in pairs(byKey) do
         local sellers = 0
         for _ in pairs(entry.owners) do sellers = sellers + 1 end
+        ns.SellChance:SetLadder(key, entry.rows)
         RecordSample(key, entry.min, sellers > 0 and sellers or nil)
     end
 end

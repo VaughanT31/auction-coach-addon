@@ -90,10 +90,27 @@ function PostHelper:Refresh()
         panel.price:SetText(Phrases.SellShort(s))
         panel.price:SetTextColor(0.7, 0.7, 0.7)
     end
-    panel.text:SetText(table.concat(Phrases.Sell(s, Util.FormatMoneyIcons), "\n\n"))
+    local text = table.concat(Phrases.Sell(s, Util.FormatMoneyIcons), "\n\n")
+    local quantity = PostHelper:Quantity()
+    local chances = Phrases.SellChances(ns.SellChance:Options(current.key, s, quantity), quantity,
+        Util.FormatMoneyIcons)
+    if chances then
+        text = text .. "\n\n|cffffd100" .. chances[1] .. "|r\n" .. table.concat(chances, "\n", 2)
+    end
+    panel.text:SetText(text)
     panel.use:SetShown(s.price ~= nil)
     panel:Show()
     Layout()
+end
+
+-- How many the player is about to post, from the sell frame.
+function PostHelper:Quantity()
+    local input = current and current.sellFrame and current.sellFrame.QuantityInput
+    if input and input.GetQuantity then
+        local ok, quantity = pcall(input.GetQuantity, input)
+        if ok and type(quantity) == "number" and quantity > 0 then return quantity end
+    end
+    return 1
 end
 
 function PostHelper:Show(sellFrame, itemLocation)
@@ -122,10 +139,10 @@ function PostHelper:UsePrice()
     local s = current and current.suggestion
     local input = current and current.sellFrame and current.sellFrame.PriceInput
     if not s or not s.price or not input or not input.SetAmount then return end
+    -- SetAmount fills the gold/silver/copper boxes, and the sell frame
+    -- updates its total and Post button from those, as when typing. Calling
+    -- its UpdatePostState directly errors while the deposit is unknown.
     input:SetAmount(s.price)
-    if current.sellFrame.UpdatePostState then
-        current.sellFrame:UpdatePostState()
-    end
     Util.Print(L.POST_SET:format(Util.FormatMoneyIcons(s.price)))
 end
 
@@ -144,6 +161,15 @@ local function HookSellFrames()
             sellFrame:HookScript("OnHide", function(frame)
                 if current and current.sellFrame == frame then PostHelper:Hide() end
             end)
+            -- The chance to sell depends on how many are posted.
+            local box = sellFrame.QuantityInput and sellFrame.QuantityInput.InputBox
+            if box and box.HookScript then
+                box:HookScript("OnTextChanged", function()
+                    if current and current.sellFrame == sellFrame then
+                        Util.Debounce("postHelperQuantity", 0.2, function() PostHelper:Refresh() end)
+                    end
+                end)
+            end
         end
     end
 end
