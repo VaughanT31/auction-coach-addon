@@ -102,7 +102,7 @@ function MainWindow:RefreshOn(event)
 end
 
 for _, event in ipairs({
-    "AC_SCAN_COMPLETE", "AC_SCAN_PROGRESS", "AC_INVENTORY_CHANGED",
+    "AC_SCAN_COMPLETE", "AC_SCAN_PROGRESS", "AC_INVENTORY_CHANGED", "AC_DATA_CHANGED",
     "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED",
 }) do
     MainWindow:RefreshOn(event)

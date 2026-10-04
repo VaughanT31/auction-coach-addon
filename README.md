@@ -24,6 +24,8 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac tooltip` | Turn the tooltip advice on or off |
 | `/ac guard` | Turn vendor and delete protection on or off |
+| `/ac export` | Copy your items as a string for the website's "My report" |
+| `/ac import` | Paste a prices string from the website (instead of the desktop app) |
 | `/ac help` | List commands |
 
 You can also open the window from the addon compartment button next to the minimap.

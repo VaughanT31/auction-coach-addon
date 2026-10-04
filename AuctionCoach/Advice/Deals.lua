@@ -3,7 +3,8 @@
 -- An item is a deal when its lowest listing is well below what the lowest
 -- listing normally is (Prices usualMin), the profit after the AH cut is
 -- worth the trouble, the item actually sells, and the price was seen
--- recently. Needs the desktop app's Data.lua for usual prices and sales.
+-- recently. Needs server data (Data.lua or an import string) for usual
+-- prices and sales.
 -- Gear is left out: each bonus ID combination has only a listing or two,
 -- so its "usual" price is just one seller's asking price. Comparing lowest
 -- with usual lowest, not with the market value, means a cheap listing
@@ -51,8 +52,8 @@ local function Candidates(minDiscount)
 
     -- Usual lowest from Data.lua, which beats the scan's own running average.
     local dataUsual = {}
-    local data = AuctionCoachData
-    if type(data) == "table" and data.format == 1 then
+    local data = ns.Prices.ActiveData()
+    if data then
         local realmID = data.realmIndex and data.realmIndex[GetNormalizedRealmName()]
         local realmItems = realmID and data.realms and data.realms[realmID]
         for _, items in ipairs({ data.commodities or {}, realmItems or {} }) do
@@ -128,8 +129,7 @@ end
 -- }
 function Deals:List()
     if cache then return cache end
-    local data = AuctionCoachData
-    local result = { items = {}, hasData = type(data) == "table" and (data.generatedAt or 0) > 0 }
+    local result = { items = {}, hasData = ns.Prices.ActiveData() ~= nil }
     if not ns.db or not ns.realmGroup then return result end
 
     local now = Util.Now()
@@ -167,7 +167,7 @@ function Deals:IsStale()
     return cache ~= nil and Util.Now() - cacheAt > 60
 end
 
-for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_LIVE_PRICE", "AC_INVENTORY_CHANGED" }) do
+for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_LIVE_PRICE", "AC_INVENTORY_CHANGED", "AC_DATA_CHANGED" }) do
     ns.Events:On(event, function() Deals:Invalidate() end)
 end
 

@@ -130,6 +130,24 @@ L.DEAL_PROFIT = "Buy it and relist at around %s to make about %s after the 5%% A
 L.DEAL_SEEN = "Price seen %s. Someone may have bought it since."
 L.DEAL_CHECK = "Always look at the listings before buying."
 
+-- Export / import strings
+L.HELP_EXPORT = "/ac export - copy your items as a string for the Auction Coach website"
+L.HELP_IMPORT = "/ac import - paste a prices string from the Auction Coach website"
+L.SHARE_UNSUPPORTED = "Export and import need a newer game client (patch 11.1 or later)."
+L.EXPORT_TITLE = "Export your items"
+L.EXPORT_HELP = "Press Ctrl+C to copy this, then paste it into \"My report\" on the Auction Coach website. It holds your characters' names, gold and item counts, nothing else."
+L.EXPORT_SIZE = "%s characters"
+L.EXPORT_SELECT = "Select all"
+L.EXPORT_FAILED = "Could not build the export string."
+L.EXPORT_BUTTON = "Export"
+L.IMPORT_TITLE = "Import prices"
+L.IMPORT_HELP = "Paste the prices string from \"My report\" on the Auction Coach website (Ctrl+V), then click Import. It works like the desktop app's prices, so you can skip the app."
+L.IMPORT_BUTTON = "Import"
+L.IMPORT_DONE = "Imported prices for %s items."
+L.IMPORT_INVALID = "That is not an Auction Coach string. Copy the whole prices string and try again."
+L.IMPORT_NOT_PRICES = "That string has no prices in it. Use the prices string from \"My report\", not your export."
+L.IMPORT_OLDER = "Your prices are already newer than this string."
+
 -- Post helper
 L.POST_TITLE = "Auction Coach suggests"
 L.POST_USE = "Use this price"

@@ -19,6 +19,7 @@ Core\Init.lua
 Data\Inventory.lua
 Data\Prices.lua
 Data\Competition.lua
+Data\Share.lua
 
 Scan\FullScan.lua
 Scan\ItemCheck.lua
@@ -36,5 +37,6 @@ UI\SellTab.lua
 UI\DealsTab.lua
 UI\PostHelper.lua
 UI\VendorGuard.lua
+UI\ShareWindow.lua
 
 API.lua

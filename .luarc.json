@@ -62,6 +62,11 @@
     "SOUNDKIT",
     "hooksecurefunc",
     "geterrorhandler",
-    "wipe"
+    "wipe",
+    "C_EncodingUtil",
+    "GetCurrentRegion",
+    "ChatFontSmall",
+    "GameFontHighlightSmall",
+    "CLOSE"
   ]
 }

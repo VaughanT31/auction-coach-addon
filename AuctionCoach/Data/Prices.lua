@@ -1,7 +1,8 @@
 -- Auction Coach - prices from two sources:
 --   scan  the in-game full scan (Scan/FullScan.lua), per connected-realm group
 --   data  AuctionCoachData, written into AuctionCoach_Data/Data.lua by the
---         desktop app (format documented in that file)
+--         desktop app (format documented in that file), or the same format
+--         pasted in as an import string (Data/Share.lua); the newer is used
 -- When both have a price, the newer one wins.
 
 local _, ns = ...
@@ -88,9 +89,29 @@ function Prices:RecordLivePrice(groupKey, key, minPrice, timestamp)
     ns.Events:Fire("AC_LIVE_PRICE", key)
 end
 
+local function Usable(data)
+    return type(data) == "table" and data.format == 1 and (data.generatedAt or 0) > 0
+end
+
+-- The server price data in use: Data.lua or an imported string, whichever
+-- is newer. nil when there is neither.
+function Prices.ActiveData()
+    local file = Usable(AuctionCoachData) and AuctionCoachData or nil
+    local imported = ns.db and Usable(ns.db.imported) and ns.db.imported or nil
+    if file and imported then
+        return imported.generatedAt > file.generatedAt and imported or file
+    end
+    return file or imported
+end
+
+-- Call after replacing the imported price data.
+function Prices:DataChanged()
+    ns.Events:Fire("AC_DATA_CHANGED")
+end
+
 local function FromData(key, realmName)
-    local data = AuctionCoachData
-    if type(data) ~= "table" or data.format ~= 1 then return nil end
+    local data = Prices.ActiveData()
+    if not data then return nil end
 
     local row
     if data.commodities then
