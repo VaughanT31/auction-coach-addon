@@ -67,6 +67,13 @@
     "GetCurrentRegion",
     "ChatFontSmall",
     "GameFontHighlightSmall",
-    "CLOSE"
+    "CLOSE",
+    "ERR_AUCTION_SOLD_S",
+    "Settings",
+    "SettingsPanel",
+    "CreateSettingsListSectionHeaderInitializer",
+    "MinimalSliderWithSteppersMixin",
+    "Minimap",
+    "GetCursorPosition"
   ]
 }

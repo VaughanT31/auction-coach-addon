@@ -80,6 +80,7 @@ end
 --   vendor       vendor price per item
 --   salesPerDay  estimated sales per day, when known
 --   competition  Competition:Score result, when known
+--   undercut     Undercuts:Typical result, when known
 -- }
 function Rules:SuggestPrice(key, link)
     local vendor = Compat.GetVendorPrice(link or Util.ItemIDFromKey(key))
@@ -96,6 +97,7 @@ function Rules:SuggestPrice(key, link)
         vendor = vendor,
         salesPerDay = price.salesPerDay,
         competition = ns.Competition:Score(key),
+        undercut = ns.Undercuts:Typical(key),
     }
 
     -- Just under the lowest listing. Buyers take the cheapest first, so
@@ -162,6 +164,10 @@ function Rules:ForLink(link)
     local score = ns.Competition:Score(key)
     if score then
         Add(Phrases.Competition(score), COMPETITION_COLORS[score.level])
+    end
+    local undercut = ns.Undercuts:Typical(key)
+    if undercut then
+        Add(Phrases.Undercut(undercut), undercut.seconds < 600 and "warn" or "info")
     end
 
     return lines

@@ -43,6 +43,23 @@ function Phrases.Competition(score)
     return text
 end
 
+-- Undercuts:Typical result as a sentence.
+function Phrases.Undercut(typical)
+    local seconds = typical.seconds
+    if seconds < 60 then
+        return L.UNDERCUT_FAST:format(typical.undercut, typical.posts)
+    end
+    local span
+    if seconds < 3600 then
+        span = Util.FormatDuration(seconds)
+    elseif seconds < 5400 then
+        span = L.UNDERCUT_HOUR
+    else
+        span = L.UNDERCUT_HOURS:format(math.floor(seconds / 3600 + 0.5))
+    end
+    return L.UNDERCUT_TYPICAL:format(span, typical.undercut, typical.posts)
+end
+
 function Phrases.NoPrice()
     return L.TT_NO_PRICE
 end
@@ -79,6 +96,9 @@ function Phrases.Sell(s, money)
     end
     if s.competition then
         lines[#lines + 1] = Phrases.Competition(s.competition)
+    end
+    if s.undercut then
+        lines[#lines + 1] = Phrases.Undercut(s.undercut)
     end
     if s.lowestAt and Util.Now() - s.lowestAt > 2 * 3600 then
         lines[#lines + 1] = L.SELL_CHECK_LIVE:format(Util.FormatAge(s.lowestAt))

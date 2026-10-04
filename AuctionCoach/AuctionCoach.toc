@@ -6,6 +6,7 @@
 ## Category: CtrlShift_Zed
 ## SavedVariables: AuctionCoachDB
 ## OptionalDeps: AuctionCoach_Data
+## IconTexture: Interface\AddOns\AuctionCoach\Media\icon
 ## AddonCompartmentFunc: AuctionCoach_OnAddonCompartmentClick
 ## X-License: MIT
 
@@ -19,6 +20,8 @@ Core\Init.lua
 Data\Inventory.lua
 Data\Prices.lua
 Data\Competition.lua
+Data\Undercuts.lua
+Data\Sales.lua
 Data\Share.lua
 
 Scan\FullScan.lua
@@ -38,5 +41,7 @@ UI\DealsTab.lua
 UI\PostHelper.lua
 UI\VendorGuard.lua
 UI\ShareWindow.lua
+UI\Options.lua
+UI\MinimapButton.lua
 
 API.lua

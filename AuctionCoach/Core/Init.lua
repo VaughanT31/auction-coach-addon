@@ -23,12 +23,18 @@ local DEFAULTS = {
         -- least this much profit after the AH cut (copper).
         dealMinDiscount = 0.3,
         dealMinProfit = 5 * 10000,
+        -- Chat line with what each sale made.
+        saleMessages = true,
+        minimapHide = false,
+        minimapAngle = 200,
     },
     characters = {},
     warbank = {},
     guilds = {},
     accounting = { sales = {}, buys = {}, cancels = {}, expired = {} },
     undercuts = {},
+    -- The player's posts of the last 48 hours, per realm group (Data/Sales.lua).
+    posts = {},
     -- Per connected-realm group: scans, competition samples, scan times.
     realms = {},
     -- One example link per item key, for names, icons and tooltips.
@@ -162,8 +168,12 @@ SlashCmdList.AUCTIONCOACH = function(input)
 end
 
 -- Addon compartment (the addons button by the minimap).
-function AuctionCoach_OnAddonCompartmentClick()
-    if ns.MainWindow then ns.MainWindow:Toggle() end
+function AuctionCoach_OnAddonCompartmentClick(_, mouseButton)
+    if mouseButton == "RightButton" and ns.Options then
+        ns.Options:Open()
+    elseif ns.MainWindow then
+        ns.MainWindow:Toggle()
+    end
 end
 
 -- ---------------------------------------------------------------------

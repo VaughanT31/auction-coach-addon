@@ -10,20 +10,33 @@ local function RecordSample(key, minPrice, sellers)
     local now = Util.Now()
     ns.Prices:RecordLivePrice(ns.realmGroup, key, minPrice, now)
     ns.Competition:Sample(ns.realmGroup, key, minPrice, now)
+    ns.Undercuts:Observe(ns.realmGroup, key, minPrice, now)
     if sellers then
         ns.Competition:RecordSellers(ns.realmGroup, key, sellers, now)
     end
 end
 
 -- Commodities (reagents, consumables...): results are sorted cheapest first.
+-- Rows made up only of the player's own listings are skipped, so they
+-- never set the price. A row at the same price can mix the player's and
+-- others' listings: it counts when others have some of its quantity.
 local function CheckCommodity(itemID)
     local key = Util.SimpleItemKey(itemID)
     if not key then return end
-    if C_AuctionHouse.GetNumCommoditySearchResults(itemID) == 0 then return end
-    local first = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, 1)
-    if first and first.unitPrice and first.unitPrice > 0 then
-        RecordSample(key, first.unitPrice)
+    local num = C_AuctionHouse.GetNumCommoditySearchResults(itemID) or 0
+    if num == 0 then return end
+    for i = 1, num do
+        local info = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, i)
+        if info and info.unitPrice and info.unitPrice > 0 then
+            local own = info.containsOwnerItem or info.containsAccountItem
+            if not own or (info.quantity or 0) > (info.numOwnerItems or 0) then
+                RecordSample(key, info.unitPrice)
+                return
+            end
+        end
     end
+    -- Only the player's own listings: nobody else sells it right now.
+    ns.Undercuts:Observe(ns.realmGroup, key, nil, Util.Now())
 end
 
 -- Items (gear, pets, other non-stackables): one search can return several

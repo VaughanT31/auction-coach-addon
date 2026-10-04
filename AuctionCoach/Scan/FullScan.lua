@@ -137,6 +137,11 @@ local function Finish()
             ns.Competition:Sample(ns.realmGroup, key, r.min, now)
         end
     end
+    -- Own listings are left out of results, so a missing item means nobody
+    -- else has it listed: the player's listing is still the cheapest.
+    for key in pairs(ns.Undercuts:Watched(ns.realmGroup)) do
+        ns.Undercuts:Observe(ns.realmGroup, key, results[key] and results[key].min, now)
+    end
 
     FullScan.state = "idle"
     FullScan.progress = 1

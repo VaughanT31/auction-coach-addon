@@ -10,6 +10,8 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 - **Full AH scan:** runs when you open the Auction House, at most once every 15 minutes (Blizzard's limit). You can also start it with `/ac scan` or the **Scan AH** button.
 - **Plain-English tooltips:** what an item is worth, how many you have, whether a vendor pays more, and how hard the competition is.
 - **Live competition sampling:** every item you search at the AH records the lowest price and the number of sellers. The more often the lowest price changes, the higher the competition.
+- **Sale messages:** when one of your auctions sells, a chat line says what it made after the AH cut (for a stack, the price each and what the whole stack makes).
+- **Undercut timing:** when you post at the lowest price, Auction Coach notes how long your listing stays the cheapest, from your later AH searches and scans. After a few posts, tooltips and the post helper say how quickly that item usually gets undercut.
 - **Hidden treasure (My Stuff tab):** the AH value of everything sellable across all your characters and your warband bank.
 - **What to sell (Sell tab):** every tradeable item in your bags with one suggested price, how fast it sells and whether to post, hold or vendor it. At the AH, click a row to put the item in the sell box.
 - **Post helper:** when you put an item in the AH sell box, a panel beside it suggests a price. "Use this price" fills it in; you still click Post.
@@ -24,11 +26,13 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac tooltip` | Turn the tooltip advice on or off |
 | `/ac guard` | Turn vendor and delete protection on or off |
+| `/ac options` | Open the options (also Esc > Options > AddOns, or right click the minimap button) |
+| `/ac sales` | Turn the sale messages on or off |
 | `/ac export` | Copy your items as a string for the website's "My report" |
 | `/ac import` | Paste a prices string from the website (instead of the desktop app) |
 | `/ac help` | List commands |
 
-You can also open the window from the addon compartment button next to the minimap.
+You can also open the window with the minimap button (drag it around the minimap edge, hide it in the options) or the addons button next to the minimap. Right click either for the options.
 
 ## For other addons
 
