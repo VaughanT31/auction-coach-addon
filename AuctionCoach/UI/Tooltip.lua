@@ -21,6 +21,8 @@ local function OnTooltipSetItem(tooltip)
         local c = Rules.COLORS[line.color] or Rules.COLORS.info
         tooltip:AddLine(line.text, c[1], c[2], c[3], true)
     end
+    -- A gap below too, so lines other addons add next do not run into ours.
+    tooltip:AddLine(" ")
     tooltip:Show()
 end
 
