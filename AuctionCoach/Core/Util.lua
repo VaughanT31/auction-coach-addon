@@ -190,10 +190,32 @@ end
 -- once available. Callers redraw on AC_ITEM_NAMES_LOADED.
 local namesPending = false
 
+-- An item string for a key, for items never seen in the player's bags
+-- (deals, for example). Gear gets its bonus IDs in field 13 onwards, so
+-- the name and item level come out right. nil for battle pets.
+function Util.ItemStringFromKey(key)
+    local itemID = Util.ItemIDFromKey(key)
+    if not itemID then return nil end
+    local bonuses = key:match(":b([%d%.]+)$")
+    if not bonuses then return "item:" .. itemID end
+    local list = { strsplit(".", bonuses) }
+    return "item:" .. itemID .. string.rep(":", 12) .. #list .. ":" .. table.concat(list, ":")
+end
+
+-- A coloured "[Name]" for a battle pet key, or nil while unknown.
+local function PetName(key)
+    local species = tonumber(key:match("^p:(%d+)"))
+    local name = species and C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID(species)
+    if type(name) ~= "string" or name == "" then return nil end
+    return "|cff0070dd[" .. name .. "]|r"
+end
+
 function Util.NamedLink(key)
     local link = ns.db and ns.db.links[key]
     if Util.LinkHasName(link) then return link end
-    if link and link:find("|Hitem:") then
+    if key and key:sub(1, 2) == "p:" then return PetName(key) end
+    link = link or Util.ItemStringFromKey(key)
+    if link and link:find("item:") then
         local _, fresh = ns.Compat.GetItemInfo(link)
         if Util.LinkHasName(fresh) then
             ns.db.links[key] = fresh

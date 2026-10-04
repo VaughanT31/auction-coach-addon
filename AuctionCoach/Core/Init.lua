@@ -19,6 +19,10 @@ local DEFAULTS = {
         -- Warn when the AH pays at least this much more than a vendor (copper).
         guardMinGain = 10 * 10000,
         treasureNotice = true,
+        -- Deals tab: at least this far below the usual price, and at
+        -- least this much profit after the AH cut (copper).
+        dealMinDiscount = 0.3,
+        dealMinProfit = 5 * 10000,
     },
     characters = {},
     warbank = {},

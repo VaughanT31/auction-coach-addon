@@ -27,11 +27,13 @@ Advice\Phrases.lua
 Advice\Rules.lua
 Advice\Treasure.lua
 Advice\Sell.lua
+Advice\Deals.lua
 
 UI\Tooltip.lua
 UI\MainWindow.lua
 UI\MyStuffTab.lua
 UI\SellTab.lua
+UI\DealsTab.lua
 UI\PostHelper.lua
 UI\VendorGuard.lua
 

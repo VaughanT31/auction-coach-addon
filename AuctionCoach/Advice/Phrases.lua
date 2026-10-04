@@ -90,3 +90,16 @@ end
 function Phrases.SellShort(s)
     return L["SELL_SHORT_" .. s.action]
 end
+
+-- Why a deal is a deal, from Deals:List, as a list of sentences.
+function Phrases.Deal(d, money)
+    money = money or Util.FormatMoney
+    local lines = {
+        L.DEAL_LISTED:format(money(d.price), math.floor(d.discount * 100 + 0.5), money(d.resell)),
+        L.DEAL_PROFIT:format(money(d.resell), money(d.profit)),
+    }
+    lines[#lines + 1] = L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(d.salesPerDay + 0.5)))
+    lines[#lines + 1] = L.DEAL_SEEN:format(Util.FormatAge(d.priceAt))
+    lines[#lines + 1] = L.DEAL_CHECK
+    return lines
+end

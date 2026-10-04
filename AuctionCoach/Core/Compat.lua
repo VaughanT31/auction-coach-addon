@@ -104,6 +104,45 @@ function Compat.IsAuctionHouseOpen()
     return AuctionHouseFrame ~= nil and AuctionHouseFrame:IsShown()
 end
 
+-- Opens this item's listings at the Auction House, the same as clicking
+-- it in the browse results. If Blizzard's frame has changed, or the item
+-- is not cached yet, searches for its name instead. Returns true when
+-- something was shown.
+function Compat.ShowAtAuctionHouse(key, link, minPrice)
+    if not Compat.IsAuctionHouseOpen() then return false end
+    local Util = ns.Util
+
+    local itemKey
+    local species, level = key:match("^p:(%d+):(%d+)")
+    if species then
+        itemKey = C_AuctionHouse.MakeItemKey(Util.PET_CAGE_ITEM_ID, tonumber(level), 0, tonumber(species))
+    else
+        local itemLevel = 0
+        if link and key:find(":b") then
+            itemLevel = Compat.GetDetailedItemLevelInfo(link) or 0
+        end
+        itemKey = C_AuctionHouse.MakeItemKey(Util.ItemIDFromKey(key), itemLevel)
+    end
+
+    if AuctionHouseFrame.SelectBrowseResult and C_AuctionHouse.GetItemKeyInfo(itemKey) then
+        local ok = pcall(AuctionHouseFrame.SelectBrowseResult, AuctionHouseFrame,
+            { itemKey = itemKey, minPrice = minPrice })
+        if ok then return true end
+    end
+
+    local name = link and link:match("%[(.-)%]")
+    if name then name = name:gsub("|A.-|a", ""):gsub("|T.-|t", ""):match("^%s*(.-)%s*$") end
+    local searchBar = AuctionHouseFrame.SearchBar
+    if not name or name == "" or not (searchBar and searchBar.SearchBox and searchBar.StartSearch) then
+        return false
+    end
+    if AuctionHouseFrame.SetDisplayMode and AuctionHouseFrameDisplayMode then
+        pcall(AuctionHouseFrame.SetDisplayMode, AuctionHouseFrame, AuctionHouseFrameDisplayMode.Buy)
+    end
+    searchBar.SearchBox:SetText(name)
+    return pcall(searchBar.StartSearch, searchBar)
+end
+
 function Compat.IsMerchantOpen()
     return MerchantFrame ~= nil and MerchantFrame:IsShown()
 end

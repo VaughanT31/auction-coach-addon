@@ -14,8 +14,19 @@ ns.Prices = Prices
 -- Averages the cheapest 15% of quantity, extending to 30% while prices stay
 -- within 20% of the previous listing. Troll listings at silly prices sit
 -- far above that chunk, so they never move the market value.
+-- Old items can have so few real listings that troll stacks hold most of
+-- the quantity, so the average also stops at a cliff: a price more than
+-- CLIFF times the previous one, once CLIFF_MIN_LISTINGS listings are in.
+-- One cheap listing alone never counts as the market (it may be a deal).
+-- Must stay identical to market_value in the platform (shared/pricing.py).
+local CLIFF, CLIFF_MIN_LISTINGS = 5, 3
+
 function Prices.MarketValue(listings)
-    table.sort(listings, function(a, b) return a[1] < b[1] end)
+    -- Same order as Python's sorted(): price, then quantity.
+    table.sort(listings, function(a, b)
+        if a[1] ~= b[1] then return a[1] < b[1] end
+        return a[2] < b[2]
+    end)
 
     local totalQty = 0
     for i = 1, #listings do
@@ -29,6 +40,9 @@ function Prices.MarketValue(listings)
 
     for i = 1, #listings do
         local price, qty = listings[i][1], listings[i][2]
+        if i > CLIFF_MIN_LISTINGS and price > lastPrice * CLIFF then
+            break
+        end
         if sumQty >= lowTarget then
             if sumQty >= highTarget or price > lastPrice * 1.2 then
                 break
@@ -93,6 +107,7 @@ local function FromData(key, realmName)
         value = row.m or row.n,
         min = row.n,
         historical = row.h,
+        usualMin = row.l,
         salesPerDay = row.s,
         t = row.t or data.generatedAt or 0,
         source = "data",
@@ -121,6 +136,8 @@ end
 --   min, minAt   lowest listing, from whichever source saw it most recently
 --                (a live AH search beats both full scans and Data.lua)
 --   historical   14-day average market value (Data.lua only)
+--   usualMin     what the lowest listing normally is: 7-day average of the
+--                hourly lowest price (Data.lua only)
 --   salesPerDay  estimated sales per day (Data.lua only)
 -- }
 function Prices:Get(key, groupKey, realmName)
@@ -142,6 +159,7 @@ function Prices:Get(key, groupKey, realmName)
         t = newer.t,
         source = newer.source,
         historical = data.historical,
+        usualMin = data.usualMin,
         salesPerDay = data.salesPerDay,
         qty = scan.qty,
     }

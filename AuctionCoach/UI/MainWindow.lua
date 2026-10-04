@@ -1,6 +1,6 @@
 -- Auction Coach - main window with a simple tab strip.
--- Tabs register themselves with MainWindow:AddTab. v0.1 has "My Stuff";
--- Today's Plan, Sell and Deals arrive in later versions.
+-- Tabs register themselves with MainWindow:AddTab: My Stuff, Sell and
+-- Deals so far, Today's Plan arrives in a later version.
 
 local _, ns = ...
 local L = ns.L

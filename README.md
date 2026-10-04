@@ -4,13 +4,16 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 
 **It advises and never automates.** You do all the buying, posting and cancelling yourself.
 
-## What's in v0.1, "What's it worth?"
+## What it does
 
 - **Inventory across alts:** bags, bank, reagent bank, warband bank, guild bank tabs you open, mailbox and active auctions. Only tradeable items are counted.
 - **Full AH scan:** runs when you open the Auction House, at most once every 15 minutes (Blizzard's limit). You can also start it with `/ac scan` or the **Scan AH** button.
 - **Plain-English tooltips:** what an item is worth, how many you have, whether a vendor pays more, and how hard the competition is.
 - **Live competition sampling:** every item you search at the AH records the lowest price and the number of sellers. The more often the lowest price changes, the higher the competition.
 - **Hidden treasure (My Stuff tab):** the AH value of everything sellable across all your characters and your warband bank.
+- **What to sell (Sell tab):** every tradeable item in your bags with one suggested price, how fast it sells and whether to post, hold or vendor it. At the AH, click a row to put the item in the sell box.
+- **Post helper:** when you put an item in the AH sell box, a panel beside it suggests a price. "Use this price" fills it in; you still click Post.
+- **Deals tab:** items listed well below what their lowest listing normally is, with the profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
 - **Vendor and delete protection:** tooltips at a merchant warn before you sell something valuable. If you sell it anyway, a popup offers to buy it straight back. Deleting a valuable item shows a warning above the confirmation.
 
 ## Commands
@@ -54,7 +57,7 @@ AuctionCoach/          the addon
 AuctionCoach_Data/     helper addon; its Data.lua is overwritten by the desktop app
 ```
 
-`AuctionCoach_Data` is installed and updated by the Auction Coach desktop app (planned for v0.3). The addon works without it, using its own scans.
+`AuctionCoach_Data` is installed and updated by the Auction Coach desktop app, which downloads hourly prices, 14-day averages and sales estimates. The addon works without it, using its own scans.
 
 ## Development
 
