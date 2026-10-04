@@ -1,0 +1,9 @@
+## Interface: 120100
+## Title: Auction Coach Data
+## Notes: Price data for Auction Coach. Written by the Auction Coach desktop app, do not edit.
+## Author: CtrlShift_Zed
+## Version: 0.1.0-alpha
+## Category: CtrlShift_Zed
+## X-License: MIT
+
+Data.lua

@@ -1,0 +1,33 @@
+## Interface: 120100
+## Title: Auction Coach
+## Notes: Plain-English Auction House advice: what your stuff is worth and what to sell.
+## Author: CtrlShift_Zed
+## Version: 0.1.0-alpha
+## Category: CtrlShift_Zed
+## SavedVariables: AuctionCoachDB
+## OptionalDeps: AuctionCoach_Data
+## AddonCompartmentFunc: AuctionCoach_OnAddonCompartmentClick
+## X-License: MIT
+
+Locales\enUS.lua
+
+Core\Util.lua
+Core\Compat.lua
+Core\Events.lua
+Core\Init.lua
+
+Data\Inventory.lua
+Data\Prices.lua
+Data\Competition.lua
+
+Scan\FullScan.lua
+Scan\ItemCheck.lua
+
+Advice\Phrases.lua
+Advice\Rules.lua
+Advice\Treasure.lua
+
+UI\Tooltip.lua
+UI\MainWindow.lua
+UI\MyStuffTab.lua
+UI\VendorGuard.lua
