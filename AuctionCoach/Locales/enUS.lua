@@ -86,6 +86,38 @@ L.TREASURE_WARBAND = "Warband bank"
 L.SCAN_BUTTON = "Scan AH"
 L.SCAN_BUTTON_TIP = "Scans the whole Auction House. Allowed once every 15 minutes."
 
+-- Selling advice (Sell tab and post helper)
+L.SELL_POST = "Post at %s each, just under the lowest listing (%s)."
+L.SELL_USUAL = "Its usual price is %s."
+L.SELL_HOLD = "Prices are %d%% below usual (%s). Hold it if you can, or post at %s to sell now."
+L.SELL_VENDOR = "Sell it to a vendor: it pays %s, more than the AH after its cut."
+L.SELL_NO_DATA = "No AH price yet. Search for it at the Auction House to check."
+L.SELL_SPEED = "Sells about %s a day."
+L.SELL_SPEED_SLOW = "Sells slowly: less than one a day."
+L.SELL_CHECK_LIVE = "Lowest price is from %s. The AH may have changed since."
+L.SELL_SHORT_POST = "Post"
+L.SELL_SHORT_HOLD = "Hold: prices low"
+L.SELL_SHORT_VENDOR = "Vendor it"
+L.SELL_SHORT_NO_DATA = "No price"
+
+-- Sell tab
+L.TAB_SELL = "Sell"
+L.SELL_TITLE = "What to sell: about %s"
+L.SELL_SUB = "Tradeable items in this character's bags, with a suggested price each. Totals are after the 5% AH cut."
+L.SELL_SUB_AH = "Click an item to put it in the Auction House sell box."
+L.SELL_EMPTY = "Nothing in your bags is worth listing right now."
+L.SELL_COL_ITEM = "Item"
+L.SELL_COL_EACH = "Price each"
+L.SELL_COL_TOTAL = "Total"
+L.SELL_COL_SPEED = "Sells/day"
+L.SELL_COL_ADVICE = "Advice"
+
+-- Post helper
+L.POST_TITLE = "Auction Coach suggests"
+L.POST_USE = "Use this price"
+L.POST_USE_TIP = "Fills in the price box. You still click Post yourself."
+L.POST_SET = "Price set to %s. Click Post when you're happy with it."
+
 -- Where items are kept
 L.WHERE_BAGS = "bags"
 L.WHERE_BANK = "bank"

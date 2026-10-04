@@ -26,8 +26,13 @@ Scan\ItemCheck.lua
 Advice\Phrases.lua
 Advice\Rules.lua
 Advice\Treasure.lua
+Advice\Sell.lua
 
 UI\Tooltip.lua
 UI\MainWindow.lua
 UI\MyStuffTab.lua
+UI\SellTab.lua
+UI\PostHelper.lua
 UI\VendorGuard.lua
+
+API.lua

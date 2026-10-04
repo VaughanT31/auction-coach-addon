@@ -66,8 +66,12 @@ function Prices:RecordLivePrice(groupKey, key, minPrice, timestamp)
     if row then
         row.min = minPrice
     else
-        scans[key] = { t = timestamp, min = minPrice, mkt = minPrice, qty = 0, n = 0 }
+        row = { t = timestamp, min = minPrice, mkt = minPrice, qty = 0, n = 0 }
+        scans[key] = row
     end
+    -- lt: when the lowest price was last seen live.
+    row.lt = timestamp
+    ns.Events:Fire("AC_LIVE_PRICE", key)
 end
 
 local function FromData(key, realmName)
@@ -102,6 +106,7 @@ local function FromScan(key, groupKey)
     return {
         value = row.mkt or row.min,
         min = row.min,
+        minAt = math.max(row.t or 0, row.lt or 0),
         qty = row.qty,
         t = row.t,
         source = "scan",
@@ -110,8 +115,14 @@ end
 
 -- Price info for an item key, or nil when nothing is known.
 -- groupKey and realmName default to the current character's.
--- Returns { value, min, t, source, ... }, where value is the market value
--- in copper per item.
+-- Returns {
+--   value        market value per item (copper), from the newer source
+--   t, source    when and where value came from ("scan" or "data")
+--   min, minAt   lowest listing, from whichever source saw it most recently
+--                (a live AH search beats both full scans and Data.lua)
+--   historical   14-day average market value (Data.lua only)
+--   salesPerDay  estimated sales per day (Data.lua only)
+-- }
 function Prices:Get(key, groupKey, realmName)
     if not key or not ns.db then return nil end
     groupKey = groupKey or ns.realmGroup
@@ -119,10 +130,27 @@ function Prices:Get(key, groupKey, realmName)
 
     local scan = groupKey and FromScan(key, groupKey)
     local data = FromData(key, realmName)
-    if scan and data then
-        return (data.t > scan.t) and data or scan
+    if not (scan and data) then
+        local only = scan or data
+        if only and not only.minAt then only.minAt = only.t end
+        return only
     end
-    return scan or data
+
+    local newer = (data.t > scan.t) and data or scan
+    local result = {
+        value = newer.value,
+        t = newer.t,
+        source = newer.source,
+        historical = data.historical,
+        salesPerDay = data.salesPerDay,
+        qty = scan.qty,
+    }
+    if (scan.minAt or 0) >= data.t then
+        result.min, result.minAt = scan.min, scan.minAt
+    else
+        result.min, result.minAt = data.min, data.t
+    end
+    return result
 end
 
 function Prices:GetForLink(link)

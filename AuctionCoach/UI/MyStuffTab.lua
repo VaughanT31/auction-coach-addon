@@ -94,28 +94,8 @@ local function CreateRow(parent, index)
     return row
 end
 
-local waitingForNames = false
-
--- Returns a link with a name in it, asking the client to load the item
--- when the stored link has an empty name ("[]").
-local function NamedLink(item)
-    local link = item.link
-    if not link or not link:find("[]", 1, true) then return link end
-    if link:find("|Hitem:") then
-        local _, fresh = Compat.GetItemInfo(link)
-        if fresh and not fresh:find("[]", 1, true) then
-            ns.db.links[item.key] = fresh
-            return fresh
-        end
-        local itemID = Util.ItemIDFromKey(item.key)
-        if itemID then Compat.RequestLoadItemDataByID(itemID) end
-        waitingForNames = true
-    end
-    return nil
-end
-
 local function SetRow(row, item)
-    local link = NamedLink(item)
+    local link = Util.NamedLink(item.key)
     row.link = link or item.link
     row.icon:SetTexture(IconFor(item.key))
     local name = link or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
@@ -124,7 +104,7 @@ local function SetRow(row, item)
     end
     row.name:SetText(name)
     row.where:SetText(WhereText(item.where))
-    row.value:SetText(Util.FormatMoney(item.value))
+    row.value:SetText(Util.FormatMoneyIcons(item.value))
     row:Show()
 end
 
@@ -210,12 +190,12 @@ local function Refresh(panel, reason)
     local numChars = 0
     for _ in pairs(ns.db.characters) do numChars = numChars + 1 end
 
-    panel.total:SetText(L.TREASURE_TOTAL:format(Util.FormatMoney(result.total)))
+    panel.total:SetText(L.TREASURE_TOTAL:format(Util.FormatMoneyIcons(result.total)))
     panel.sub:SetText(numChars == 1 and L.TREASURE_SUB_ONE or L.TREASURE_SUB:format(numChars))
 
     local ownerParts = {}
     for _, o in ipairs(result.owners) do
-        table.insert(ownerParts, OwnerName(o.owner) .. " " .. Util.FormatMoney(o.value))
+        table.insert(ownerParts, OwnerName(o.owner) .. " " .. Util.FormatMoneyIcons(o.value))
     end
     panel.owners:SetText(table.concat(ownerParts, "   "))
 
@@ -247,11 +227,3 @@ end
 
 ns.MainWindow:AddTab({ name = L.TAB_MY_STUFF, Build = Build, Refresh = Refresh })
 
--- Redraw once the item names that were missing have loaded.
-ns.Events:On("GET_ITEM_INFO_RECEIVED", function()
-    if not waitingForNames then return end
-    Util.Debounce("myStuffNames", 0.5, function()
-        waitingForNames = false
-        ns.MainWindow:Refresh()
-    end)
-end)

@@ -25,6 +25,22 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 
 You can also open the window from the addon compartment button next to the minimap.
 
+## For other addons
+
+Auction Coach exposes its prices through the global `AuctionCoachAPI` (CraftSim uses it as a price source). Prices are copper per item, and functions return `nil` when there is no data. `item` is an item link, an item ID or a TSM-style `"i:12345"`; pass a link for gear.
+
+| Function | Returns |
+|---|---|
+| `AuctionCoachAPI.IsReady()` | `true` once prices can be read (after login) |
+| `AuctionCoachAPI.GetMarketValue(item)` | Typical price (cheapest 15-30% of listings) |
+| `AuctionCoachAPI.GetMinBuyout(item)` | Lowest listing |
+| `AuctionCoachAPI.GetHistorical(item)` | 14-day average market value (needs the desktop app) |
+| `AuctionCoachAPI.GetSaleRate(item)` | Estimated sales per day (needs the desktop app) |
+| `AuctionCoachAPI.GetPriceInfo(item)` | Table: `market`, `min`, `historical`, `salesPerDay`, `updated`, `source` |
+| `AuctionCoachAPI.GetSuggestedPrice(item)` | Price to post at, and `"POST"`, `"HOLD"`, `"VENDOR"` or `"NO_DATA"` |
+
+`AuctionCoachAPI.version` is 1 and only goes up on breaking changes.
+
 ## Repo layout
 
 ```

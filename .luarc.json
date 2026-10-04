@@ -4,6 +4,7 @@
   "diagnostics.globals": [
     "AuctionCoachDB",
     "AuctionCoachData",
+    "AuctionCoachAPI",
     "AuctionCoach_OnAddonCompartmentClick",
     "SLASH_AUCTIONCOACH1",
     "SLASH_AUCTIONCOACH2",
@@ -53,6 +54,9 @@
     "UnitName",
     "UnitClass",
     "IsAddOnLoaded",
+    "ItemLocation",
+    "PlaySound",
+    "SOUNDKIT",
     "hooksecurefunc",
     "geterrorhandler",
     "wipe"

@@ -54,6 +54,71 @@ function Rules:IsWorthWarning(key, link)
     return nil
 end
 
+-- ---------------------------------------------------------------------
+-- Selling
+-- ---------------------------------------------------------------------
+
+local SILVER = 100
+-- Lowest listing this far below the usual price means the market crashed.
+local CRASHED_BELOW = 0.8
+
+-- The AH only takes prices in whole silver.
+local function DownToSilver(copper)
+    return math.floor(copper / SILVER) * SILVER
+end
+
+local function UpToSilver(copper)
+    return math.ceil(copper / SILVER) * SILVER
+end
+
+-- What to do with an item and at what price. Returns {
+--   action       "POST" | "HOLD" (market crashed, posting now loses gold)
+--                | "VENDOR" (a vendor pays more) | "NO_DATA"
+--   price        suggested price per item, whole silver (nil for VENDOR/NO_DATA)
+--   lowest       lowest listing per item, and lowestAt when it was seen
+--   usual        14-day average (Data.lua), else the market value
+--   vendor       vendor price per item
+--   salesPerDay  estimated sales per day, when known
+--   competition  Competition:Score result, when known
+-- }
+function Rules:SuggestPrice(key, link)
+    local vendor = Compat.GetVendorPrice(link or Util.ItemIDFromKey(key))
+    local price = ns.Prices:Get(key)
+    if not price or not (price.min or price.value) then
+        return { action = "NO_DATA", vendor = vendor }
+    end
+
+    local lowest = price.min or price.value
+    local result = {
+        lowest = lowest,
+        lowestAt = price.minAt,
+        usual = price.historical or price.value,
+        vendor = vendor,
+        salesPerDay = price.salesPerDay,
+        competition = ns.Competition:Score(key),
+    }
+
+    -- Just under the lowest listing. Buyers take the cheapest first, so
+    -- matching it means waiting behind everyone else at that price.
+    local suggest = DownToSilver(lowest - 1)
+    if suggest < SILVER then suggest = math.max(SILVER, lowest) end
+
+    -- Below this, a vendor pays more than the AH after its cut.
+    local floor = vendor > 0 and UpToSilver(math.ceil(vendor / (1 - Util.AH_CUT))) or 0
+    if vendor > 0 and suggest <= floor then
+        result.action = "VENDOR"
+        return result
+    end
+
+    result.price = suggest
+    if result.usual and lowest < result.usual * CRASHED_BELOW then
+        result.action = "HOLD"
+    else
+        result.action = "POST"
+    end
+    return result
+end
+
 -- Advice lines for an item link: { { text = "...", color = "info" }, ... },
 -- or nil when there is nothing useful to say (for example soulbound items).
 function Rules:ForLink(link)

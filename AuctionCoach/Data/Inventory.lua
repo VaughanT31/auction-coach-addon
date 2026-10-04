@@ -46,10 +46,10 @@ local function Add(target, link, count)
     local key = Util.ItemKeyFromLink(link)
     if not key then return end
     target[key] = (target[key] or 0) + (count or 1)
-    -- Links of items the client has not loaded yet have an empty name
-    -- ("[]"), so replace them once a complete link comes along.
+    -- Links of items the client has not loaded yet have no name, so
+    -- replace them once a complete link comes along.
     local stored = ns.db.links[key]
-    if not stored or stored:find("[]", 1, true) then
+    if not Util.LinkHasName(stored) then
         ns.db.links[key] = link
     end
 end

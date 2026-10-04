@@ -8,7 +8,7 @@ local L = ns.L
 local MainWindow = {}
 ns.MainWindow = MainWindow
 
-local WIDTH, HEIGHT = 580, 500
+local WIDTH, HEIGHT = 640, 500
 local TAB_WIDTH, TAB_HEIGHT = 110, 22
 
 local frame
@@ -92,9 +92,28 @@ local function RefreshIfShown(event)
     MainWindow:Refresh(event)
 end
 
+local refreshEvents = {}
+
+-- Refresh the open tab when this event fires (each event only once).
+function MainWindow:RefreshOn(event)
+    if refreshEvents[event] then return end
+    refreshEvents[event] = true
+    ns.Events:On(event, RefreshIfShown)
+end
+
 for _, event in ipairs({
     "AC_SCAN_COMPLETE", "AC_SCAN_PROGRESS", "AC_INVENTORY_CHANGED",
     "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED",
 }) do
-    ns.Events:On(event, RefreshIfShown)
+    MainWindow:RefreshOn(event)
 end
+
+-- Rows show "Loading item..." until the client has the item's name. Redraw
+-- once the names asked for have arrived.
+ns.Events:On("GET_ITEM_INFO_RECEIVED", function()
+    if not ns.Util.NamesPending() then return end
+    ns.Util.Debounce("itemNames", 0.5, function()
+        ns.Util.ClearNamesPending()
+        MainWindow:Refresh()
+    end)
+end)

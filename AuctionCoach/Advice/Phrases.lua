@@ -46,3 +46,47 @@ end
 function Phrases.NoPrice()
     return L.TT_NO_PRICE
 end
+
+-- Selling advice from Rules:SuggestPrice, as a list of sentences.
+-- money formats copper (plain text by default; the UI passes coin icons).
+function Phrases.Sell(s, money)
+    money = money or Util.FormatMoney
+    local lines = {}
+    if s.action == "NO_DATA" then
+        lines[1] = L.SELL_NO_DATA
+        return lines
+    end
+    if s.action == "VENDOR" then
+        lines[1] = L.SELL_VENDOR:format(money(s.vendor))
+        return lines
+    end
+
+    if s.action == "HOLD" then
+        local percent = math.floor((1 - s.lowest / s.usual) * 100 + 0.5)
+        lines[#lines + 1] = L.SELL_HOLD:format(percent, money(s.usual), money(s.price))
+    else
+        lines[#lines + 1] = L.SELL_POST:format(money(s.price), money(s.lowest))
+        if s.usual and s.usual > 0 and math.abs(s.usual - s.lowest) / s.usual > 0.05 then
+            lines[#lines + 1] = L.SELL_USUAL:format(money(s.usual))
+        end
+    end
+    if s.salesPerDay then
+        if s.salesPerDay < 1 then
+            lines[#lines + 1] = L.SELL_SPEED_SLOW
+        else
+            lines[#lines + 1] = L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(s.salesPerDay + 0.5)))
+        end
+    end
+    if s.competition then
+        lines[#lines + 1] = Phrases.Competition(s.competition)
+    end
+    if s.lowestAt and Util.Now() - s.lowestAt > 2 * 3600 then
+        lines[#lines + 1] = L.SELL_CHECK_LIVE:format(Util.FormatAge(s.lowestAt))
+    end
+    return lines
+end
+
+-- One or two words for the Sell tab's advice column.
+function Phrases.SellShort(s)
+    return L["SELL_SHORT_" .. s.action]
+end

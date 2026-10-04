@@ -6,7 +6,7 @@
 local ADDON_NAME, ns = ...
 local L = ns.L
 
-local DB_VERSION = 1
+local DB_VERSION = 2
 
 local DEFAULTS = {
     version = DB_VERSION,
@@ -34,6 +34,51 @@ local DEFAULTS = {
 
 -- MIGRATIONS[n] upgrades a database from version n - 1 to version n.
 local MIGRATIONS = {}
+
+local OLD_GEAR_KEY = ":i%d+$"
+
+-- v2: gear keys changed from item level ("123:i639") to bonus IDs
+-- ("123:b6652.12817") so they match the server. Inventory counts are moved
+-- using each key's saved link. Scan rows have no link, so old gear rows are
+-- dropped and the next scan replaces them.
+MIGRATIONS[2] = function(db)
+    local rename = {}
+    for key, link in pairs(db.links or {}) do
+        if key:find(OLD_GEAR_KEY) then
+            local newKey = ns.Util.ItemKeyFromLink(link)
+            if newKey and newKey ~= key then rename[key] = newKey end
+        end
+    end
+
+    local function Move(items)
+        if type(items) ~= "table" then return end
+        for old, new in pairs(rename) do
+            if items[old] then
+                items[new] = (items[new] or 0) + items[old]
+                items[old] = nil
+            end
+        end
+    end
+    for _, char in pairs(db.characters or {}) do
+        for _, items in pairs(char.inventory or {}) do Move(items) end
+    end
+    Move(db.warbank)
+    for _, guild in pairs(db.guilds or {}) do
+        for _, items in pairs(guild.tabs or {}) do Move(items) end
+    end
+    for old, new in pairs(rename) do
+        db.links[new] = db.links[new] or db.links[old]
+        db.links[old] = nil
+    end
+
+    for _, realm in pairs(db.realms or {}) do
+        for _, field in ipairs({ "scans", "competition" }) do
+            for key in pairs(realm[field] or {}) do
+                if key:find(OLD_GEAR_KEY) then realm[field][key] = nil end
+            end
+        end
+    end
+end
 
 local function ApplyDefaults(target, defaults)
     for key, value in pairs(defaults) do

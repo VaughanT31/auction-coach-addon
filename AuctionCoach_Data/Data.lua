@@ -12,7 +12,7 @@
 --   },
 --   realms = {                         -- realm-specific items (gear, pets...)
 --     ["1403"] = {
---       ["12345:i639"] = { m = 0, n = 0, h = 0, s = 0, t = 0 },
+--       ["12345:b6652.12817"] = { m = 0, n = 0, h = 0, s = 0, t = 0 },
 --     },
 --   },
 --   commodities = {                    -- region-wide items (reagents, consumables...)
