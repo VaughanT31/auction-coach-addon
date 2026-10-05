@@ -12,11 +12,11 @@
 --   },
 --   realms = {                         -- realm-specific items (gear, pets...)
 --     ["1403"] = {
---       ["12345:b6652.12817"] = { m = 0, n = 0, h = 0, l = 0, s = 0, t = 0 },
+--       ["12345:b6652.12817"] = { m = 0, n = 0, h = 0, l = 0, s = 0, t = 0, u = 0, un = 0, w = 0, wn = 0 },
 --     },
 --   },
 --   commodities = {                    -- region-wide items (reagents, consumables...)
---     ["190396"] = { m = 0, n = 0, h = 0, l = 0, s = 0, t = 0 },
+--     ["190396"] = { m = 0, n = 0, h = 0, l = 0, s = 0, t = 0, u = 0, un = 0, w = 0, wn = 0 },
 --   },
 -- }
 --
@@ -25,6 +25,10 @@
 --   n  lowest price
 --   h  14-day average market value
 --   l  usual lowest price: 7-day average of the hourly lowest price
+--   u  typical seconds until a listing posted at the lowest price gets undercut,
+--      from players who share their posts (opt-in); un = how many posts
+--   w  typical seconds until such a listing first sells; wn = how many sales
+--      (u/un and w/wn only appear once at least 3 posts back them)
 --   s  estimated sales per day
 --   t  unix time of the snapshot this row came from (optional, defaults to generatedAt)
 -- Item keys follow the addon's format, see AuctionCoach/Core/Util.lua.

@@ -9,7 +9,8 @@
 --
 --   db.posts[group] = { { k = item key, v = unit price, q = quantity,
 --                         p = posted, s = first sale, n = sale messages,
---                         name = item name when posted }, ... }
+--                         name = item name when posted,
+--                         id = auction ID, when Blizzard reported it }, ... }
 
 local _, ns = ...
 local L, Util = ns.L, ns.Util
@@ -83,9 +84,25 @@ function Sales:Message(post)
     return L.SALE_STACK:format(link, money(post.v), post.q, money(Util.AfterCut(post.v * post.q)))
 end
 
-function Sales:OnSold(itemName, now)
-    local post = self:FindPost(itemName, now)
-    if not post then return end
+-- The post with this auction ID, if Blizzard reported it when posting.
+function Sales:FindPostByID(auctionID)
+    local posts = auctionID and Posts(ns.realmGroup, false)
+    if not posts then return nil end
+    for _, post in ipairs(posts) do
+        if post.id == auctionID then return post end
+    end
+    return nil
+end
+
+-- The same sale can arrive as an AH notification and as a chat message.
+local lastSale = { name = nil, t = 0 }
+
+function Sales:OnSold(itemName, now, auctionID)
+    local name = Sales.PlainName(itemName)
+    if name and name == lastSale.name and now - lastSale.t <= 2 then return end
+    lastSale.name, lastSale.t = name, now
+    local post = self:FindPostByID(auctionID) or self:FindPost(itemName, now)
+    if not post or (post.n or 0) >= post.q then return end
     post.n = (post.n or 0) + 1
     if not post.s then
         post.s = now
@@ -107,10 +124,35 @@ if type(ERR_AUCTION_SOLD_S) == "string" then
     soldPattern = "^" .. ERR_AUCTION_SOLD_S:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)") .. "$"
 end
 
+-- Retail reports sales as an AH notification (Blizzard's chat frame
+-- prints "A buyer has been found..." from it). The chat message is only a
+-- fallback in case a client sends it as plain system text.
+local SOLD = Enum.AuctionHouseNotification and Enum.AuctionHouseNotification.AuctionSold
+
+ns.Events:On("AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION", function(_, notification, text, auctionID)
+    if not ns.db or notification ~= SOLD or type(text) ~= "string" then return end
+    Sales:OnSold(text, Util.Now(), auctionID)
+end)
+
 ns.Events:On("CHAT_MSG_SYSTEM", function(_, message)
     if not soldPattern or not ns.db or type(message) ~= "string" then return end
     local name = message:match(soldPattern)
     if name then Sales:OnSold(name, Util.Now()) end
+end)
+
+-- Blizzard confirms each post with its auction ID, in posting order: attach
+-- it to the oldest recent post that has none yet, so a sale can be matched
+-- exactly even when several items are posted quickly.
+ns.Events:On("AUCTION_HOUSE_AUCTION_CREATED", function(_, auctionID)
+    local posts = ns.db and auctionID and Posts(ns.realmGroup, false)
+    if not posts then return end
+    local now = Util.Now()
+    for _, post in ipairs(posts) do
+        if not post.id and now - post.p <= 30 then
+            post.id = auctionID
+            return
+        end
+    end
 end)
 
 -- Item key and link of the item being posted.

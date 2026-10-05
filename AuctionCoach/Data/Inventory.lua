@@ -103,8 +103,15 @@ function Inventory:ScanAuctions()
     for i = 1, num do
         local info = C_AuctionHouse.GetOwnedAuctionInfo(i)
         -- Sold auctions are waiting as gold in the mailbox, not items.
-        if info and info.itemLink and info.status == Enum.AuctionStatus.Active then
-            Add(auctions, info.itemLink, info.quantity)
+        if info and info.status == Enum.AuctionStatus.Active then
+            if info.itemLink then
+                Add(auctions, info.itemLink, info.quantity)
+            elseif info.itemKey and info.itemKey.itemID then
+                -- Commodity auctions have no link, only an item key. They
+                -- are never gear, so the item ID is the whole key.
+                local key = Util.SimpleItemKey(info.itemKey.itemID)
+                if key then auctions[key] = (auctions[key] or 0) + (info.quantity or 1) end
+            end
         end
     end
     Changed()

@@ -55,10 +55,21 @@ end
 
 -- Undercuts:Typical result as a sentence.
 function Phrases.Undercut(typical)
+    if typical.shared then
+        if typical.seconds < 60 then return L.UNDERCUT_SHARED_FAST:format(typical.posts) end
+        return L.UNDERCUT_SHARED:format(Span(typical.seconds), typical.posts)
+    end
     if typical.seconds < 60 then
         return L.UNDERCUT_FAST:format(typical.undercut, typical.posts)
     end
     return L.UNDERCUT_TYPICAL:format(Span(typical.seconds), typical.undercut, typical.posts)
+end
+
+-- Typical time to the first sale from shared posts, or nil.
+function Phrases.SellTime(sellTime)
+    if not sellTime then return nil end
+    if sellTime.seconds < 60 then return L.SELLTIME_FAST:format(sellTime.count) end
+    return L.SELLTIME:format(Span(sellTime.seconds), sellTime.count)
 end
 
 -- Why an item is contested for the player's seller style, or nil.
@@ -117,6 +128,7 @@ function Phrases.Sell(s, money)
             lines[#lines + 1] = L.SELL_USUAL:format(money(s.usual))
         end
     end
+    lines[#lines + 1] = Phrases.SellTime(s.sellTime)
     if s.salesPerDay then
         if s.salesPerDay < 1 then
             lines[#lines + 1] = L.SELL_SPEED_SLOW

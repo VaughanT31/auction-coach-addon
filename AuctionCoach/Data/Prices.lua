@@ -129,6 +129,10 @@ local function FromData(key, realmName)
         min = row.n,
         historical = row.h,
         usualMin = row.l,
+        -- From players who share their posts (opt-in): typical seconds until
+        -- undercut and until the first sale, and how many posts that is from.
+        sharedUndercut = row.u and { seconds = row.u, count = row.un or 0 } or nil,
+        sharedSell = row.w and { seconds = row.w, count = row.wn or 0 } or nil,
         salesPerDay = row.s,
         t = row.t or data.generatedAt or 0,
         source = "data",
@@ -157,6 +161,8 @@ end
 --   min, minAt   lowest listing, from whichever source saw it most recently
 --                (a live AH search beats both full scans and Data.lua)
 --   historical   14-day average market value (Data.lua only)
+--   sharedUndercut, sharedSell  { seconds, count } from players who share
+--                (Data.lua only): typical time until undercut / first sale
 --   usualMin     what the lowest listing normally is: 7-day average of the
 --                hourly lowest price (Data.lua only)
 --   salesPerDay  estimated sales per day (Data.lua only)
@@ -181,6 +187,8 @@ function Prices:Get(key, groupKey, realmName)
         source = newer.source,
         historical = data.historical,
         usualMin = data.usualMin,
+        sharedUndercut = data.sharedUndercut,
+        sharedSell = data.sharedSell,
         salesPerDay = data.salesPerDay,
         qty = scan.qty,
     }

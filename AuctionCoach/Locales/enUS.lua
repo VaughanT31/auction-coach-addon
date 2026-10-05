@@ -74,6 +74,10 @@ L.TT_SELLERS = "About %d sellers have this listed right now."
 L.UNDERCUT_TYPICAL = "Your listings of this usually get undercut after about %s (%d of your last %d posts were)."
 L.UNDERCUT_FAST = "Your listings of this usually get undercut within a minute (%d of your last %d posts were)."
 L.UNDERCUT_HOURS = "%s hours"
+L.UNDERCUT_SHARED = "Listings of this usually get undercut after about %s (from %d posts by Auction Coach players)."
+L.UNDERCUT_SHARED_FAST = "Listings of this usually get undercut within a minute (from %d posts by Auction Coach players)."
+L.SELLTIME = "Posted at the lowest price, this usually sells within about %s (from %d sales by Auction Coach players)."
+L.SELLTIME_FAST = "Posted at the lowest price, this usually sells within a minute (from %d sales by Auction Coach players)."
 L.UNDERCUT_HOUR = "an hour"
 
 -- Hidden treasure / My Stuff

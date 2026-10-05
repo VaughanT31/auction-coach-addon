@@ -142,9 +142,24 @@ function Undercuts:Watched(groupKey)
     return keys
 end
 
--- Typical time until the player's listings of this item get undercut.
--- Returns { seconds, undercut = n, posts = n }, or nil without enough data.
+-- The shared figure from Data.lua (players who share their posts), in the
+-- same shape as OwnTypical, with shared = true and the record count.
+local function Shared(key)
+    local price = ns.Prices:Get(key)
+    local shared = price and price.sharedUndercut
+    if not shared then return nil end
+    return { seconds = shared.seconds, undercut = shared.count, posts = shared.count, shared = true }
+end
+
+-- Typical time until listings of this item get undercut: the player's own
+-- once they have enough undercuts, otherwise the shared figure.
+-- Returns { seconds, undercut = n, posts = n, shared = true|nil } or nil.
 function Undercuts:Typical(key, groupKey)
+    return self:OwnTypical(key, groupKey) or Shared(key)
+end
+
+-- From the player's own posts only, or nil without enough data.
+function Undercuts:OwnTypical(key, groupKey)
     local list = Records(groupKey or ns.realmGroup, key, false)
     if not list then return nil end
     local now = Util.Now()

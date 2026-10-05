@@ -98,6 +98,7 @@ function Rules:SuggestPrice(key, link)
         usual = price.historical or price.value,
         vendor = vendor,
         salesPerDay = price.salesPerDay,
+        sellTime = price.sharedSell,
         competition = ns.Competition:Score(key),
         undercut = ns.Undercuts:Typical(key),
     }
