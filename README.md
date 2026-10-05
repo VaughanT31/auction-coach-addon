@@ -4,6 +4,16 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 
 **It advises and never automates.** You do all the buying, posting and cancelling yourself.
 
+Website: [auctioncoach.ctrlshiftzed.com](https://auctioncoach.ctrlshiftzed.com)
+
+## Install
+
+1. **The addon:** install Auction Coach from CurseForge or Wago (or download the zip from this repo's releases and unzip it into `World of Warcraft\_retail_\Interface\AddOns`).
+2. **The desktop app (optional, recommended):** download the installer from the [Auction Coach platform releases](https://github.com/VaughanT31/auction-coach-platform/releases/latest). It runs in the tray and keeps the addon's prices fresh every hour, with 14-day averages and sales estimates for your realm. Without it, the addon uses its own Auction House scans.
+3. In game, open the Auction House once: Auction Coach scans it, and the advice starts.
+
+Windows may warn that the desktop app installer is from an unknown publisher, because it is not code signed yet. Choose "More info", then "Run anyway".
+
 ## What it does
 
 - **Inventory across alts:** bags, bank, reagent bank, warband bank, guild bank tabs you open, mailbox and active auctions. Only tradeable items are counted.
@@ -37,7 +47,7 @@ You can also open the window with the minimap button (drag it around the minimap
 
 ## For other addons
 
-Auction Coach exposes its prices through the global `AuctionCoachAPI` (CraftSim uses it as a price source). Prices are copper per item, and functions return `nil` when there is no data. `item` is an item link, an item ID or a TSM-style `"i:12345"`; pass a link for gear.
+Auction Coach exposes its prices through the global `AuctionCoachAPI`, so other addons can use it as a price source. Prices are copper per item, and functions return `nil` when there is no data. `item` is an item link, an item ID or a TSM-style `"i:12345"`; pass a link for gear.
 
 | Function | Returns |
 |---|---|
@@ -76,6 +86,8 @@ mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\Au
 ```
 
 Then `/reload` in game after each change.
+
+To build the zip for CurseForge and Wago, bump `## Version` in `AuctionCoach/AuctionCoach.toc`, then run `package.ps1`. It writes `.release\AuctionCoach-<version>.zip` with only the `AuctionCoach` folder: `AuctionCoach_Data` belongs to the desktop app and must never be shipped (it would wipe players' prices on every update).
 
 Conventions:
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/).
