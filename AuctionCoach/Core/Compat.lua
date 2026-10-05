@@ -8,6 +8,13 @@ local Compat = {}
 ns.Compat = Compat
 
 Compat.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+
+-- The player's region as the server names it: "EU", "US", "KR", "TW" or "CN".
+-- "" when the client does not say (should not happen on Retail).
+local REGIONS = { [1] = "US", [2] = "KR", [3] = "EU", [4] = "TW", [5] = "CN" }
+function Compat.RegionCode()
+    return REGIONS[GetCurrentRegion and GetCurrentRegion() or 0] or ""
+end
 Compat.GetItemInfoInstant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
 Compat.GetDetailedItemLevelInfo = (C_Item and C_Item.GetDetailedItemLevelInfo) or GetDetailedItemLevelInfo
 Compat.GetItemIconByID = (C_Item and C_Item.GetItemIconByID) or GetItemIcon

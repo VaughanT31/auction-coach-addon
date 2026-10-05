@@ -18,7 +18,6 @@ local Share = {}
 ns.Share = Share
 
 local PREFIX = "AC1:"
-local REGIONS = { [1] = "US", [2] = "KR", [3] = "EU", [4] = "TW", [5] = "CN" }
 
 -- C_EncodingUtil arrived in 11.1. Nil when this client lacks it.
 local function Codec()
@@ -91,7 +90,7 @@ function Share:BuildExport()
     return {
         kind = "inventory",
         v = 1,
-        region = REGIONS[GetCurrentRegion and GetCurrentRegion() or 0] or "",
+        region = ns.Compat.RegionCode(),
         realm = GetNormalizedRealmName(),
         at = Util.Now(),
         chars = chars,

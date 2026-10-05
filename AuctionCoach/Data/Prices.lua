@@ -89,8 +89,12 @@ function Prices:RecordLivePrice(groupKey, key, minPrice, timestamp)
     ns.Events:Fire("AC_LIVE_PRICE", key)
 end
 
+-- Server data for another region (an EU file on a US account, say) would
+-- show the wrong prices, so it is ignored and the addon's own scans are used.
 local function Usable(data)
-    return type(data) == "table" and data.format == 1 and (data.generatedAt or 0) > 0
+    if type(data) ~= "table" or data.format ~= 1 or (data.generatedAt or 0) <= 0 then return false end
+    local region = ns.Compat.RegionCode()
+    return not data.region or region == "" or tostring(data.region):upper() == region
 end
 
 -- The server price data in use: Data.lua or an imported string, whichever

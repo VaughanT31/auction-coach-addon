@@ -32,6 +32,8 @@ local function GetChar()
     end
     char.class = select(2, UnitClass("player"))
     char.realmGroup = ns.realmGroup
+    -- The desktop app reads this to fetch prices for the right region.
+    char.region = ns.Compat.RegionCode()
     char.lastSeen = Util.Now()
     char.gold = char.gold or 0
     char.professions = char.professions or {}
