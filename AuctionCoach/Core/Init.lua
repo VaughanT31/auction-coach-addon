@@ -25,6 +25,8 @@ local DEFAULTS = {
         dealMinProfit = 5 * 10000,
         -- Chat line with what each sale made.
         saleMessages = true,
+        -- At login, warn when the desktop app's prices are old (Data/Freshness.lua).
+        staleWarning = true,
         minimapHide = false,
         minimapAngle = 200,
     },

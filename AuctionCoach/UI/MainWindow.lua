@@ -14,6 +14,20 @@ local TAB_WIDTH, TAB_HEIGHT = 110, 22
 local frame
 local tabs = {}
 local activeTab
+local priceStatus
+
+-- How old the prices are, beside the tabs: grey, or amber when old (the
+-- desktop app has probably stopped).
+local function UpdatePriceStatus()
+    if not priceStatus then return end
+    local text, old = ns.Freshness:StatusText()
+    priceStatus:SetText(text)
+    if old then
+        priceStatus:SetTextColor(1, 0.65, 0.2)
+    else
+        priceStatus:SetTextColor(0.6, 0.6, 0.6)
+    end
+end
 
 -- def = { name, Build = function(panel), Refresh = function(panel) }
 function MainWindow:AddTab(def)
@@ -67,6 +81,10 @@ local function Create()
         tab.Build(panel)
     end
 
+    priceStatus = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    priceStatus:SetPoint("TOPRIGHT", -16, -36)
+    priceStatus:SetJustifyH("RIGHT")
+
     frame:SetScript("OnShow", function() MainWindow:Refresh() end)
     SelectTab(1)
 end
@@ -84,6 +102,7 @@ end
 -- reason is the event that triggered the refresh, or nil for a full one.
 function MainWindow:Refresh(reason)
     if not self:IsShown() or not activeTab then return end
+    UpdatePriceStatus()
     local tab = tabs[activeTab]
     if tab.Refresh then tab.Refresh(tab.panel, reason) end
 end

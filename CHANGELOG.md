@@ -14,6 +14,7 @@ Everything so far, in one go:
 - **Sale messages:** a chat line says what each sale made after the AH cut.
 - **Vendor and delete protection:** warns before you sell or delete something valuable, and offers to buy back a valuable item you just sold.
 - **Export and import strings:** your items for the website's My report, and prices from the website for players without the desktop app.
+- **Old price warning:** the main window shows when prices were last updated, and at login a chat line warns when the desktop app's prices are over 6 hours old (the app has probably stopped) or are for another region. Can be turned off in the options.
 - **Options page and minimap button.**
 - **Public price API** (`AuctionCoachAPI`) for other addons.
 

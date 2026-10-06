@@ -24,6 +24,7 @@ Data\Undercuts.lua
 Data\Sales.lua
 Data\SellChance.lua
 Data\Share.lua
+Data\Freshness.lua
 
 Scan\FullScan.lua
 Scan\ItemCheck.lua

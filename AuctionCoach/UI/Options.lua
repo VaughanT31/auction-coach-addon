@@ -95,6 +95,7 @@ local function Build()
     Checkbox("autoScan", L.OPT_AUTOSCAN, L.OPT_AUTOSCAN_TIP, true)
     Checkbox("saleMessages", L.OPT_SALES, L.OPT_SALES_TIP, true)
     Checkbox("treasureNotice", L.OPT_TREASURE, L.OPT_TREASURE_TIP, true)
+    Checkbox("staleWarning", L.OPT_STALE, L.OPT_STALE_TIP, true)
     Checkbox("minimapHide", L.OPT_MINIMAP, L.OPT_MINIMAP_TIP, true, function()
         if ns.MinimapButton then ns.MinimapButton:Update() end
     end, true)
