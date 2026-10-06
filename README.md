@@ -90,6 +90,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 
 **Now**
 - Prices for more realms in both EU and US.
+- **Gold overview** on the My Stuff tab: your total gold and each character's gold, beside your hidden treasure.
 - **Cancel or repost:** at the Auction House, see which of your auctions have been undercut and what to do about each one.
 - **Today's Plan:** tell Auction Coach how much time you have (15 minutes, an hour) and get a short to-do list of what to post, skip and buy, with the gold it should make.
 
