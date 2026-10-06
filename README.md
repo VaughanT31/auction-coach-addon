@@ -13,7 +13,7 @@ Website: [auctioncoach.ctrlshiftzed.com](https://auctioncoach.ctrlshiftzed.com)
 Pick one:
 
 - **CurseForge app or Wago app:** search for **Auction Coach** and click Install.
-- **By hand:** download the zip from this repo's [releases](https://github.com/VaughanT31/auction-coach-addon/releases/latest) and unzip it into `World of Warcraft\_retail_\Interface\AddOns`. You should end up with `AddOns\AuctionCoach\AuctionCoach.toc`.
+- **By hand:** download `AuctionCoach-x.y.z.zip` from this repo's [releases](https://github.com/VaughanT31/auction-coach-addon/releases) and unzip it into `World of Warcraft\_retail_\Interface\AddOns`. You should end up with `AddOns\AuctionCoach\AuctionCoach.toc`.
 
 Log in (or `/reload`), open the Auction House once, and Auction Coach scans it. Tooltips and the window (`/ac`) start giving advice straight away. That is all you need: the desktop app below is optional.
 
@@ -21,7 +21,7 @@ Log in (or `/reload`), open the Auction House once, and Auction Coach scans it. 
 
 The free Windows app runs in the tray and downloads fresh prices every hour, with 14-day averages, usual prices and sales estimates. These power deals, sell chances and "usually sells for" advice.
 
-1. **Download** the installer: [auctioncoach.ctrlshiftzed.com/download/windows](https://auctioncoach.ctrlshiftzed.com/download/windows).
+1. **Download** `AuctionCoachSetup-0.5.0.exe` from the [desktop app release](https://github.com/VaughanT31/auction-coach-addon/releases/tag/desktop-v0.5.0) on this repo. The release notes list its SHA-256 fingerprint if you want to check the file.
 2. **Run it.** Windows may say it protected your PC, because the installer is not code signed yet: click **More info**, then **Run anyway**. It installs for your Windows user only, so no admin prompt.
 3. **Where is World of Warcraft?** The app finds your WoW folder on its own; click it, then **Continue**. If it is somewhere unusual, open **Use a different folder** and paste the path to the folder that contains `_retail_`.
 4. **Which realms do you play on?** Your characters' realms are ticked for you if you have logged in with the addon before. Check the **Region** (EU or US) and tick any other realms you play, then **Save realms**.
