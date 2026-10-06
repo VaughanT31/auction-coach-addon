@@ -4,7 +4,7 @@ A plain-English Auction House coach for World of Warcraft (Retail). Auction Coac
 
 **It advises and never automates.** You do all the buying, posting and cancelling yourself.
 
-Website: [auctioncoach.ctrlshiftzed.com](https://auctioncoach.ctrlshiftzed.com)
+Website: [auctioncoach.ctrlshiftzed.com](https://auctioncoach.ctrlshiftzed.com) | Download: [CurseForge](https://www.curseforge.com/wow/addons/auction-coach)
 
 ## Install
 
@@ -12,7 +12,7 @@ Website: [auctioncoach.ctrlshiftzed.com](https://auctioncoach.ctrlshiftzed.com)
 
 Pick one:
 
-- **CurseForge app or Wago app:** search for **Auction Coach** and click Install.
+- **[CurseForge](https://www.curseforge.com/wow/addons/auction-coach):** click Install, or search for **Auction Coach** in the CurseForge app.
 - **By hand:** download `AuctionCoach-x.y.z.zip` from this repo's [releases](https://github.com/VaughanT31/auction-coach-addon/releases) and unzip it into `World of Warcraft\_retail_\Interface\AddOns`. You should end up with `AddOns\AuctionCoach\AuctionCoach.toc`.
 
 Log in (or `/reload`), open the Auction House once, and Auction Coach scans it. Tooltips and the window (`/ac`) start giving advice straight away. That is all you need: the desktop app below is optional.
