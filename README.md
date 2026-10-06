@@ -84,6 +84,32 @@ Auction Coach exposes its prices through the global `AuctionCoachAPI`, so other 
 
 `AuctionCoachAPI.version` is 1 and only goes up on breaking changes.
 
+## Roadmap
+
+What is coming, roughly in order. Plans change with feedback, so there are no dates. Got an idea, or want something sooner? [Open an idea](https://github.com/VaughanT31/auction-coach-addon/issues/new/choose) or give an existing one a 👍.
+
+**Now**
+- Prices for more realms in both EU and US.
+- **Cancel or repost:** at the Auction House, see which of your auctions have been undercut and what to do about each one.
+- **Today's Plan:** tell Auction Coach how much time you have (15 minutes, an hour) and get a short to-do list of what to post, skip and buy, with the gold it should make.
+
+**Next**
+- **Gold tracking:** your gold and sales over time, per character and in total.
+- **Destroy values:** whether an item is worth more disenchanted, milled or prospected than sold as it is.
+- **Shopping list:** items you want, with a note when one is listed below your price.
+- **Market calendar** on the website: weekly reset, Darkmoon Faire, holidays and patch days, and what they usually do to prices.
+- Auction Coach prices inside popular crafting addons.
+
+**Later**
+- **Optional accounts** on the website (no Blizzard login needed) to keep your reports, updated by the desktop app.
+- **My auctions** on the website: what you have listed, what has been undercut and what has sold.
+- **Alerts outside the game** (Discord first): undercut, sold, or a deal on your shopping list.
+- Warnings about price manipulation.
+- **Craft or sell:** which of your recipes are worth crafting for the Auction House right now, counting reagent costs, how fast the result sells and how hard the competition is, and whether to sell the reagents instead.
+- Other languages, a code-signed installer and a macOS desktop app.
+
+Never planned: automatic buying, posting or cancelling, or TSM-style groups and price formulas. Auction Coach advises, you click.
+
 ## Repo layout
 
 ```
