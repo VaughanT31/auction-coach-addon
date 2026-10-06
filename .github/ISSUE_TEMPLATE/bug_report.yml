@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in Auction Coach is wrong or broken.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more of this you fill in, the faster it gets fixed.
+  - type: input
+    id: version
+    attributes:
+      label: Addon version
+      description: Shown in the addon list at the character screen, or in your AddOns folder.
+      placeholder: "0.4.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: region
+    attributes:
+      label: Region
+      options:
+        - EU
+        - US
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: realm
+    attributes:
+      label: Realm
+      placeholder: "Draenor"
+  - type: dropdown
+    id: app
+    attributes:
+      label: Do you use the desktop app?
+      options:
+        - "Yes"
+        - "No"
+        - "No, I use /ac import"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Lua error (if any)
+      description: Turn on errors with /console scriptErrors 1, or use BugSack, and paste the full text.
+      render: text

@@ -1,0 +1,11 @@
+name: Idea or suggestion
+description: Something Auction Coach could do better or do next.
+labels: ["idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like Auction Coach to do, and how would it help you?
+    validations:
+      required: true
