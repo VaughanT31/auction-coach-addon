@@ -99,6 +99,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - **Shopping list:** items you want, with a note when one is listed below your price.
 - **Market calendar** on the website: weekly reset, Darkmoon Faire, holidays and patch days, and what they usually do to prices.
 - Auction Coach prices inside popular crafting addons.
+- **Cross-realm flips:** items that are cheap on one of your realms and sell for more on another, with the profit after the AH cut and how fast they sell there. Buy, move them through the warband bank, post on the other realm.
 
 **Later**
 - **Optional accounts** on the website (no Blizzard login needed) to keep your reports, updated by the desktop app.
