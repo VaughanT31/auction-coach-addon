@@ -171,3 +171,74 @@ function Phrases.Deal(d, money)
     lines[#lines + 1] = L.DEAL_CHECK
     return lines
 end
+
+-- ---------------------------------------------------------------------
+-- Today's Plan
+-- ---------------------------------------------------------------------
+
+-- "3", "about 2.5" or "less than one" items.
+local function Amount(n)
+    if n < 1 then return L.PLAN_LESS_THAN_ONE end
+    if math.abs(n - math.floor(n + 0.5)) < 0.05 then return BreakUpLargeNumbers(math.floor(n + 0.5)) end
+    return L.PLAN_ABOUT:format(n)
+end
+
+-- Short reason for a plan row.
+function Phrases.PlanShort(step, money)
+    money = money or Util.FormatMoney
+    local kind = step.kind
+    if kind == "POST" then
+        if step.suggestion.contested == "SOME" then
+            return L.PLAN_SHORT_POST_CONTESTED:format(money(step.price))
+        end
+        return L.PLAN_SHORT_POST:format(money(step.price))
+    elseif kind == "REPOST" then
+        return L.PLAN_SHORT_REPOST:format(money(step.price))
+    elseif kind == "BUY" then
+        return L.PLAN_SHORT_BUY:format(money(step.price), money(step.resell))
+    elseif kind == "VENDOR" then
+        return L.PLAN_SHORT_VENDOR
+    elseif kind == "SKIP" then
+        local s = step.suggestion
+        if s.action == "HOLD" then
+            return L.PLAN_SHORT_HOLD:format(math.floor((1 - s.lowest / s.usual) * 100 + 0.5))
+        end
+        return L.PLAN_SHORT_CONTESTED
+    end
+    return ""
+end
+
+-- Tooltip lines explaining a plan row.
+function Phrases.PlanDetails(step, money)
+    money = money or Util.FormatMoney
+    local lines = {}
+    local kind = step.kind
+    if kind == "POST" then
+        lines[#lines + 1] = L.SELL_POST:format(money(step.price), money(step.suggestion.lowest))
+        if step.sold then
+            lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.count),
+                ns.Styles:WindowHours(), money(step.gold))
+        else
+            lines[#lines + 1] = L.PLAN_WHY_UNKNOWN:format(money(step.full))
+        end
+        lines[#lines + 1] = Phrases.Contested(step.suggestion)
+    elseif kind == "REPOST" then
+        lines[#lines + 1] = L.PLAN_WHY_REPOST:format(money(step.oldPrice), money(step.lowest), money(step.price))
+        lines[#lines + 1] = L.PLAN_WHY_DEPOSIT
+        if step.sold then
+            lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.count),
+                ns.Styles:WindowHours(), money(step.gold))
+        end
+    elseif kind == "BUY" then
+        for _, line in ipairs(Phrases.Deal(step.deal, money)) do lines[#lines + 1] = line end
+        lines[#lines + 1] = L.PLAN_WHY_BUY:format(money(step.gold))
+    elseif kind == "VENDOR" then
+        lines[#lines + 1] = L.PLAN_WHY_VENDOR:format(step.count, money(step.gold))
+    elseif kind == "SKIP" then
+        for _, line in ipairs(Phrases.Sell(step.suggestion, money)) do lines[#lines + 1] = line end
+    end
+    if step.seconds then
+        lines[#lines + 1] = L.PLAN_TAKES:format(Util.FormatDuration(step.seconds))
+    end
+    return lines
+end

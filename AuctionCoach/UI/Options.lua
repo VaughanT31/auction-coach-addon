@@ -100,6 +100,12 @@ local function Build()
         if ns.MinimapButton then ns.MinimapButton:Update() end
     end, true)
 
+    Header(L.PLAN_TITLE_EMPTY)
+    Slider("planMinutes", L.OPT_PLAN, L.OPT_PLAN_TIP, 15, 5, 60, 5,
+        function(minutes) return minutes or 15 end,
+        function(minutes) return minutes end,
+        function(minutes) return L.OPT_MINUTES:format(minutes) end)
+
     Header(L.OPT_PROTECTION)
     Checkbox("vendorGuard", L.OPT_GUARD, L.OPT_GUARD_TIP, true)
     Slider("guardMinGain", L.OPT_GUARD_GAIN, L.OPT_GUARD_GAIN_TIP, 10 * GOLD, 1, 500, 1,

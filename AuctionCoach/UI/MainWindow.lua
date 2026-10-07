@@ -1,6 +1,6 @@
 -- Auction Coach - main window with a simple tab strip.
--- Tabs register themselves with MainWindow:AddTab: My Stuff, Sell and
--- Deals so far, Today's Plan arrives in a later version.
+-- Tabs register themselves with MainWindow:AddTab, in .toc order: Today,
+-- My Stuff, Sell and Deals.
 
 local _, ns = ...
 local L = ns.L
@@ -91,6 +91,19 @@ end
 
 function MainWindow:IsShown()
     return frame ~= nil and frame:IsShown()
+end
+
+-- Opens the window on the tab with this name.
+function MainWindow:ShowTab(name)
+    if not ns.db then return end
+    if not frame then Create() end
+    for i, tab in ipairs(tabs) do
+        if tab.name == name then
+            SelectTab(i)
+            break
+        end
+    end
+    frame:Show()
 end
 
 function MainWindow:Toggle()

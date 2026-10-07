@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- **Today's Plan (new Today tab):** pick how much time you have (5, 15, 30 or 60 minutes) and get a short to-do list, best gold per minute first: what to post, which of your undercut listings to repost, which deals to buy and what to sell to a vendor, with the gold each step should make. Items better left alone today (prices crashed, or undercut faster than you check back) are listed separately.
+- Gold figures are what should actually come in: how many will sell before you are back (from the desktop app's sales data and your seller style), after the AH cut.
+- Click a step at the Auction House to start it, and tick steps off as you go. Ticks clear after the next full scan.
+- The plan says how much is waiting on your other characters and the warband bank.
+- `/ac plan` opens it. Set the default time in the options.
+
 ## 0.4.0 (first public release)
 
 Everything so far, in one go:

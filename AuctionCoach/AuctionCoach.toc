@@ -2,7 +2,7 @@
 ## Title: Auction Coach
 ## Notes: Plain-English Auction House advice: what your stuff is worth and what to sell.
 ## Author: CtrlShift_Zed
-## Version: 0.4.0
+## Version: 0.5.0
 ## Category: CtrlShift_Zed
 ## SavedVariables: AuctionCoachDB
 ## OptionalDeps: AuctionCoach_Data
@@ -35,9 +35,11 @@ Advice\Rules.lua
 Advice\Treasure.lua
 Advice\Sell.lua
 Advice\Deals.lua
+Advice\Plan.lua
 
 UI\Tooltip.lua
 UI\MainWindow.lua
+UI\PlanTab.lua
 UI\MyStuffTab.lua
 UI\SellTab.lua
 UI\DealsTab.lua

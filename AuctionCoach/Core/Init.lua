@@ -27,6 +27,8 @@ local DEFAULTS = {
         saleMessages = true,
         -- At login, warn when the desktop app's prices are old (Data/Freshness.lua).
         staleWarning = true,
+        -- Today's Plan: minutes the player has (Advice/Plan.lua).
+        planMinutes = 15,
         minimapHide = false,
         minimapAngle = 200,
     },

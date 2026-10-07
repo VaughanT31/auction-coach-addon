@@ -38,6 +38,7 @@ Paste prices from the website instead: in game, type `/ac export`, paste the str
 
 ## What it does
 
+- **Today's Plan (Today tab):** pick how much time you have and get a short to-do list, best gold per minute first: what to post, which undercut listings to repost, which deals to buy and what to vendor, with the gold each step should make. Items to leave alone today are listed separately. Tick steps off as you go.
 - **Inventory across alts:** bags, bank, reagent bank, warband bank, guild bank tabs you open, mailbox and active auctions. Only tradeable items are counted.
 - **Full AH scan:** runs when you open the Auction House, at most once every 15 minutes (Blizzard's limit). You can also start it with `/ac scan` or the **Scan AH** button.
 - **Plain-English tooltips:** what an item is worth, how many you have, whether a vendor pays more, and how hard the competition is.
@@ -57,6 +58,7 @@ Paste prices from the website instead: in game, type `/ac export`, paste the str
 | Command | What it does |
 |---|---|
 | `/ac` | Open or close the Auction Coach window |
+| `/ac plan` | Open Today's Plan |
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac tooltip` | Turn the tooltip advice on or off |
 | `/ac guard` | Turn vendor and delete protection on or off |
@@ -92,7 +94,6 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - Prices for more realms in both EU and US.
 - **Gold overview** on the My Stuff tab: your total gold and each character's gold, beside your hidden treasure.
 - **Cancel or repost:** at the Auction House, see which of your auctions have been undercut and what to do about each one.
-- **Today's Plan:** tell Auction Coach how much time you have (15 minutes, an hour) and get a short to-do list of what to post, skip and buy, with the gold it should make.
 
 **Next**
 - **Gold tracking:** your gold and sales over time, per character and in total.
@@ -103,7 +104,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - **Cross-realm flips:** items that are cheap on one of your realms and sell for more on another, with the profit after the AH cut and how fast they sell there. Buy, move them through the warband bank, post on the other realm.
 
 **Later**
-- **Optional accounts** on the website (no Blizzard login needed) to keep your reports, updated by the desktop app.
+- **Optional accounts** on the website (no Blizzard login needed) so your saved reports follow you to any device, updated by the desktop app. Today, My report saves your reports in your browser.
 - **My auctions** on the website: what you have listed, what has been undercut and what has sold.
 - **Alerts outside the game** (Discord first): undercut, sold, or a deal on your shopping list.
 - Warnings about price manipulation.
@@ -119,7 +120,7 @@ AuctionCoach/          the addon
   Core/                bootstrap, events, helpers, API wrappers
   Data/                inventory, prices, competition
   Scan/                full AH scan and live item checks
-  Advice/              rules, plain-English phrases, hidden treasure
+  Advice/              rules, plain-English phrases, hidden treasure, Today's Plan
   UI/                  tooltip, main window, vendor/delete guard
   Locales/             player-facing text
 AuctionCoach_Data/     helper addon; its Data.lua is overwritten by the desktop app
