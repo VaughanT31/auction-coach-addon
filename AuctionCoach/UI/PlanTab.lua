@@ -168,9 +168,6 @@ local function UpdateTimeButtons(panel)
 end
 
 local function Build(panel)
-    panel.title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    panel.title:SetPoint("TOPLEFT", 4, -4)
-
     -- Time buttons, right to left from the panel's top right corner.
     panel.timeButtons = {}
     local previous
@@ -195,6 +192,13 @@ local function Build(panel)
     local timeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     timeLabel:SetPoint("RIGHT", previous, "LEFT", -6, 0)
     timeLabel:SetText(L.PLAN_TIME)
+
+    -- The title stops short of the time buttons instead of running into them.
+    panel.title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    panel.title:SetPoint("TOPLEFT", 4, -4)
+    panel.title:SetPoint("RIGHT", timeLabel, "LEFT", -10, 0)
+    panel.title:SetJustifyH("LEFT")
+    panel.title:SetWordWrap(false)
 
     panel.sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     panel.sub:SetPoint("TOPLEFT", panel.title, "BOTTOMLEFT", 0, -8)
@@ -227,7 +231,7 @@ local function ElsewhereText(elsewhere)
     local parts = {}
     for i = 1, math.min(#elsewhere, 3) do
         local o = elsewhere[i]
-        local who = o.owner == "warband" and L.TREASURE_WARBAND or (o.owner:match("^(.-)%-") or o.owner)
+        local who = o.owner:match("^(.-)%-") or o.owner
         parts[#parts + 1] = who .. " " .. Util.FormatMoneyIcons(o.value)
     end
     return L.PLAN_ELSEWHERE:format(table.concat(parts, ", "))
@@ -238,17 +242,22 @@ local function Refresh(panel, reason)
     UpdateTimeButtons(panel)
     local plan = ns.Plan:Build()
 
+    local sub
     if #plan.steps > 0 then
-        panel.title:SetText(L.PLAN_TITLE:format(Util.FormatMoneyIcons(plan.gold), Util.FormatDuration(plan.seconds)))
+        panel.title:SetText(L.PLAN_TITLE:format(Util.FormatMoneyIcons(plan.gold)))
+        sub = L.PLAN_SUB:format(Util.FormatDuration(plan.seconds), plan.budget)
     else
         panel.title:SetText(L.PLAN_TITLE_EMPTY)
+        sub = L.PLAN_SUB_EMPTY:format(plan.budget)
     end
-    panel.sub:SetText(L.PLAN_SUB:format(plan.budget)
-        .. (Compat.IsAuctionHouseOpen() and (" " .. L.PLAN_SUB_AH) or ""))
+    panel.sub:SetText(sub .. (Compat.IsAuctionHouseOpen() and (" " .. L.PLAN_SUB_AH) or ""))
     panel.empty:SetText((#plan.steps == 0 and #plan.skips == 0) and L.PLAN_EMPTY or "")
 
     local notes = {}
     if plan.left > 0 then notes[#notes + 1] = L.PLAN_LEFT:format(plan.left) end
+    if plan.unaffordable > 0 then
+        notes[#notes + 1] = L.PLAN_NO_GOLD:format(plan.unaffordable, Util.FormatMoneyIcons(plan.money))
+    end
     if #plan.elsewhere > 0 then notes[#notes + 1] = ElsewhereText(plan.elsewhere) end
     if #plan.steps > 0 and not plan.hasSpeed then notes[#notes + 1] = L.PLAN_NO_SPEED end
     panel.footer:SetText(table.concat(notes, "\n"))

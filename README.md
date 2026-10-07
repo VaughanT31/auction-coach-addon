@@ -38,7 +38,7 @@ Paste prices from the website instead: in game, type `/ac export`, paste the str
 
 ## What it does
 
-- **Today's Plan (Today tab):** pick how much time you have and get a short to-do list, best gold per minute first: what to post, which undercut listings to repost, which deals to buy and what to vendor, with the gold each step should make. Items to leave alone today are listed separately. Tick steps off as you go.
+- **Today's Plan (Today tab):** pick how much time you have and get a short to-do list, best gold per minute first: what to post (from your bags, bank and warband bank), which undercut listings to repost, which deals you can afford and what to vendor, with the gold each step should make. Items to leave alone today are listed separately. Tick steps off as you go.
 - **Inventory across alts:** bags, bank, reagent bank, warband bank, guild bank tabs you open, mailbox and active auctions. Only tradeable items are counted.
 - **Full AH scan:** runs when you open the Auction House, at most once every 15 minutes (Blizzard's limit). You can also start it with `/ac scan` or the **Scan AH** button.
 - **Plain-English tooltips:** what an item is worth, how many you have, whether a vendor pays more, and how hard the competition is.
@@ -51,6 +51,7 @@ Paste prices from the website instead: in game, type `/ac export`, paste the str
 - **Seller styles:** tell Auction Coach how you sell (casual, active or camper) in the options. Items that get undercut faster than you check back are marked "Post (contested)" and ranked lower, and the chance to sell is shown for the time until you are likely back.
 - **Deals tab:** items listed well below what their lowest listing normally is, with the profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
 - **Old price warning:** the main window shows when prices were last updated. At login, a chat line warns when the desktop app's prices are over 6 hours old (the app has probably stopped) or are for another region. Addons cannot talk to the desktop app, so the age of its prices is how Auction Coach notices.
+- **Grey items:** tooltips and the Sell tab say to vendor them. Most grey AH listings are gold sellers moving gold, so their prices are not real, and they never count as treasure or deals.
 - **Vendor and delete protection:** tooltips at a merchant warn before you sell something valuable. If you sell it anyway, a popup offers to buy it straight back. Deleting a valuable item shows a warning above the confirmation.
 
 ## Commands

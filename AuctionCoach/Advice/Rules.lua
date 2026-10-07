@@ -29,10 +29,23 @@ local COMPETITION_COLORS = {
     EXTREME = "bad",
 }
 
+local POOR = (Enum and Enum.ItemQuality and Enum.ItemQuality.Poor) or 0
+
+-- Grey (poor quality) items. Real players hardly buy them on the AH: most
+-- grey listings are gold sellers moving gold between realms, so their
+-- prices say nothing about what a player can get. Every piece of advice
+-- treats them as vendor trash. False when the item is not cached yet.
+function Rules:IsJunk(key, link)
+    if not key or key:sub(1, 2) == "p:" then return false end
+    local quality = select(3, Compat.GetItemInfo(link or Util.ItemIDFromKey(key)))
+    return quality == POOR
+end
+
 -- Returns ahAfterCut, vendorPrice (per item) when the AH pays clearly more
 -- than a vendor, otherwise nil. Used by vendor/delete protection and the
 -- hidden treasure total.
 function Rules:AuctionBeatsVendor(key, link, groupKey, realmName)
+    if self:IsJunk(key, link) then return nil end
     local price = ns.Prices:Get(key, groupKey, realmName)
     if not price or not price.value then return nil end
     local afterCut = Util.AfterCut(price.value)
@@ -73,7 +86,8 @@ end
 
 -- What to do with an item and at what price. Returns {
 --   action       "POST" | "HOLD" (market crashed, posting now loses gold)
---                | "VENDOR" (a vendor pays more) | "NO_DATA"
+--                | "VENDOR" (a vendor pays more, or a grey item: junk = true)
+--                | "NO_DATA"
 --   price        suggested price per item, whole silver (nil for VENDOR/NO_DATA)
 --   lowest       lowest listing per item, and lowestAt when it was seen
 --   usual        14-day average (Data.lua), else the market value
@@ -86,6 +100,9 @@ end
 -- }
 function Rules:SuggestPrice(key, link)
     local vendor = Compat.GetVendorPrice(link or Util.ItemIDFromKey(key))
+    if self:IsJunk(key, link) then
+        return { action = "VENDOR", vendor = vendor, junk = true }
+    end
     local price = ns.Prices:Get(key)
     if not price or not (price.min or price.value) then
         return { action = "NO_DATA", vendor = vendor }
@@ -139,6 +156,11 @@ function Rules:ForLink(link)
     local lines = {}
     local function Add(text, color)
         lines[#lines + 1] = { text = text, color = color or "info" }
+    end
+
+    if self:IsJunk(key, link) then
+        Add(Phrases.Junk(Compat.GetVendorPrice(link)), "muted")
+        return lines
     end
 
     local price = ns.Prices:Get(key)

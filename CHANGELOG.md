@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- **Grey items are vendor trash.** Real players hardly buy grey items on the AH: most of their listings are gold sellers moving gold, so their AH prices are not real. Tooltips now say to vendor them, and they no longer count toward hidden treasure, show up as deals or trigger the vendor warning.
+- **Today's Plan includes your bank and warband bank:** items worth posting there become "take out of the bank, then post" steps, counting the walk to the banker once. Other characters' items are still listed below the plan.
+- **More realistic deals in the plan:** a deal only counts as much as the chance it resells before you are back, and the plan never spends more gold than the character has.
+- Several cheap items with the same name are one step instead of a row each, with a reminder to check each one.
+- The plan's title no longer runs into the time buttons; how long the plan takes is now in the line below.
+
 ## 0.5.0
 
 - **Today's Plan (new Today tab):** pick how much time you have (5, 15, 30 or 60 minutes) and get a short to-do list, best gold per minute first: what to post, which of your undercut listings to repost, which deals to buy and what to sell to a vendor, with the gold each step should make. Items better left alone today (prices crashed, or undercut faster than you check back) are listed separately.

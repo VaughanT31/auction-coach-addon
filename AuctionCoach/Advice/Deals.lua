@@ -5,7 +5,7 @@
 -- worth the trouble, the item actually sells, and the price was seen
 -- recently. Needs server data (Data.lua or an import string) for usual
 -- prices and sales.
--- Gear is left out: each bonus ID combination has only a listing or two,
+-- Grey items are left out (Rules:IsJunk), and so is gear: each bonus ID combination has only a listing or two,
 -- so its "usual" price is just one seller's asking price. Comparing lowest
 -- with usual lowest, not with the market value, means a cheap listing
 -- that sits unsold for days turns into the usual price instead of a
@@ -93,6 +93,8 @@ end
 local function Evaluate(key, price, now, minDiscount, minProfit)
     local low = price.min
     if not low or low <= 0 then return nil end
+    -- Grey items do not resell: their listings are mostly gold sellers.
+    if ns.Rules:IsJunk(key) then return nil end
     if now - (price.minAt or 0) > MAX_AGE then return nil end
 
     -- Relisting means matching the usual lowest price, unless the whole

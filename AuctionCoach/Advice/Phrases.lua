@@ -105,6 +105,15 @@ function Phrases.NoPrice()
     return L.TT_NO_PRICE
 end
 
+-- Grey items: vendor trash, whatever the AH says (Rules:IsJunk).
+function Phrases.Junk(vendor, money)
+    money = money or Util.FormatMoney
+    if vendor and vendor > 0 then
+        return L.JUNK_VENDOR:format(money(vendor))
+    end
+    return L.JUNK
+end
+
 -- Selling advice from Rules:SuggestPrice, as a list of sentences.
 -- money formats copper (plain text by default; the UI passes coin icons).
 function Phrases.Sell(s, money)
@@ -112,6 +121,10 @@ function Phrases.Sell(s, money)
     local lines = {}
     if s.action == "NO_DATA" then
         lines[1] = L.SELL_NO_DATA
+        return lines
+    end
+    if s.junk then
+        lines[1] = Phrases.Junk(s.vendor, money)
         return lines
     end
     if s.action == "VENDOR" then
@@ -188,7 +201,11 @@ function Phrases.PlanShort(step, money)
     money = money or Util.FormatMoney
     local kind = step.kind
     if kind == "POST" then
-        if step.suggestion.contested == "SOME" then
+        if step.from == "warband" then
+            return L.PLAN_SHORT_POST_WARBAND:format(money(step.price))
+        elseif step.from == "bank" then
+            return L.PLAN_SHORT_POST_BANK:format(money(step.price))
+        elseif step.suggestion.contested == "SOME" then
             return L.PLAN_SHORT_POST_CONTESTED:format(money(step.price))
         end
         return L.PLAN_SHORT_POST:format(money(step.price))
@@ -214,6 +231,9 @@ function Phrases.PlanDetails(step, money)
     local lines = {}
     local kind = step.kind
     if kind == "POST" then
+        if step.from then
+            lines[#lines + 1] = step.from == "warband" and L.PLAN_WHY_WARBAND or L.PLAN_WHY_BANK
+        end
         lines[#lines + 1] = L.SELL_POST:format(money(step.price), money(step.suggestion.lowest))
         if step.sold then
             lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.count),
@@ -230,8 +250,12 @@ function Phrases.PlanDetails(step, money)
                 ns.Styles:WindowHours(), money(step.gold))
         end
     elseif kind == "BUY" then
+        if step.count > 1 then
+            lines[#lines + 1] = L.PLAN_WHY_BUY_SAME_NAME:format(step.count, money(step.spend))
+        end
         for _, line in ipairs(Phrases.Deal(step.deal, money)) do lines[#lines + 1] = line end
-        lines[#lines + 1] = L.PLAN_WHY_BUY:format(money(step.gold))
+        lines[#lines + 1] = L.PLAN_WHY_BUY:format(money(step.gold), math.floor(step.chance * 100 + 0.5),
+            ns.Styles:WindowHours())
     elseif kind == "VENDOR" then
         lines[#lines + 1] = L.PLAN_WHY_VENDOR:format(step.count, money(step.gold))
     elseif kind == "SKIP" then
