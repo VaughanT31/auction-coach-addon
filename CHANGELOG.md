@@ -7,6 +7,7 @@
 - **More realistic deals in the plan:** a deal only counts as much as the chance it resells before you are back, and the plan never spends more gold than the character has.
 - Several cheap items with the same name are one step instead of a row each, with a reminder to check each one.
 - The plan's title no longer runs into the time buttons; how long the plan takes is now in the line below.
+- My Stuff: the per-character amounts are now labelled "Items worth", so they are not mistaken for each character's gold.
 
 ## 0.5.0
 

@@ -93,6 +93,7 @@ L.TREASURE_EMPTY_ITEMS = "Nothing sellable found yet. Log in to your other chara
 L.TREASURE_UNPRICED = "%d items have no AH price yet and are not counted."
 L.TREASURE_NOTICE = "Hidden treasure: your characters hold about %s of sellable items. Type /ac to see what."
 L.TREASURE_WARBAND = "Warband bank"
+L.TREASURE_BY_OWNER = "Items worth:"
 L.SCAN_BUTTON = "Scan AH"
 L.SCAN_BUTTON_TIP = "Scans the whole Auction House. Allowed once every 15 minutes."
 

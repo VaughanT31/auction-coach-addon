@@ -209,7 +209,8 @@ local function Refresh(panel, reason)
     for _, o in ipairs(result.owners) do
         table.insert(ownerParts, OwnerName(o.owner) .. " " .. Util.FormatMoneyIcons(o.value))
     end
-    panel.owners:SetText(table.concat(ownerParts, "   "))
+    -- Labelled, so nobody reads these item values as the characters' gold.
+    panel.owners:SetText(#ownerParts > 0 and ("|cffffd100" .. L.TREASURE_BY_OWNER .. "|r  " .. table.concat(ownerParts, "   ")) or "")
 
     if result.unpriced > 0 and result.priced > 0 then
         panel.note:SetText(L.TREASURE_UNPRICED:format(result.unpriced))
