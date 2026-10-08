@@ -6,7 +6,7 @@ purpose: the desktop app creates and updates it, and shipping the empty
 placeholder would wipe every player's prices on each addon update.
 
 Run from anywhere:
-    powershell -ExecutionPolicy Bypass -File F:\AuctionCoach\auction-coach-addon\package.ps1
+    powershell -ExecutionPolicy Bypass -File "F:\WoW-Addon Development\AuctionCoach\auction-coach-addon\package.ps1"
 #>
 
 $ErrorActionPreference = "Stop"

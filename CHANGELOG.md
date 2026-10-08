@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+- **A new look** matching the other CtrlShift_Zed addons: flat dark windows, flat tabs with a gold line under the open one, flat buttons and faint row bands. The post helper beside the Auction House keeps its gold border.
+- **Auctions tab (new):** every auction you have listed on this character, your price next to the lowest one, and what to do about each: keep it, repost it at a new price, cancel it because a vendor now pays more, or let it run because reposting isn't worth it today. At the Auction House, click a row to see its listings. `/ac auctions` opens it.
+- **Gold overview on My Stuff:** your total gold, each character's gold and the warband bank's, beside your hidden treasure.
+- **Today's Plan, more steps:** collect your mailbox first (gold from sales, expired items), post expired items straight from the mail, and cancel listings a vendor now pays more for. Gold waiting in the mailbox counts toward the deals the plan can afford.
+- Reposting advice now uses your real listings and their prices, so it also covers auctions posted before Auction Coach was installed.
+
 ## 0.5.1
 
 - **Grey items are vendor trash.** Real players hardly buy grey items on the AH: most of their listings are gold sellers moving gold, so their AH prices are not real. Tooltips now say to vendor them, and they no longer count toward hidden treasure, show up as deals or trigger the vendor warning.

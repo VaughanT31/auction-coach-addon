@@ -203,6 +203,8 @@ function Phrases.PlanShort(step, money)
     if kind == "POST" then
         if step.from == "warband" then
             return L.PLAN_SHORT_POST_WARBAND:format(money(step.price))
+        elseif step.from == "mail" then
+            return L.PLAN_SHORT_POST_MAIL:format(money(step.price))
         elseif step.from == "bank" then
             return L.PLAN_SHORT_POST_BANK:format(money(step.price))
         elseif step.suggestion.contested == "SOME" then
@@ -211,6 +213,13 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_POST:format(money(step.price))
     elseif kind == "REPOST" then
         return L.PLAN_SHORT_REPOST:format(money(step.price))
+    elseif kind == "CANCEL" then
+        return L.PLAN_SHORT_CANCEL:format(money(step.gold))
+    elseif kind == "MAIL" then
+        if step.mailGold and step.mailGold > 0 then
+            return L.PLAN_SHORT_MAIL_GOLD:format(money(step.mailGold))
+        end
+        return L.PLAN_SHORT_MAIL
     elseif kind == "BUY" then
         return L.PLAN_SHORT_BUY:format(money(step.price), money(step.resell))
     elseif kind == "VENDOR" then
@@ -231,8 +240,12 @@ function Phrases.PlanDetails(step, money)
     local lines = {}
     local kind = step.kind
     if kind == "POST" then
-        if step.from then
-            lines[#lines + 1] = step.from == "warband" and L.PLAN_WHY_WARBAND or L.PLAN_WHY_BANK
+        if step.from == "warband" then
+            lines[#lines + 1] = L.PLAN_WHY_WARBAND
+        elseif step.from == "bank" then
+            lines[#lines + 1] = L.PLAN_WHY_BANK
+        elseif step.from == "mail" then
+            lines[#lines + 1] = L.PLAN_WHY_MAIL_ITEM
         end
         lines[#lines + 1] = L.SELL_POST:format(money(step.price), money(step.suggestion.lowest))
         if step.sold then
@@ -248,6 +261,14 @@ function Phrases.PlanDetails(step, money)
         if step.sold then
             lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.count),
                 ns.Styles:WindowHours(), money(step.gold))
+        end
+    elseif kind == "CANCEL" then
+        lines[#lines + 1] = L.PLAN_WHY_CANCEL:format(money(step.oldPrice), money(step.vendor), money(step.gold))
+        lines[#lines + 1] = L.PLAN_WHY_DEPOSIT_CANCEL
+    elseif kind == "MAIL" then
+        lines[#lines + 1] = L.PLAN_WHY_MAIL
+        if step.mailGold and step.mailGold > 0 then
+            lines[#lines + 1] = L.PLAN_WHY_MAIL_GOLD:format(money(step.mailGold))
         end
     elseif kind == "BUY" then
         if step.count > 1 then

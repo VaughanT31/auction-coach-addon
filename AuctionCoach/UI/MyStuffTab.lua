@@ -7,6 +7,9 @@ local L, Util, Compat = ns.L, ns.Util, ns.Compat
 
 local ROW_HEIGHT = 22
 local MAX_ROWS = 200
+-- Gold overview column on the right.
+local GOLD_WIDTH = 170
+local GOLD_MAX_CHARS = 10
 
 local LOCATION_LABELS = {
     bags = L.WHERE_BAGS,
@@ -58,6 +61,7 @@ local function CreateRow(parent, index)
     row:SetHeight(ROW_HEIGHT)
     row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
     row:SetPoint("RIGHT")
+    ns.Skin.RowBand(row)
 
     row.icon = row:CreateTexture(nil, "ARTWORK")
     row.icon:SetSize(18, 18)
@@ -126,15 +130,102 @@ local function UpdateScanButton(panel)
     end
 end
 
+-- ---------------------------------------------------------------------
+-- Gold overview: total gold, each character's gold (most first) and the
+-- warband bank, beside the hidden treasure.
+-- ---------------------------------------------------------------------
+
+local function BuildGold(panel)
+    local box = CreateFrame("Frame", nil, panel, "BackdropTemplate")
+    box:SetWidth(GOLD_WIDTH)
+    box:SetPoint("TOPRIGHT", panel.scanButton, "BOTTOMRIGHT", 0, -8)
+    box:SetPoint("BOTTOM", 0, 26)
+    box:EnableMouse(true)
+    box:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:SetText(L.GOLD_HEADER, 1, 0.82, 0)
+        GameTooltip:AddLine(L.GOLD_TIP, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    box:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    ns.Skin.Backdrop(box, { 1, 1, 1, 0.025 }, ns.Skin.BORDER)
+
+    box.header = box:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    box.header:SetPoint("TOPLEFT", 8, -8)
+    box.header:SetText(L.GOLD_HEADER)
+
+    box.totalLabel = box:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    box.totalLabel:SetPoint("TOPLEFT", box.header, "BOTTOMLEFT", 0, -8)
+    box.totalLabel:SetText(L.GOLD_TOTAL)
+    box.total = box:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    box.total:SetPoint("TOPLEFT", box.totalLabel, "BOTTOMLEFT", 0, -4)
+    box.total:SetPoint("RIGHT", -8, 0)
+    box.total:SetJustifyH("LEFT")
+
+    local divider = box:CreateTexture(nil, "ARTWORK")
+    divider:SetColorTexture(1, 1, 1, 0.1)
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", box.total, "BOTTOMLEFT", 0, -8)
+    divider:SetPoint("RIGHT", -8, 0)
+
+    -- Names and amounts as two columns of lines, so the amounts line up.
+    box.names = box:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    box.names:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 0, -8)
+    box.names:SetJustifyH("LEFT")
+    box.names:SetSpacing(4)
+    box.amounts = box:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    box.amounts:SetPoint("TOPRIGHT", divider, "BOTTOMRIGHT", 0, -8)
+    box.amounts:SetJustifyH("RIGHT")
+    box.amounts:SetSpacing(4)
+
+    panel.gold = box
+end
+
+local function RefreshGold(panel)
+    local chars = {}
+    local total = 0
+    for key, char in pairs(ns.db.characters) do
+        local gold = char.gold or 0
+        total = total + gold
+        if gold > 0 then chars[#chars + 1] = { key = key, gold = gold } end
+    end
+    table.sort(chars, function(a, b)
+        if a.gold ~= b.gold then return a.gold > b.gold end
+        return a.key < b.key
+    end)
+
+    local names, amounts = {}, {}
+    for i = 1, math.min(#chars, GOLD_MAX_CHARS) do
+        names[#names + 1] = OwnerName(chars[i].key)
+        amounts[#amounts + 1] = Util.FormatMoneyIcons(chars[i].gold)
+    end
+    if #chars > GOLD_MAX_CHARS then
+        local rest = 0
+        for i = GOLD_MAX_CHARS + 1, #chars do rest = rest + chars[i].gold end
+        names[#names + 1] = "|cff9d9d9d" .. L.GOLD_MORE:format(#chars - GOLD_MAX_CHARS) .. "|r"
+        amounts[#amounts + 1] = Util.FormatMoneyIcons(rest)
+    end
+    local warband = ns.db.warbankGold
+    if warband and warband > 0 then
+        total = total + warband
+        names[#names + 1] = "|cff99ccff" .. L.GOLD_WARBAND .. "|r"
+        amounts[#amounts + 1] = Util.FormatMoneyIcons(warband)
+    end
+
+    local box = panel.gold
+    box.total:SetText(Util.FormatMoneyIcons(total))
+    box.names:SetText(table.concat(names, "\n"))
+    box.amounts:SetText(table.concat(amounts, "\n"))
+end
+
 local function Build(panel)
     panel.total = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     panel.total:SetPoint("TOPLEFT", 4, -4)
     panel.total:SetJustifyH("LEFT")
 
-    panel.scanButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    panel.scanButton:SetSize(90, 22)
+    panel.scanButton = ns.Skin.Button(panel, L.SCAN_BUTTON, 90, 22)
     panel.scanButton:SetPoint("TOPRIGHT", -4, 0)
-    panel.scanButton:SetText(L.SCAN_BUTTON)
     panel.scanButton:SetScript("OnClick", function() ns.FullScan:Start(true) end)
     panel.scanButton:SetMotionScriptsWhileDisabled(true)
     panel.scanButton:SetScript("OnEnter", function(self)
@@ -147,26 +238,36 @@ local function Build(panel)
     panel.status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     panel.status:SetPoint("RIGHT", panel.scanButton, "LEFT", -8, 0)
 
+    BuildGold(panel)
+
     panel.sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     panel.sub:SetPoint("TOPLEFT", panel.total, "BOTTOMLEFT", 0, -6)
-    panel.sub:SetPoint("RIGHT", -4, 0)
+    panel.sub:SetPoint("RIGHT", panel.gold, "LEFT", -10, 0)
     panel.sub:SetJustifyH("LEFT")
 
-    panel.owners = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    panel.owners:SetPoint("TOPLEFT", panel.sub, "BOTTOMLEFT", 0, -8)
-    panel.owners:SetPoint("RIGHT", -4, 0)
-    panel.owners:SetJustifyH("LEFT")
+    -- What each character's items are worth, on hover over the total
+    -- rather than as a line of its own (it crowded the top of the tab).
+    local totalHover = CreateFrame("Frame", nil, panel)
+    totalHover:SetAllPoints(panel.total)
+    totalHover:EnableMouse(true)
+    totalHover:SetScript("OnEnter", function(self)
+        local owners = panel.ownerList
+        if not owners or #owners == 0 then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        GameTooltip:SetText(L.TREASURE_BY_OWNER, 1, 0.82, 0)
+        for _, o in ipairs(owners) do
+            GameTooltip:AddDoubleLine(OwnerName(o.owner), Util.FormatMoneyIcons(o.value), 1, 1, 1, 1, 1, 1)
+        end
+        GameTooltip:Show()
+    end)
+    totalHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    panel.importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    panel.importButton:SetSize(80, 20)
+    panel.importButton = ns.Skin.Button(panel, L.IMPORT_BUTTON, 80, 20)
     panel.importButton:SetPoint("BOTTOMRIGHT", -4, 0)
-    panel.importButton:SetText(L.IMPORT_BUTTON)
     panel.importButton:SetScript("OnClick", function() ns.ShareWindow:ShowImport() end)
 
-    panel.exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    panel.exportButton:SetSize(80, 20)
+    panel.exportButton = ns.Skin.Button(panel, L.EXPORT_BUTTON, 80, 20)
     panel.exportButton:SetPoint("RIGHT", panel.importButton, "LEFT", -4, 0)
-    panel.exportButton:SetText(L.EXPORT_BUTTON)
     panel.exportButton:SetScript("OnClick", function() ns.ShareWindow:ShowExport() end)
 
     panel.note = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -175,8 +276,9 @@ local function Build(panel)
     panel.note:SetJustifyH("LEFT")
 
     local scroll = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", panel.owners, "BOTTOMLEFT", 0, -10)
-    scroll:SetPoint("BOTTOMRIGHT", -26, 26)
+    scroll:SetPoint("TOPLEFT", panel.sub, "BOTTOMLEFT", 0, -10)
+    scroll:SetPoint("BOTTOM", 0, 26)
+    scroll:SetPoint("RIGHT", panel.gold, "LEFT", -30, 0)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(1, 1)
     scroll:SetScrollChild(content)
@@ -189,7 +291,7 @@ local function Build(panel)
 
     panel.empty = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     panel.empty:SetPoint("TOPLEFT", scroll, "TOPLEFT", 4, -8)
-    panel.empty:SetPoint("RIGHT", -30, 0)
+    panel.empty:SetPoint("RIGHT", scroll, "RIGHT", -4, 0)
     panel.empty:SetJustifyH("LEFT")
 end
 
@@ -197,6 +299,7 @@ local function Refresh(panel, reason)
     UpdateScanButton(panel)
     if reason == "AC_SCAN_PROGRESS" then return end
 
+    RefreshGold(panel)
     local result = ns.Treasure:Compute()
 
     local numChars = 0
@@ -205,12 +308,9 @@ local function Refresh(panel, reason)
     panel.total:SetText(L.TREASURE_TOTAL:format(Util.FormatMoneyIcons(result.total)))
     panel.sub:SetText(numChars == 1 and L.TREASURE_SUB_ONE or L.TREASURE_SUB:format(numChars))
 
-    local ownerParts = {}
-    for _, o in ipairs(result.owners) do
-        table.insert(ownerParts, OwnerName(o.owner) .. " " .. Util.FormatMoneyIcons(o.value))
-    end
-    -- Labelled, so nobody reads these item values as the characters' gold.
-    panel.owners:SetText(#ownerParts > 0 and ("|cffffd100" .. L.TREASURE_BY_OWNER .. "|r  " .. table.concat(ownerParts, "   ")) or "")
+    -- Shown on hover over the total, labelled "Items worth" so nobody reads
+    -- these item values as the characters' gold.
+    panel.ownerList = result.owners
 
     if result.unpriced > 0 and result.priced > 0 then
         panel.note:SetText(L.TREASURE_UNPRICED:format(result.unpriced))

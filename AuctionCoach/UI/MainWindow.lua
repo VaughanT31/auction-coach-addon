@@ -1,6 +1,6 @@
 -- Auction Coach - main window with a simple tab strip.
 -- Tabs register themselves with MainWindow:AddTab, in .toc order: Today,
--- My Stuff, Sell and Deals.
+-- My Stuff, Sell, Deals and Auctions.
 
 local _, ns = ...
 local L = ns.L
@@ -8,16 +8,18 @@ local L = ns.L
 local MainWindow = {}
 ns.MainWindow = MainWindow
 
-local WIDTH, HEIGHT = 640, 500
-local TAB_WIDTH, TAB_HEIGHT = 110, 22
+local WIDTH, HEIGHT = 640, 516
+local TAB_WIDTH, TAB_HEIGHT = 92, 24
+-- Title row, then the tab row, then the open tab's panel.
+local TABS_Y = -44
 
 local frame
 local tabs = {}
 local activeTab
 local priceStatus
 
--- How old the prices are, beside the tabs: grey, or amber when old (the
--- desktop app has probably stopped).
+-- How old the prices are, beside the close button: grey, or amber when old
+-- (the desktop app has probably stopped).
 local function UpdatePriceStatus()
     if not priceStatus then return end
     local text, old = ns.Freshness:StatusText()
@@ -38,54 +40,44 @@ local function SelectTab(index)
     activeTab = index
     for i, tab in ipairs(tabs) do
         tab.panel:SetShown(i == index)
-        tab.button:SetEnabled(i ~= index)
+        tab.button:SetActive(i == index)
     end
     MainWindow:Refresh()
 end
 
 local function Create()
-    frame = CreateFrame("Frame", "AuctionCoachMainWindow", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(WIDTH, HEIGHT)
+    frame = ns.Skin.Window("AuctionCoachMainWindow", WIDTH, HEIGHT)
     frame:SetPoint("CENTER")
-    frame:SetFrameStrata("HIGH")
-    frame:SetClampedToScreen(true)
-    frame:SetMovable(true)
-    frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-    frame:Hide()
-    -- Close with Escape.
-    table.insert(UISpecialFrames, frame:GetName())
-
-    local title = frame.TitleText
-    if not title then
-        title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        title:SetPoint("TOP", 0, -5)
-    end
-    title:SetText(L.ADDON_TITLE)
+    frame.title:SetText(L.ADDON_TITLE)
 
     for i, tab in ipairs(tabs) do
-        local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-        button:SetSize(TAB_WIDTH, TAB_HEIGHT)
-        button:SetPoint("TOPLEFT", 12 + (i - 1) * (TAB_WIDTH + 4), -30)
-        button:SetText(tab.name)
+        local button = ns.Skin.Tab(frame, tab.name, TAB_WIDTH, TAB_HEIGHT)
+        button:SetPoint("TOPLEFT", 16 + (i - 1) * (TAB_WIDTH + 4), TABS_Y)
         button:SetScript("OnClick", function() SelectTab(i) end)
         tab.button = button
 
         local panel = CreateFrame("Frame", nil, frame)
-        panel:SetPoint("TOPLEFT", 14, -30 - TAB_HEIGHT - 8)
+        panel:SetPoint("TOPLEFT", 14, TABS_Y - TAB_HEIGHT - 10)
         panel:SetPoint("BOTTOMRIGHT", -14, 12)
         panel:Hide()
         tab.panel = panel
         tab.Build(panel)
     end
 
+    -- Divider under the tab row.
+    local divider = frame:CreateTexture(nil, "ARTWORK")
+    divider:SetColorTexture(1, 1, 1, 0.06)
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", 16, TABS_Y - TAB_HEIGHT - 4)
+    divider:SetPoint("TOPRIGHT", -16, TABS_Y - TAB_HEIGHT - 4)
+
+    -- How old the prices are, beside the close button.
     priceStatus = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    priceStatus:SetPoint("TOPRIGHT", -16, -36)
+    priceStatus:SetPoint("RIGHT", frame.closeButton, "LEFT", -6, 0)
     priceStatus:SetJustifyH("RIGHT")
 
-    frame:SetScript("OnShow", function() MainWindow:Refresh() end)
+    -- Hooked, not set: Skin.Window already re-snaps the border on show.
+    frame:HookScript("OnShow", function() MainWindow:Refresh() end)
     SelectTab(1)
 end
 

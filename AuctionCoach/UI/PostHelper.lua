@@ -24,14 +24,9 @@ local function CreatePanel()
     panel = CreateFrame("Frame", "AuctionCoachPostHelper", AuctionHouseFrame, "BackdropTemplate")
     panel:SetWidth(WIDTH)
     panel:SetPoint("TOPLEFT", AuctionHouseFrame, "TOPRIGHT", 4, -24)
-    panel:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 14,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    panel:SetBackdropColor(0.08, 0.07, 0.06, 0.96)
-    panel:SetBackdropBorderColor(0.88, 0.65, 0.15)
+    -- Same flat panel as the main window, with a gold border so it stands
+    -- out beside Blizzard's frame.
+    ns.Skin.Backdrop(panel, ns.Skin.BG, { 0.88, 0.65, 0.15, 0.9 })
 
     panel.title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     panel.title:SetPoint("TOPLEFT", 12, -12)
@@ -53,8 +48,7 @@ local function CreatePanel()
     panel.text:SetJustifyH("LEFT")
     panel.text:SetSpacing(3)
 
-    panel.use = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    panel.use:SetSize(WIDTH - 24, 24)
+    panel.use = ns.Skin.Button(panel, nil, WIDTH - 24, 24)
     panel.use:SetPoint("TOPLEFT", panel.text, "BOTTOMLEFT", 0, -10)
     panel.use:SetText(L.POST_USE)
     panel.use:SetScript("OnClick", function() PostHelper:UsePrice() end)

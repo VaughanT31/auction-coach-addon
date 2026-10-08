@@ -79,13 +79,30 @@ function Inventory:ScanBank()
         ScanContainers(Compat.Bags.reagentBank, inv.reagentBank)
     end
     ScanContainers(Compat.Bags.warband, ns.db.warbank)
+    Inventory:ScanWarbandGold()
     Changed()
 end
 
+-- Gold deposited in the warband bank, for the gold overview. Only readable
+-- while a bank is open.
+function Inventory:ScanWarbandGold()
+    if C_Bank and C_Bank.FetchDepositedMoney and Enum.BankType and Enum.BankType.Account then
+        local ok, money = pcall(C_Bank.FetchDepositedMoney, Enum.BankType.Account)
+        if ok and money then ns.db.warbankGold = money end
+    end
+end
+
 function Inventory:ScanMail()
-    local mail = GetChar().inventory.mail
+    local char = GetChar()
+    local mail = char.inventory.mail
     wipe(mail)
     local numItems = GetInboxNumItems()
+    -- Gold waiting in the mailbox (sales, mostly), for Today's Plan.
+    local gold = 0
+    for i = 1, numItems do
+        gold = gold + (select(5, GetInboxHeaderInfo(i)) or 0)
+    end
+    char.mailGold = gold
     for i = 1, numItems do
         for j = 1, ATTACHMENTS_MAX_RECEIVE or 16 do
             local link = GetInboxItemLink(i, j)
@@ -98,24 +115,42 @@ function Inventory:ScanMail()
     Changed()
 end
 
+-- Also keeps each active auction with its price (char.auctionList), for
+-- the Auctions tab and Today's Plan (Advice/Auctions.lua):
+--   { id = auction ID, k = item key, v = unit price, q = quantity, left = seconds left }
 function Inventory:ScanAuctions()
-    local auctions = GetChar().inventory.auctions
+    local char = GetChar()
+    local auctions = char.inventory.auctions
     wipe(auctions)
+    local list = {}
     local num = C_AuctionHouse.GetNumOwnedAuctions()
     for i = 1, num do
         local info = C_AuctionHouse.GetOwnedAuctionInfo(i)
         -- Sold auctions are waiting as gold in the mailbox, not items.
         if info and info.status == Enum.AuctionStatus.Active then
+            local key
             if info.itemLink then
                 Add(auctions, info.itemLink, info.quantity)
+                key = Util.ItemKeyFromLink(info.itemLink)
             elseif info.itemKey and info.itemKey.itemID then
                 -- Commodity auctions have no link, only an item key. They
                 -- are never gear, so the item ID is the whole key.
-                local key = Util.SimpleItemKey(info.itemKey.itemID)
+                key = Util.SimpleItemKey(info.itemKey.itemID)
                 if key then auctions[key] = (auctions[key] or 0) + (info.quantity or 1) end
+            end
+            -- buyoutAmount is per item for commodities. For other items it
+            -- is treated as the price of the whole auction (quantity is
+            -- almost always 1 there anyway).
+            local quantity = math.max(1, info.quantity or 1)
+            local unit = info.buyoutAmount
+            if unit and info.itemLink then unit = math.floor(unit / quantity) end
+            if key and unit and unit > 0 then
+                list[#list + 1] = { id = info.auctionID, k = key, v = unit, q = quantity, left = info.timeLeftSeconds }
             end
         end
     end
+    char.auctionList = list
+    char.auctionsAt = Util.Now()
     Changed()
 end
 
@@ -218,12 +253,23 @@ Events:On("BAG_UPDATE_DELAYED", function()
 end)
 
 Events:On("PLAYER_MONEY", function()
-    if ns.charKey then GetChar().gold = GetMoney() end
+    if ns.charKey then
+        GetChar().gold = GetMoney()
+        -- The gold overview on My Stuff shows it.
+        Changed()
+    end
 end)
 
 Events:On("BANKFRAME_OPENED", function()
     bankOpen = true
     Inventory:ScanBank()
+end)
+
+Events:On("ACCOUNT_MONEY", function()
+    if bankOpen then
+        Inventory:ScanWarbandGold()
+        Changed()
+    end
 end)
 
 Events:On("BANKFRAME_CLOSED", function()

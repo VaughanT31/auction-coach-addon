@@ -13,37 +13,18 @@ local WIDTH, HEIGHT = 520, 340
 local frame
 
 local function Create()
-    frame = CreateFrame("Frame", "AuctionCoachShareWindow", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(WIDTH, HEIGHT)
+    frame = ns.Skin.Window("AuctionCoachShareWindow", WIDTH, HEIGHT, "DIALOG")
     frame:SetPoint("CENTER", 0, 40)
-    frame:SetFrameStrata("DIALOG")
-    frame:SetClampedToScreen(true)
-    frame:SetMovable(true)
-    frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-    frame:Hide()
-    table.insert(UISpecialFrames, frame:GetName())
-
-    frame.title = frame.TitleText or frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    if not frame.TitleText then frame.title:SetPoint("TOP", 0, -5) end
 
     frame.help = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    frame.help:SetPoint("TOPLEFT", 16, -34)
+    frame.help:SetPoint("TOPLEFT", 16, -42)
     frame.help:SetPoint("RIGHT", -16, 0)
     frame.help:SetJustifyH("LEFT")
 
     local box = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     box:SetPoint("TOPLEFT", frame.help, "BOTTOMLEFT", -4, -10)
     box:SetPoint("BOTTOMRIGHT", -14, 44)
-    box:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    box:SetBackdropColor(0, 0, 0, 0.6)
+    ns.Skin.Backdrop(box, { 0, 0, 0, 0.5 }, ns.Skin.BORDER)
 
     local scroll = CreateFrame("ScrollFrame", nil, box, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 8, -8)
@@ -68,14 +49,11 @@ local function Create()
     frame.status:SetPoint("RIGHT", -230, 0)
     frame.status:SetJustifyH("LEFT")
 
-    frame.close = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    frame.close:SetSize(100, 22)
+    frame.close = ns.Skin.Button(frame, CLOSE or "Close", 100, 22)
     frame.close:SetPoint("BOTTOMRIGHT", -14, 12)
-    frame.close:SetText(CLOSE or "Close")
     frame.close:SetScript("OnClick", function() frame:Hide() end)
 
-    frame.action = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    frame.action:SetSize(110, 22)
+    frame.action = ns.Skin.Button(frame, nil, 110, 22)
     frame.action:SetPoint("RIGHT", frame.close, "LEFT", -6, 0)
 end
 

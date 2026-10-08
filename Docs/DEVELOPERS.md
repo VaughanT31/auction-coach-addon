@@ -37,8 +37,8 @@ Docs/                  screenshots and this file
 Link both folders into your AddOns folder (run in an elevated Command Prompt, and adjust the paths):
 
 ```
-mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\AuctionCoach" "F:\AuctionCoach\auction-coach-addon\AuctionCoach"
-mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\AuctionCoach_Data" "F:\AuctionCoach\auction-coach-addon\AuctionCoach_Data"
+mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\AuctionCoach" "F:\WoW-Addon Development\AuctionCoach\auction-coach-addon\AuctionCoach"
+mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\AuctionCoach_Data" "F:\WoW-Addon Development\AuctionCoach\auction-coach-addon\AuctionCoach_Data"
 ```
 
 Then `/reload` in game after each change.
@@ -57,6 +57,7 @@ Conventions:
 |---|---|
 | `/ac` | Open or close the Auction Coach window |
 | `/ac plan` | Open Today's Plan |
+| `/ac auctions` | See which of your auctions are undercut |
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac status` | Show what the scanner is doing |
 | `/ac tooltip` | Turn the tooltip advice on or off |

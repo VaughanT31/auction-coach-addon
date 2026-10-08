@@ -8,6 +8,7 @@ local L, Util, Compat, Phrases = ns.L, ns.Util, ns.Compat, ns.Phrases
 
 local ROW_HEIGHT = 24
 local COIN_ICON = "Interface\\Icons\\INV_Misc_Coin_01"
+local MAIL_ICON = "Interface\\Icons\\INV_Letter_15"
 
 -- Column layout: x offset and width, shared by header and rows.
 local COLUMNS = {
@@ -23,6 +24,8 @@ local TAG_COLORS = {
     BUY = { 0.4, 0.7, 1 },
     VENDOR = { 0.75, 0.75, 0.75 },
     SKIP = { 0.55, 0.55, 0.55 },
+    MAIL = { 0.85, 0.75, 1 },
+    CANCEL = { 1, 0.5, 0.35 },
 }
 
 local function Column(parent, name, template, justify)
@@ -59,7 +62,7 @@ local function StartStep(step)
     if not step or not step.key then return false end
     if step.kind == "POST" then
         return ns.Sell:PutInSellBox(step.key)
-    elseif step.kind == "REPOST" or step.kind == "BUY" then
+    elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" then
         return Compat.ShowAtAuctionHouse(step.key, Util.NamedLink(step.key), step.price)
     end
     return false
@@ -70,6 +73,7 @@ local function CreateRow(parent, index)
     row:SetHeight(ROW_HEIGHT)
     row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
     row:SetPoint("RIGHT")
+    row.band = ns.Skin.RowBand(row)
 
     row.check = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     row.check:SetSize(22, 22)
@@ -118,6 +122,7 @@ local function SetHeading(row, text)
     row.gold:SetText("")
     row.heading:SetText(text)
     row.highlight:Hide()
+    row.band:Hide()
     row:EnableMouse(false)
     row:SetAlpha(1)
     row:Show()
@@ -127,6 +132,7 @@ local function SetStep(row, step)
     row.step = step
     row.heading:SetText("")
     row.highlight:Show()
+    row.band:Show()
     row:EnableMouse(true)
 
     local color = TAG_COLORS[step.kind]
@@ -137,6 +143,9 @@ local function SetStep(row, step)
     if step.kind == "VENDOR" then
         row.icon:SetTexture(COIN_ICON)
         row.name:SetText(L.PLAN_VENDOR_ITEMS:format(step.count))
+    elseif step.kind == "MAIL" then
+        row.icon:SetTexture(MAIL_ICON)
+        row.name:SetText(step.count > 0 and L.PLAN_MAIL_ITEMS:format(step.count) or L.PLAN_MAIL_NAME)
     else
         local itemID = Util.ItemIDFromKey(step.key) or Util.PET_CAGE_ITEM_ID
         row.icon:SetTexture(Compat.GetItemIconByID(itemID))
@@ -173,8 +182,7 @@ local function Build(panel)
     local previous
     for i = #ns.Plan.BUDGETS, 1, -1 do
         local minutes = ns.Plan.BUDGETS[i]
-        local button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-        button:SetSize(54, 20)
+        local button = ns.Skin.Button(panel, nil, 54, 20)
         if previous then
             button:SetPoint("RIGHT", previous, "LEFT", -2, 0)
         else
@@ -243,7 +251,7 @@ local function Refresh(panel, reason)
     local plan = ns.Plan:Build()
 
     local sub
-    if #plan.steps > 0 then
+    if plan.gold > 0 then
         panel.title:SetText(L.PLAN_TITLE:format(Util.FormatMoneyIcons(plan.gold)))
         sub = L.PLAN_SUB:format(Util.FormatDuration(plan.seconds), plan.budget)
     else

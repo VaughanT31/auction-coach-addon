@@ -2,9 +2,16 @@
 -- player has ("15 min"), with the gold each step should make.
 --
 -- Steps come from advice that already exists:
+--   MAIL    collect the mailbox (gold from sales, expired or cancelled
+--           items). Pinned first when there is anything waiting, and its
+--           time is taken off the budget before ranking; it makes no new
+--           gold itself.
 --   POST    items worth listing (Sell), from this character's bags, its
---           bank or the warband bank (from = "bank" | "warband")
---   REPOST  the player's own listings that someone has undercut (posts)
+--           bank, the warband bank or the mailbox (from = "bank" |
+--           "warband" | "mail"; expired auctions come back by mail)
+--   REPOST  the player's own listings that someone has undercut
+--           (Advice/Auctions.lua)
+--   CANCEL  own listings a vendor now pays more for: cancel, then vendor
 --   BUY     deals worth flipping (Deals); deals for items with the same
 --           name are one step
 --   VENDOR  everything in the bags a vendor pays more for, as one step
@@ -36,12 +43,15 @@ local COST = {
     BUY = 45,       -- look at the listings and buy
     BUY_MORE = 20,  -- each further item in a same-name group
     VENDOR = 30,    -- one trip to a vendor for everything
+    MAIL = 30,      -- take everything from the mailbox
+    CANCEL = 70,    -- cancel, collect it from the mail, sell to a vendor
 }
 
 -- Places a step may need to walk to first, and how long that takes.
 local SETUP = {
     ah = 60,        -- walking to the AH and opening it
     bank = 45,      -- walking to a banker
+    mailbox = 30,   -- walking to a mailbox (only for the pinned MAIL step)
 }
 
 -- Deals still need reselling, and the cheap listing may be gone.
@@ -122,7 +132,7 @@ local function PostCandidate(item)
         gold = unit * item.count * UNKNOWN_SPEED_FACTOR
     end
     gold = math.floor(gold * ns.Styles.Factor(s.contested))
-    local fromBank = item.from ~= nil
+    local fromBank = item.from == "bank" or item.from == "warband"
     return {
         id = "POST:" .. (item.from and (item.from .. ":") or "") .. item.key,
         kind = "POST", key = item.key, count = item.count, from = item.from,
@@ -162,44 +172,59 @@ local function BankItems()
     return items
 end
 
--- The player's newest post of each item on this realm group that has not
--- fully sold, keyed by item key.
-local function OpenPosts()
-    local open = {}
-    local posts = ns.db.posts[ns.realmGroup]
-    local now = Util.Now()
-    for _, post in ipairs(posts or {}) do
-        if now - post.p <= 48 * 3600 and (post.n or 0) < post.q then
-            local current = open[post.k]
-            if not current or post.p > current.p then open[post.k] = post end
-        end
+-- Items waiting in this character's mailbox that are worth posting, as
+-- Sell:List-style items with from = "mail". Only what the addon saw the
+-- last time the mailbox was open.
+local function MailItems()
+    local items = {}
+    local char = ns.db.characters[ns.charKey]
+    local mail = char and char.inventory and char.inventory.mail
+    for key, count in pairs(mail or {}) do
+        local link = ns.db.links[key]
+        local s = ns.Rules:SuggestPrice(key, link)
+        items[#items + 1] = {
+            key = key, link = link, count = count, suggestion = s, from = "mail",
+            value = s.price and Util.AfterCut(s.price) * count or 0,
+        }
     end
-    return open
+    return items
 end
 
--- Own listings with a lower price seen from someone else since posting.
-local function RepostCandidates(list)
+-- The pinned "collect your mailbox" step, or nil when nothing is waiting.
+local function MailStep()
     local char = ns.db.characters[ns.charKey]
-    local listed = char and char.inventory and char.inventory.auctions
-    if not listed then return end
-    local posts = OpenPosts()
-    for key, quantity in pairs(listed) do
-        local post = posts[key]
-        local price = post and ns.Prices:Get(key)
-        if price and price.min and price.minAt and price.minAt > post.p and price.min < post.v then
-            local s = ns.Rules:SuggestPrice(key, ns.db.links[key])
-            if s.action == "POST" and s.price then
-                local remaining = math.min(quantity, post.q - (post.n or 0))
-                local sold = ExpectedSold(remaining, s.salesPerDay)
-                local unit = Util.AfterCut(s.price)
-                local gold = sold and unit * sold or unit * remaining * UNKNOWN_SPEED_FACTOR
-                list[#list + 1] = {
-                    id = "REPOST:" .. key, kind = "REPOST", key = key, count = remaining,
-                    price = s.price, oldPrice = post.v, lowest = price.min,
-                    gold = math.floor(gold * ns.Styles.Factor(s.contested)), sold = sold,
-                    seconds = COST.REPOST, ah = true, suggestion = s,
-                }
-            end
+    if not char then return nil end
+    local items = 0
+    for _, count in pairs(char.inventory and char.inventory.mail or {}) do items = items + count end
+    local gold = char.mailGold or 0
+    if items == 0 and gold <= 0 then return nil end
+    return {
+        id = "MAIL", kind = "MAIL", count = items, mailGold = gold,
+        seconds = COST.MAIL + SETUP.mailbox,
+    }
+end
+
+-- Own listings someone has undercut (REPOST), or that a vendor now pays
+-- more for (CANCEL), from Advice/Auctions.lua.
+local function AuctionCandidates(list)
+    for _, entry in ipairs(ns.Auctions:List().items) do
+        local s = entry.suggestion
+        if entry.action == "REPOST" then
+            local sold = ExpectedSold(entry.quantity, s.salesPerDay)
+            local unit = Util.AfterCut(entry.newPrice)
+            local gold = sold and unit * sold or unit * entry.quantity * UNKNOWN_SPEED_FACTOR
+            list[#list + 1] = {
+                id = "REPOST:" .. entry.key .. "@" .. entry.unit, kind = "REPOST", key = entry.key,
+                count = entry.quantity, price = entry.newPrice, oldPrice = entry.unit, lowest = entry.lowest,
+                gold = math.floor(gold * ns.Styles.Factor(s.contested)), sold = sold,
+                seconds = COST.REPOST * entry.auctions, ah = true, suggestion = s,
+            }
+        elseif entry.action == "CANCEL" then
+            list[#list + 1] = {
+                id = "CANCEL:" .. entry.key .. "@" .. entry.unit, kind = "CANCEL", key = entry.key,
+                count = entry.quantity, oldPrice = entry.unit, vendor = s.vendor,
+                gold = entry.vendorGold, seconds = COST.CANCEL * entry.auctions, ah = true,
+            }
         end
     end
 end
@@ -295,18 +320,40 @@ function Plan:Build(minutes)
             candidates[#candidates + 1] = PostCandidate(item)
         end
     end
+    -- Mail items worth posting. The pinned MAIL step collects them, so
+    -- they need no extra walk.
+    local mailStep = MailStep()
+    if mailStep then
+        for _, item in ipairs(MailItems()) do
+            local s = item.suggestion
+            if s.salesPerDay then result.hasSpeed = true end
+            if s.action == "POST" and s.contested ~= "HEAVY" then
+                candidates[#candidates + 1] = PostCandidate(item)
+            end
+        end
+    end
     if vendorItems > 0 then
         candidates[#candidates + 1] = {
             id = "VENDOR", kind = "VENDOR", count = vendorItems, gold = vendorGold, seconds = COST.VENDOR,
         }
     end
-    RepostCandidates(candidates)
+    AuctionCandidates(candidates)
     BuyCandidates(candidates)
 
-    result.money = GetMoney()
+    -- Mailbox gold is spendable once collected, so deals can use it.
+    result.money = GetMoney() + (mailStep and mailStep.mailGold or 0)
+    local budget = minutes * 60 - (mailStep and mailStep.seconds or 0)
+    local setups = {}
+    for place, seconds in pairs(SETUP) do
+        if place ~= "mailbox" then setups[place] = seconds end
+    end
     result.steps, result.gold, result.seconds, result.unaffordable =
-        Plan.Select(candidates, minutes * 60, SETUP, result.money)
+        Plan.Select(candidates, math.max(0, budget), setups, result.money)
     result.left = #candidates - #result.steps - result.unaffordable
+    if mailStep then
+        table.insert(result.steps, 1, mailStep)
+        result.seconds = result.seconds + mailStep.seconds
+    end
 
     for _, o in ipairs(ns.Treasure:Compute().owners) do
         if o.owner ~= ns.charKey and o.owner ~= "warband" and o.value > 0 then

@@ -77,6 +77,7 @@ From then on the app starts with Windows and keeps prices fresh. WoW loads new p
 |---|---|
 | `/ac` | Open or close the Auction Coach window |
 | `/ac plan` | Open Today's Plan |
+| `/ac auctions` | See which of your auctions are undercut |
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac options` | Open the options, including your seller style |
 | `/ac help` | List every command |
@@ -98,11 +99,13 @@ The minimap button opens the window too. Right click it for the options.
 What is coming, roughly in order. Plans change with feedback, so there are no dates. Got an idea, or want something sooner? [Open an idea](https://github.com/VaughanT31/auction-coach-addon/issues/new/choose) or give an existing one a 👍.
 
 **Now**
-- **A new look**, matching the other CtrlShift_Zed addons.
-- **Gold overview** on the My Stuff tab: your total gold and each character's gold, beside your hidden treasure.
-- **Today's Plan, more steps:** collect your mailbox, repost expired items and cancel listings that will not sell.
-- **Cancel or repost:** at the Auction House, see which of your auctions have been undercut and what to do about each one.
 - Prices for more realms in both EU and US.
+
+**Just added (0.6.0)**
+- **A new look**, matching the other CtrlShift_Zed addons.
+- **Gold overview** on the My Stuff tab: your total gold, each character's gold and the warband bank's.
+- **Today's Plan, more steps:** collect your mailbox, repost expired items and cancel listings a vendor now pays more for.
+- **Auctions tab:** see which of your auctions have been undercut and what to do about each one.
 
 **Next**
 - **Gold tracking:** your gold and sales over time, per character and in total.

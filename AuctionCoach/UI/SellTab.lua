@@ -60,6 +60,7 @@ local function CreateRow(parent, index)
     row:SetHeight(ROW_HEIGHT)
     row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
     row:SetPoint("RIGHT")
+    ns.Skin.RowBand(row)
 
     row.icon = row:CreateTexture(nil, "ARTWORK")
     row.icon:SetSize(18, 18)
