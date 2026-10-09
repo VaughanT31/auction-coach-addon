@@ -150,6 +150,15 @@ function Rules:ForLink(link)
 
     local bindType = Compat.GetBindType(link)
     if bindType == BIND_ON_PICKUP or bindType == BIND_QUEST then
+        -- Soulbound gear can't be sold on the AH, but it can be disenchanted.
+        local destroy = bindType == BIND_ON_PICKUP and ns.Destroy:Value(key, link)
+        if destroy then
+            return { { text = Phrases.Destroy(destroy), color = "good" } }
+        end
+        local progress = bindType == BIND_ON_PICKUP and ns.Destroy:Progress(key, link)
+        if progress then
+            return { { text = Phrases.DestroyProgress(progress), color = "muted" } }
+        end
         return nil
     end
 
@@ -185,6 +194,19 @@ function Rules:ForLink(link)
         Add(Phrases.VendorBetter(vendor), "warn")
     elseif vendor > 0 and Compat.IsMerchantOpen() and self:IsWorthWarning(key, link) then
         Add(Phrases.DontVendor(vendor), "bad")
+    end
+
+    local destroy = ns.Destroy:Value(key, link)
+    if destroy then
+        Add(Phrases.Destroy(destroy, afterCut), destroy.value > afterCut and "good" or "muted")
+    else
+        local progress = ns.Destroy:Progress(key, link)
+        if progress then Add(Phrases.DestroyProgress(progress), "muted") end
+    end
+
+    local wanted = ns.Shopping:Get(key)
+    if wanted then
+        Add(Phrases.ShopTooltip(wanted.max, price), "info")
     end
 
     local score = ns.Competition:Score(key)

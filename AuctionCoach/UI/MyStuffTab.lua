@@ -179,6 +179,11 @@ local function BuildGold(panel)
     box.amounts:SetJustifyH("RIGHT")
     box.amounts:SetSpacing(4)
 
+    -- Gold over time (UI/GoldHistoryWindow.lua).
+    box.history = ns.Skin.Button(box, L.GOLD_HISTORY_BUTTON, GOLD_WIDTH - 16, 20)
+    box.history:SetPoint("BOTTOM", 0, 8)
+    box.history:SetScript("OnClick", function() ns.GoldHistoryWindow:Toggle() end)
+
     panel.gold = box
 end
 

@@ -287,3 +287,65 @@ function Phrases.PlanDetails(step, money)
     end
     return lines
 end
+
+-- ---------------------------------------------------------------------
+-- 0.7.0: destroy values, shopping list, cross-realm flips
+-- ---------------------------------------------------------------------
+
+-- Destroy:Value as a sentence. afterCut is what selling one makes, or nil
+-- for items that can't be sold (soulbound gear).
+function Phrases.Destroy(d, afterCut, money)
+    money = money or Util.FormatMoney
+    local text = L["DESTROY_" .. d.kind]:format(money(d.value), d.used)
+    if afterCut and afterCut > 0 then
+        if d.value > afterCut then
+            text = text .. " " .. L.DESTROY_BETTER
+        else
+            text = text .. " " .. L.DESTROY_WORSE
+        end
+    end
+    return text
+end
+
+-- Destroy:Progress as a sentence: still learning, no value yet.
+function Phrases.DestroyProgress(p)
+    return L["DESTROY_PROGRESS_" .. p.kind]:format(p.used, p.needed)
+end
+
+-- Tooltip line for an item on the shopping list.
+function Phrases.ShopTooltip(max, price, money)
+    money = money or Util.FormatMoney
+    local status = ns.Shopping.Evaluate({ max = max }, price, Util.Now())
+    if status == "BUY" then
+        return L.SHOP_TT_BUY:format(money(price.min), money(max))
+    end
+    return L.SHOP_TT:format(money(max))
+end
+
+-- A shopping list row's tooltip.
+function Phrases.Shop(item, money)
+    money = money or Util.FormatMoney
+    local lines = { L.SHOP_TT:format(money(item.max)) }
+    if item.status == "BUY" then
+        lines[#lines + 1] = L.SHOP_WHY_BUY:format(money(item.lowest), Util.FormatAge(item.lowestAt))
+    elseif item.status == "WAIT" then
+        lines[#lines + 1] = L.SHOP_WHY_WAIT:format(money(item.lowest))
+    elseif item.status == "OLD" then
+        lines[#lines + 1] = L.SHOP_WHY_OLD:format(money(item.lowest), Util.FormatAge(item.lowestAt))
+    else
+        lines[#lines + 1] = L.SHOP_WHY_UNKNOWN
+    end
+    return lines
+end
+
+-- Why a cross-realm flip is worth it, from Flips:List.
+function Phrases.Flip(f, money)
+    money = money or Util.FormatMoney
+    return {
+        L.FLIP_BUY:format(f.buyRealm, money(f.price), Util.FormatAge(f.priceAt)),
+        L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.profit)),
+        L.SELL_SPEED:format(f.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(f.salesPerDay + 0.5))),
+        L.FLIP_HOW,
+        L.DEAL_CHECK,
+    }
+end

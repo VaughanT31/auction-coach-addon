@@ -20,7 +20,9 @@ The **My Stuff** tab adds up everything sellable on all your characters and your
 
 <img src="Docs/MyStuffTab.png" alt="My Stuff: the AH value of everything on all your characters" width="600">
 
-Item tooltips say what an item is worth, how many you have across your characters, whether a vendor pays more and how tough the competition is.
+Item tooltips say what an item is worth, how many you have across your characters, whether a vendor pays more and how tough the competition is. Once you have disenchanted, milled or prospected a few of something, they also say what it is worth destroyed and whether that beats selling it.
+
+Beside the list, the **gold overview** shows each character's gold and the warband bank's. **History** below it shows how your gold changed today, this week and this month, with your AH sales and purchases day by day.
 
 ### What to sell, and for how much
 
@@ -35,6 +37,11 @@ When you put an item in the sell box, the **post helper** suggests a price and s
 ### Deals
 
 The **Deals** tab lists items listed well below their usual price that sell every day, with your profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
+
+Two more views on the same tab:
+
+- **Shopping:** your shopping list. Add an item with the most you'll pay, and Auction Coach tells you (in the list, the tooltip and chat) when one is listed at or below that.
+- **Other realms:** cross-realm flips. Items that are cheap on one of your realms and usually sell for more on another. Buy, move it through the warband bank, post.
 
 <img src="Docs/CurrentDeals.png" alt="Deals: items listed well below their usual price" width="600">
 
@@ -78,6 +85,9 @@ From then on the app starts with Windows and keeps prices fresh. WoW loads new p
 | `/ac` | Open or close the Auction Coach window |
 | `/ac plan` | Open Today's Plan |
 | `/ac auctions` | See which of your auctions are undercut |
+| `/ac gold` | Your gold and AH sales over time |
+| `/ac destroy` | What Auction Coach has learned about milling, prospecting and disenchanting |
+| `/ac shop add [item] 12.5` | Add an item to your shopping list (shift-click it in), with the most you'll pay |
 | `/ac scan` | Scan the Auction House now (it must be open) |
 | `/ac options` | Open the options, including your seller style |
 | `/ac help` | List every command |
@@ -101,19 +111,22 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.6.0)**
+**Just added (0.7.0)**
+- **Gold history:** your gold and AH sales over time, per day, from the History button on My Stuff.
+- **Shopping list:** items you want, with a note when one is listed at or below your price.
+- **Cross-realm flips:** items cheap on one of your realms that sell for more on another.
+- **Destroy values:** what an item is worth disenchanted, milled or prospected, learned from what you get.
+
+**Added in 0.6.0**
 - **A new look**, matching the other CtrlShift_Zed addons.
 - **Gold overview** on the My Stuff tab: your total gold, each character's gold and the warband bank's.
 - **Today's Plan, more steps:** collect your mailbox, repost expired items and cancel listings a vendor now pays more for.
 - **Auctions tab:** see which of your auctions have been undercut and what to do about each one.
 
 **Next**
-- **Gold tracking:** your gold and sales over time, per character and in total.
-- **Destroy values:** whether an item is worth more disenchanted, milled or prospected than sold as it is.
-- **Shopping list:** items you want, with a note when one is listed below your price.
+- **Shared destroy values:** what everyone's disenchanting, milling and prospecting yields, through the desktop app, so values show before you have destroyed anything yourself.
 - **Market calendar** on the website: weekly reset, Darkmoon Faire, holidays and patch days, and what they usually do to prices.
 - Auction Coach prices inside popular crafting addons.
-- **Cross-realm flips:** items that are cheap on one of your realms and sell for more on another. Buy, move them through the warband bank, post on the other realm.
 
 **Later**
 - **Optional accounts** on the website (no Blizzard login needed) so your saved reports follow you to any device, updated by the desktop app.

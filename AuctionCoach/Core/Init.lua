@@ -29,6 +29,8 @@ local DEFAULTS = {
         staleWarning = true,
         -- Today's Plan: minutes the player has (Advice/Plan.lua).
         planMinutes = 15,
+        -- Chat line when a shopping list item is listed at or below its max.
+        shoppingAlerts = true,
         minimapHide = false,
         minimapAngle = 200,
     },
@@ -44,6 +46,13 @@ local DEFAULTS = {
     -- One example link per item key, for names, icons and tooltips.
     links = {},
     treasureNoticeAt = 0,
+    -- Shopping list: [itemKey] = { max, added } (Data/Shopping.lua).
+    shopping = {},
+    -- Gold tracking per day, and AH mails already counted (Data/GoldHistory.lua).
+    goldDays = {},
+    invoicesSeen = {},
+    -- What destroying items has yielded (Data/Destroy.lua).
+    destroy = {},
 }
 
 -- MIGRATIONS[n] upgrades a database from version n - 1 to version n.
