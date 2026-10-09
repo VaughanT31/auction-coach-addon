@@ -361,7 +361,7 @@ L.GOLDHIST_COL_TOTAL = "Gold"
 L.GOLDHIST_COL_CHANGE = "Change"
 L.GOLDHIST_COL_SALES = "AH sales"
 L.GOLDHIST_COL_BOUGHT = "AH buys"
-L.GOLDHIST_NOTE = "Gold is every character's gold plus the warband bank, as last seen. AH sales and buys come from the Auction House's mails, counted the first time any character opens them; the number in brackets is how many items."
+L.GOLDHIST_NOTE = "Gold is every character's gold plus the warband bank, as last seen. AH sales and buys come from the Auction House's mails, counted on the day you collect them; the number in brackets is how many items."
 
 -- Shopping list (0.7.0)
 L.HELP_SHOP = "/ac shop add [item] 12.5 - add an item to your shopping list with the most you'll pay | /ac shop remove [item] | /ac shop alerts"

@@ -50,7 +50,6 @@ local DEFAULTS = {
     shopping = {},
     -- Gold tracking per day, and AH mails already counted (Data/GoldHistory.lua).
     goldDays = {},
-    invoicesSeen = {},
     -- What destroying items has yielded (Data/Destroy.lua).
     destroy = {},
 }

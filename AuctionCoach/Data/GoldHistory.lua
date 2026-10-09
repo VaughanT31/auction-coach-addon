@@ -4,16 +4,16 @@
 --   - Gold: the latest total of every character's gold plus the warband
 --     bank, taken whenever any of it changes. Characters keep the gold
 --     they had when last seen, so the total covers the whole account.
---   - AH sales and purchases, read from the Auction House's own mails
---     (GetInboxInvoiceInfo): what a sale paid after the cut and how many
---     items, and what each purchase cost. Mails are counted once, the
---     first time any character sees them in a mailbox, on the day they
---     were sent.
+--   - AH sales and purchases, from the Auction House's own mails
+--     (GetInboxInvoiceInfo), counted when the player collects them: the
+--     gold a sale paid, and what each purchase cost, with item counts.
+--     Collecting is the one moment each mail is seen exactly once: the
+--     inbox only lists 50 mails, and identical commodity sales can't be
+--     told apart by reading it.
 --
 --   db.goldDays[YYYY-MM-DD] = { total = copper, warband = copper,
 --       chars = { [charKey] = copper }, sales = copper, sold = items,
 --       bought = copper, boughtItems = items }
---   db.invoicesSeen[id] = unix time sent (pruned after KEEP_INVOICE_IDS)
 
 local _, ns = ...
 local Util = ns.Util
@@ -22,10 +22,6 @@ local GoldHistory = {}
 ns.GoldHistory = GoldHistory
 
 local KEEP_DAYS = 120
--- AH mails last 30 days, so an ID older than that can't be seen again.
-local KEEP_INVOICE_IDS = 31 * 86400
--- Days a mail with this many days left was sent: AH mails last 30 days.
-local MAIL_DAYS = 30
 
 function GoldHistory.DayKey(t)
     return date("%Y-%m-%d", t or Util.Now())
@@ -71,11 +67,8 @@ local function Prune()
     for key in pairs(Days()) do
         if key < cutoff then Days()[key] = nil end
     end
-    local seen = ns.db.invoicesSeen or {}
-    local now = Util.Now()
-    for id, sent in pairs(seen) do
-        if now - sent > KEEP_INVOICE_IDS then seen[id] = nil end
-    end
+    -- 0.7.0 test builds deduplicated mails by ID; no longer needed.
+    ns.db.invoicesSeen = nil
 end
 
 -- ---------------------------------------------------------------------
@@ -83,36 +76,23 @@ end
 -- ---------------------------------------------------------------------
 
 -- One AH mail as a sale or purchase, or nil. Pure, so it can be tested
--- outside the game: invoiceType, itemName, amount (copper the mail is
--- about), count, daysLeft, now.
--- The ID combines what the mail says with the minute it was sent (from
--- its days left), so the same mail always gets the same ID while two
--- sales of the same item at the same price normally don't.
-function GoldHistory.ReadInvoice(invoiceType, itemName, amount, count, daysLeft, now)
-    if invoiceType ~= "seller" and invoiceType ~= "buyer" then return nil end
-    if not itemName or not amount or amount <= 0 or not daysLeft then return nil end
-    local sent = now - math.max(0, MAIL_DAYS - daysLeft) * 86400
-    local minute = math.floor(sent / 60)
-    return {
-        kind = invoiceType == "seller" and "sale" or "buy",
-        id = table.concat({ invoiceType, itemName, amount, count or 1, minute }, "|"),
-        amount = amount, count = math.max(1, count or 1), sent = sent,
-    }
+-- outside the game. money is the gold attached to the mail: for a sale
+-- that is exactly what the player receives (price plus deposit back,
+-- minus the AH cut). A purchase mail is about what was paid (bid).
+function GoldHistory.ReadInvoice(invoiceType, itemName, bid, count, money)
+    if invoiceType == "seller" then
+        if not money or money <= 0 then return nil end
+        return { kind = "sale", amount = money, count = math.max(1, count or 1), item = itemName }
+    elseif invoiceType == "buyer" then
+        if not bid or bid <= 0 then return nil end
+        return { kind = "buy", amount = bid, count = math.max(1, count or 1), item = itemName }
+    end
+    return nil
 end
 
--- Adds a read invoice to its day, once. Returns true when it was new.
+-- Adds a collected sale or purchase to today.
 function GoldHistory:Record(invoice)
-    local seen = ns.db.invoicesSeen or {}
-    ns.db.invoicesSeen = seen
-    -- A minute either side: days left is rounded, so the computed minute
-    -- can move by one between mailbox visits.
-    local base, minute = invoice.id:match("^(.*)|(%-?%d+)$")
-    minute = tonumber(minute)
-    for m = minute - 1, minute + 1 do
-        if seen[base .. "|" .. m] then return false end
-    end
-    seen[invoice.id] = invoice.sent
-    local day = Day(GoldHistory.DayKey(invoice.sent))
+    local day = Day(GoldHistory.DayKey())
     if invoice.kind == "sale" then
         day.sales = day.sales + invoice.amount
         day.sold = day.sold + invoice.count
@@ -120,27 +100,32 @@ function GoldHistory:Record(invoice)
         day.bought = day.bought + invoice.amount
         day.boughtItems = day.boughtItems + invoice.count
     end
-    return true
+    ns.Events:Fire("AC_GOLD_HISTORY_CHANGED")
 end
 
-function GoldHistory:ScanInbox()
-    if not ns.db or not GetInboxInvoiceInfo then return end
-    local now = Util.Now()
-    local changed = false
+-- The inbox as it was before the player touched it: [index] = invoice.
+-- Rebuilt on every MAIL_INBOX_UPDATE, so a collect hook reads the mail as
+-- it was even if the game has already started removing it.
+local inbox = {}
+
+function GoldHistory:ReadInbox()
+    inbox = {}
+    if not GetInboxInvoiceInfo then return end
     for i = 1, GetInboxNumItems() do
-        local invoiceType, itemName, _, bid, _, deposit, consignment, _, _, _, count = GetInboxInvoiceInfo(i)
+        local invoiceType, itemName, _, bid, _, _, _, _, _, _, count = GetInboxInvoiceInfo(i)
         if invoiceType == "seller" or invoiceType == "buyer" then
-            local daysLeft = select(7, GetInboxHeaderInfo(i))
-            -- A sale pays the price plus the deposit back, minus the AH cut;
-            -- a purchase mail is about what was paid.
-            local amount = invoiceType == "seller"
-                and (bid or 0) + (deposit or 0) - (consignment or 0)
-                or (bid or 0)
-            local invoice = GoldHistory.ReadInvoice(invoiceType, itemName, amount, count, daysLeft, now)
-            if invoice and self:Record(invoice) then changed = true end
+            local money = select(5, GetInboxHeaderInfo(i))
+            inbox[i] = GoldHistory.ReadInvoice(invoiceType, itemName, bid, count, money)
         end
     end
-    if changed then ns.Events:Fire("AC_GOLD_HISTORY_CHANGED") end
+end
+
+-- A mail at index is being collected: count it, once.
+function GoldHistory:Collect(index)
+    local invoice = ns.db and inbox[index]
+    if not invoice or invoice.counted then return end
+    invoice.counted = true
+    self:Record(invoice)
 end
 
 -- ---------------------------------------------------------------------
@@ -205,5 +190,15 @@ ns.Events:On("AC_INVENTORY_CHANGED", function()
 end)
 
 ns.Events:On("MAIL_INBOX_UPDATE", function()
-    Util.Debounce("invoiceScan", 0.5, function() GoldHistory:ScanInbox() end)
+    GoldHistory:ReadInbox()
 end)
+
+-- Every way to collect a mail ends in one of these, whether from the
+-- mail frame, its Open All button or another mail addon. A sale's gold
+-- comes with TakeInboxMoney or AutoLootMailItem; a purchase's items with
+-- TakeInboxItem or AutoLootMailItem.
+for _, name in ipairs({ "TakeInboxMoney", "AutoLootMailItem", "TakeInboxItem" }) do
+    if _G[name] then
+        hooksecurefunc(name, function(index) GoldHistory:Collect(index) end)
+    end
+end

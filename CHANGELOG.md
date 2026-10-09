@@ -2,7 +2,7 @@
 
 ## 0.7.0
 
-- **Gold history:** a History button under the gold overview on My Stuff (or `/ac gold`) shows how your gold changed today, this week and this month, with a day-by-day list. AH sales and purchases come from the Auction House's own mails, so they are exact, with how many items each day.
+- **Gold history:** a History button under the gold overview on My Stuff (or `/ac gold`) shows how your gold changed today, this week and this month, with a day-by-day list. AH sales and purchases come from the Auction House's own mails, counted on the day you collect them, with how many items.
 - **Shopping list:** add items you want with the most you'll pay (Deals tab > Shopping, or `/ac shop add [item] 12.5`). When one is listed at or below that, the list marks it "Buy now", its tooltip says so and a chat line tells you. Right-click a row to remove it. `/ac shop alerts` turns the chat line off.
 - **Cross-realm flips:** Deals tab > Other realms lists items that are cheap on one of your realms and usually sell for more on another, with the profit after the AH cut. Buy, move it through the warband bank, post. Commodities cost the same on every realm, so these are mostly gear, pets and other realm-only items.
 - **Destroy values:** tooltips say what an item is worth disenchanted, milled or prospected, and whether that beats selling it. There is no game data for what items destroy into, so Auction Coach learns it from what you get each time you destroy something. Until then the tooltip shows how far along it is, and `/ac destroy` lists everything learned. Herbs and ore milled or prospected straight from your bank or warband bank count too. Soulbound gear gets the disenchant line too.

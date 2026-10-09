@@ -81,7 +81,7 @@ local function CreateRow(parent, index)
 end
 
 local function Create()
-    frame = ns.Skin.Window("AuctionCoachGoldHistory", WIDTH, HEIGHT)
+    frame = ns.Skin.Window("AuctionCoachGoldHistory", WIDTH, HEIGHT, "DIALOG")
     frame:SetPoint("CENTER", 60, 0)
     frame.title:SetText(L.GOLDHIST_TITLE)
 
