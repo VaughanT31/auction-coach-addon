@@ -66,6 +66,29 @@ local function CreateTile(parent, index, label)
     return tile
 end
 
+-- Mouseover on a day: each character's gold and the warband bank's that day.
+local function ShowDayTooltip(row)
+    local day = row.day
+    if not day then return end
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    GameTooltip:SetText(DayLabel(day.key), 1, 0.82, 0)
+    local saved = day.day
+    if not saved or not saved.chars or not next(saved.chars) then
+        GameTooltip:AddLine(L.GOLDHIST_NO_SNAPSHOT, 0.8, 0.8, 0.8, true)
+    else
+        local chars = {}
+        for charKey, gold in pairs(saved.chars) do chars[#chars + 1] = { charKey, gold } end
+        table.sort(chars, function(a, b) return a[2] > b[2] end)
+        for _, c in ipairs(chars) do
+            GameTooltip:AddDoubleLine(c[1], Util.FormatMoneyIcons(c[2]), 1, 1, 1, 1, 1, 1)
+        end
+        if (saved.warband or 0) > 0 then
+            GameTooltip:AddDoubleLine(L.GOLDHIST_WARBAND, Util.FormatMoneyIcons(saved.warband), 0.6, 0.8, 1, 1, 1, 1)
+        end
+    end
+    GameTooltip:Show()
+end
+
 local function CreateRow(parent, index)
     local row = CreateFrame("Frame", nil, parent)
     row:SetHeight(ROW_HEIGHT)
@@ -77,6 +100,9 @@ local function CreateRow(parent, index)
     row.change = Column(row, "change", "GameFontHighlightSmall")
     row.sales = Column(row, "sales", "GameFontHighlightSmall")
     row.bought = Column(row, "bought", "GameFontHighlightSmall")
+    row:EnableMouse(true)
+    row:SetScript("OnEnter", ShowDayTooltip)
+    row:SetScript("OnLeave", GameTooltip_Hide)
     return row
 end
 
@@ -102,7 +128,7 @@ local function Create()
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
-    scroll:SetPoint("BOTTOMRIGHT", -40, 40)
+    scroll:SetPoint("BOTTOMRIGHT", -40, 62)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(1, 1)
     scroll:SetScrollChild(content)
@@ -115,6 +141,13 @@ local function Create()
     frame.note:SetPoint("RIGHT", -16, 0)
     frame.note:SetJustifyH("LEFT")
     frame.note:SetText(L.GOLDHIST_NOTE)
+
+    -- AH gold still sitting in mailboxes isn't counted until it's collected.
+    frame.mailNote = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.mailNote:SetPoint("BOTTOMLEFT", 16, 44)
+    frame.mailNote:SetPoint("RIGHT", -16, 0)
+    frame.mailNote:SetJustifyH("LEFT")
+    frame.mailNote:SetTextColor(1, 0.75, 0.3)
 
     frame:HookScript("OnShow", function() GoldHistoryWindow:Refresh() end)
 end
@@ -133,6 +166,7 @@ function GoldHistoryWindow:Refresh()
     for i, day in ipairs(recent) do
         local row = frame.rows[i] or CreateRow(frame.content, i)
         frame.rows[i] = row
+        row.day = day
         row.date:SetText(DayLabel(day.key))
         row.total:SetText(day.total and Util.FormatMoneyIcons(day.total) or "|cff9d9d9d-|r")
         row.change:SetText(Signed(day.change))
@@ -141,6 +175,15 @@ function GoldHistoryWindow:Refresh()
         row:Show()
     end
     frame.content:SetHeight(#recent * ROW_HEIGHT)
+
+    local waiting, chars = 0, 0
+    for _, char in pairs(ns.db.characters) do
+        if (char.mailGold or 0) > 0 then
+            waiting = waiting + char.mailGold
+            chars = chars + 1
+        end
+    end
+    frame.mailNote:SetText(waiting > 0 and L.GOLDHIST_MAIL_WAITING:format(Util.FormatMoneyIcons(waiting), chars) or "")
 end
 
 function GoldHistoryWindow:Toggle()

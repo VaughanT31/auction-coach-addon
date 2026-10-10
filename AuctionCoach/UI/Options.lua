@@ -100,6 +100,9 @@ local function Build()
         if ns.MinimapButton then ns.MinimapButton:Update() end
     end, true)
 
+    Checkbox("destroyTooltip", L.OPT_DESTROY_TOOLTIP, L.OPT_DESTROY_TOOLTIP_TIP, true)
+    Checkbox("shoppingAlerts", L.OPT_SHOP_ALERTS, L.OPT_SHOP_ALERTS_TIP, true)
+
     Header(L.PLAN_TITLE_EMPTY)
     Slider("planMinutes", L.OPT_PLAN, L.OPT_PLAN_TIP, 15, 5, 60, 5,
         function(minutes) return minutes or 15 end,

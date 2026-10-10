@@ -18,6 +18,9 @@
 --       used = items destroyed, out = { [itemKey] = quantity received } }
 --
 -- A value is only given once enough has been destroyed to average over.
+-- Until then, the desktop app's Data.lua may carry the average from players
+-- who share (destroy[sourceKey] = { k, n = players, u = used, o = { [key] =
+-- quantity per item } }), which is used instead.
 
 local _, ns = ...
 local Util, Compat = ns.Util, ns.Compat
@@ -74,30 +77,49 @@ function Destroy:Learn(sourceKey, kind, used, out)
     ns.Events:Fire("AC_DESTROY_LEARNED", sourceKey)
 end
 
+-- The shared average for a source from Data.lua, or nil.
+function Destroy.Shared(sourceKey)
+    local data = ns.Prices and ns.Prices.ActiveData and ns.Prices.ActiveData()
+    local entry = sourceKey and data and type(data.destroy) == "table" and data.destroy[sourceKey]
+    if type(entry) ~= "table" or not MIN_USED[entry.k] or type(entry.o) ~= "table" then return nil end
+    return entry
+end
+
 -- What one source item is worth destroyed, after the AH cut on the
--- materials, or nil when not enough is known yet.
--- Returns { value = copper per item, kind, used, unpriced = outputs with no price }.
+-- materials, or nil when not enough is known yet. The player's own yields
+-- once there are enough of them, otherwise the shared average.
+-- Returns { value = copper per item, kind, used, unpriced = outputs with no
+-- price, players = how many players for a shared value (nil for own) }.
 -- price(key) returns a market value per item or nil (defaults to Prices).
 function Destroy:Value(key, link, price)
     if not ns.db then return nil end
     local sourceKey = Destroy.SourceKey(key, link)
-    local entry = sourceKey and ns.db.destroy[sourceKey]
-    if not entry or entry.used < (MIN_USED[entry.kind] or 5) then return nil end
+    if not sourceKey then return nil end
+    local entry = ns.db.destroy[sourceKey]
+    local perItem, kind, used, players
+    if entry and entry.used >= (MIN_USED[entry.kind] or 5) then
+        perItem, kind, used = {}, entry.kind, entry.used
+        for outKey, qty in pairs(entry.out) do perItem[outKey] = qty / entry.used end
+    else
+        local shared = Destroy.Shared(sourceKey)
+        if not shared then return nil end
+        perItem, kind, used, players = shared.o, shared.k, shared.u, shared.n
+    end
     price = price or function(k)
         local p = ns.Prices:Get(k)
         return p and p.value
     end
     local value, unpriced = 0, 0
-    for outKey, qty in pairs(entry.out) do
+    for outKey, qty in pairs(perItem) do
         local each = price(outKey)
         if each then
-            value = value + Util.AfterCut(each) * qty / entry.used
+            value = value + Util.AfterCut(each) * qty
         else
             unpriced = unpriced + 1
         end
     end
     if value <= 0 then return nil end
-    return { value = math.floor(value), kind = entry.kind, used = entry.used, unpriced = unpriced }
+    return { value = math.floor(value), kind = kind, used = used, unpriced = unpriced, players = players }
 end
 
 -- How far along learning an item is, for items without a value yet:
@@ -256,6 +278,10 @@ end
 local function PrintList()
     local L = ns.L
     Util.Print(watchingSalvage and L.DESTROY_LIST_WATCHING or L.DESTROY_LIST_NOT_WATCHING)
+    local data = ns.Prices.ActiveData()
+    local shared = 0
+    for _ in pairs(data and type(data.destroy) == "table" and data.destroy or {}) do shared = shared + 1 end
+    if shared > 0 then Util.Print(L.DESTROY_LIST_SHARED:format(shared)) end
     local keys = {}
     for sourceKey in pairs(ns.db.destroy) do keys[#keys + 1] = sourceKey end
     table.sort(keys)

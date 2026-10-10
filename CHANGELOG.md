@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0
+
+- **Shared destroy values:** players who share through the desktop app (0.6.0 or later) now also share what their disenchanting, milling and prospecting gives. Tooltips and Today's Plan use the average from everyone until you have destroyed enough of something yourself, so values show from the start: "Mills into about 38g of materials each (from 4 players' milling)". Your own results take over once you have enough of them. `/ac destroy` shows how many shared values you have.
+- **Today's Plan, shopping list:** items on your shopping list that are listed at or below your price now show near the top of the plan as a SHOP step, before the money-making steps. Click it at the Auction House to search for the item. Only items you have the gold for are added.
+- **Today's Plan, destroy instead of selling:** when disenchanting, milling or prospecting something in your bags is worth clearly more than selling it, the plan says so in one step per kind ("Mill 40 herbs, about 120g more than selling"), and those items leave the post and vendor steps. Only for what this character can do (Disenchant, Inscription, Jewelcrafting), and only once Auction Coach has learned the item's yield.
+- **Settings:** switches for the destroy line on tooltips and for the shopping list chat alerts, in the Auction Coach options.
+- **Gold history:** hover a day to see each character's gold and the warband bank's that day. A note shows when gold is still waiting in a mailbox, since sales are counted when you collect them.
+
 ## 0.7.0
 
 - **Gold history:** a History button under the gold overview on My Stuff (or `/ac gold`) shows how your gold changed today, this week and this month, with a day-by-day list. AH sales and purchases come from the Auction House's own mails, counted on the day you collect them, with how many items.

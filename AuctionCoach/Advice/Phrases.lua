@@ -224,6 +224,10 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_BUY:format(money(step.price), money(step.resell))
     elseif kind == "VENDOR" then
         return L.PLAN_SHORT_VENDOR
+    elseif kind == "SHOP" then
+        return L.PLAN_SHORT_SHOP:format(money(step.price), money(step.max))
+    elseif kind == "DESTROY" then
+        return L.PLAN_SHORT_DESTROY:format(money(step.gain))
     elseif kind == "SKIP" then
         local s = step.suggestion
         if s.action == "HOLD" then
@@ -279,6 +283,21 @@ function Phrases.PlanDetails(step, money)
             ns.Styles:WindowHours())
     elseif kind == "VENDOR" then
         lines[#lines + 1] = L.PLAN_WHY_VENDOR:format(step.count, money(step.gold))
+    elseif kind == "SHOP" then
+        lines[#lines + 1] = L.PLAN_WHY_SHOP:format(money(step.price), money(step.max))
+    elseif kind == "DESTROY" then
+        lines[#lines + 1] = L["PLAN_WHY_DESTROY_" .. step.destroyKind]:format(money(step.gain), money(step.value))
+        local names = {}
+        for i, item in ipairs(step.items) do
+            if i > 6 then
+                names[#names + 1] = L.PLAN_DESTROY_MORE:format(#step.items - 6)
+                break
+            end
+            local link = Util.NamedLink(item.key)
+            names[#names + 1] = (link or item.key) .. (item.count > 1 and (" x" .. item.count) or "")
+        end
+        lines[#lines + 1] = table.concat(names, ", ")
+        lines[#lines + 1] = L.PLAN_WHY_DESTROY_COUNTED:format(money(step.gold))
     elseif kind == "SKIP" then
         for _, line in ipairs(Phrases.Sell(step.suggestion, money)) do lines[#lines + 1] = line end
     end
@@ -296,7 +315,12 @@ end
 -- for items that can't be sold (soulbound gear).
 function Phrases.Destroy(d, afterCut, money)
     money = money or Util.FormatMoney
-    local text = L["DESTROY_" .. d.kind]:format(money(d.value), d.used)
+    local text
+    if d.players then
+        text = L["DESTROY_SHARED_" .. d.kind]:format(money(d.value), d.players)
+    else
+        text = L["DESTROY_" .. d.kind]:format(money(d.value), d.used)
+    end
     if afterCut and afterCut > 0 then
         if d.value > afterCut then
             text = text .. " " .. L.DESTROY_BETTER

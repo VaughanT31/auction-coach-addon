@@ -31,6 +31,8 @@ local DEFAULTS = {
         planMinutes = 15,
         -- Chat line when a shopping list item is listed at or below its max.
         shoppingAlerts = true,
+        -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).
+        destroyTooltip = true,
         minimapHide = false,
         minimapAngle = 200,
     },

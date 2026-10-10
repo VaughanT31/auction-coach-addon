@@ -15,6 +15,12 @@
 --   BUY     deals worth flipping (Deals); deals for items with the same
 --           name are one step
 --   VENDOR  everything in the bags a vendor pays more for, as one step
+--   SHOP    shopping list items listed at or below the player's max.
+--           Pinned after MAIL (the player asked for them), not ranked; their
+--           time and price come off the budget and the gold first.
+--   DESTROY items in the bags worth more disenchanted, milled or prospected
+--           than sold (Data/Destroy.lua), one step per kind, only for what
+--           this character can do. Those items leave the POST and VENDOR steps.
 --   SKIP    items better left alone today (prices crashed, or undercut far
 --           faster than the player checks back). Shown, never counted.
 --
@@ -45,6 +51,9 @@ local COST = {
     VENDOR = 30,    -- one trip to a vendor for everything
     MAIL = 30,      -- take everything from the mailbox
     CANCEL = 70,    -- cancel, collect it from the mail, sell to a vendor
+    SHOP = 40,      -- find it and buy it
+    DESTROY = 15,   -- open the profession or target the item
+    DESTROY_CAST = 3, -- per disenchant, or per mill/prospect of five
 }
 
 -- Places a step may need to walk to first, and how long that takes.
@@ -60,6 +69,11 @@ local BUY_FACTOR = 0.7
 local UNKNOWN_SPEED_FACTOR = 0.5
 local MAX_BUYS = 10
 local MAX_SKIPS = 3
+-- Destroying is suggested only when the materials beat selling by this
+-- much, and the materials still need posting, so count part of their value.
+local DESTROY_MARGIN = 1.1
+local DESTROY_FACTOR = 0.8
+local DESTROY_KINDS = { DE = true, MILL = true, PROSPECT = true }
 
 -- ---------------------------------------------------------------------
 -- Ranking (pure: no WoW API)
@@ -271,6 +285,45 @@ local function BuyCandidates(list)
     end
 end
 
+-- An item in the bags worth more destroyed than sold, or nil: returns the
+-- Destroy:Value result and what selling one makes (AH after cut, or vendor).
+local function DestroyInstead(item)
+    local d = ns.Destroy and ns.Destroy:Value(item.key, item.link)
+    if not d or not DESTROY_KINDS[d.kind] or not ns.Compat.CanDestroy(d.kind) then return nil end
+    local s = item.suggestion
+    local sellEach = (s.action == "POST" or s.action == "HOLD") and s.price and Util.AfterCut(s.price) or (s.vendor or 0)
+    if d.value <= sellEach * DESTROY_MARGIN then return nil end
+    return d, sellEach
+end
+
+-- Destroy candidates: one step per kind from the grouped items.
+local function DestroyCandidates(groups, list)
+    for kind, g in pairs(groups) do
+        local casts = kind == "DE" and g.units or math.ceil(g.units / 5)
+        list[#list + 1] = {
+            id = "DESTROY:" .. kind, kind = "DESTROY", destroyKind = kind, key = g.items[1].key,
+            count = #g.items, units = g.units, items = g.items, value = g.value, gain = g.gain,
+            gold = math.floor(g.value * DESTROY_FACTOR), seconds = COST.DESTROY + COST.DESTROY_CAST * casts,
+        }
+    end
+end
+
+-- Shopping list items to buy now, pinned: { step, ... } that fit the gold.
+local function ShopSteps(money)
+    local steps, spend = {}, 0
+    if not ns.Shopping then return steps, 0 end
+    for _, item in ipairs(ns.Shopping:Items()) do
+        if item.status == "BUY" and (not money or spend + item.lowest <= money) then
+            spend = spend + item.lowest
+            steps[#steps + 1] = {
+                id = "SHOP:" .. item.key, kind = "SHOP", key = item.key, price = item.lowest, max = item.max,
+                spend = item.lowest, seconds = COST.SHOP, ah = true,
+            }
+        end
+    end
+    return steps, spend
+end
+
 -- Returns {
 --   steps        picked steps, best gold per minute first
 --   gold         expected gold from all steps
@@ -295,10 +348,22 @@ function Plan:Build(minutes)
 
     local candidates = {}
     local vendorGold, vendorItems = 0, 0
+    local destroyGroups = {}
     for _, item in ipairs(ns.Sell:List().items) do
         local s = item.suggestion
         if s.salesPerDay then result.hasSpeed = true end
-        if (s.action == "POST" and s.contested == "HEAVY") or s.action == "HOLD" then
+        local d, sellEach = DestroyInstead(item)
+        if d then
+            local g = destroyGroups[d.kind]
+            if not g then
+                g = { items = {}, units = 0, value = 0, gain = 0 }
+                destroyGroups[d.kind] = g
+            end
+            g.items[#g.items + 1] = { key = item.key, count = item.count }
+            g.units = g.units + item.count
+            g.value = g.value + d.value * item.count
+            g.gain = g.gain + (d.value - sellEach) * item.count
+        elseif (s.action == "POST" and s.contested == "HEAVY") or s.action == "HOLD" then
             if #result.skips < MAX_SKIPS then
                 result.skips[#result.skips + 1] = {
                     id = "SKIP:" .. item.key, kind = "SKIP", key = item.key, count = item.count, suggestion = s,
@@ -339,6 +404,7 @@ function Plan:Build(minutes)
     end
     AuctionCandidates(candidates)
     BuyCandidates(candidates)
+    DestroyCandidates(destroyGroups, candidates)
 
     -- Mailbox gold is spendable once collected, so deals can use it.
     result.money = GetMoney() + (mailStep and mailStep.mailGold or 0)
@@ -347,9 +413,20 @@ function Plan:Build(minutes)
     for place, seconds in pairs(SETUP) do
         if place ~= "mailbox" then setups[place] = seconds end
     end
+    -- Shopping list buys come first after the mailbox: their time, the walk
+    -- to the AH and their price are taken before anything is ranked.
+    local shopSteps, shopSpend = ShopSteps(result.money)
+    local pinnedSeconds = 0
+    if #shopSteps > 0 then
+        pinnedSeconds = SETUP.ah
+        for _, step in ipairs(shopSteps) do pinnedSeconds = pinnedSeconds + step.seconds end
+        setups.ah = nil
+    end
     result.steps, result.gold, result.seconds, result.unaffordable =
-        Plan.Select(candidates, math.max(0, budget), setups, result.money)
+        Plan.Select(candidates, math.max(0, budget - pinnedSeconds), setups, result.money - shopSpend)
     result.left = #candidates - #result.steps - result.unaffordable
+    for i = #shopSteps, 1, -1 do table.insert(result.steps, 1, shopSteps[i]) end
+    result.seconds = result.seconds + pinnedSeconds
     if mailStep then
         table.insert(result.steps, 1, mailStep)
         result.seconds = result.seconds + mailStep.seconds

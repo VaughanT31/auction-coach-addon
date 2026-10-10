@@ -111,7 +111,12 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.7.0)**
+**Just added (0.8.0)**
+- **Shared destroy values:** what everyone's disenchanting, milling and prospecting yields, through the desktop app, so values show before you have destroyed anything yourself.
+- **Today's Plan** now lists your shopping list buys first, and tells you when disenchanting, milling or prospecting beats selling.
+- Settings for the destroy tooltip line and shopping alerts; per-character gold in the gold history.
+
+**Added in 0.7.0**
 - **Gold history:** your gold and AH sales over time, per day, from the History button on My Stuff.
 - **Shopping list:** items you want, with a note when one is listed at or below your price.
 - **Cross-realm flips:** items cheap on one of your realms that sell for more on another.
@@ -124,7 +129,6 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - **Auctions tab:** see which of your auctions have been undercut and what to do about each one.
 
 **Next**
-- **Shared destroy values:** what everyone's disenchanting, milling and prospecting yields, through the desktop app, so values show before you have destroyed anything yourself.
 - **Market calendar** on the website: weekly reset, Darkmoon Faire, holidays and patch days, and what they usually do to prices.
 - Auction Coach prices inside popular crafting addons.
 

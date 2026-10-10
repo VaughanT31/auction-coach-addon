@@ -107,6 +107,24 @@ end
 -- Auction House
 -- ---------------------------------------------------------------------
 
+-- Whether this character can destroy items of a kind: Disenchant is a
+-- spell enchanters know; milling and prospecting come with Inscription
+-- and Jewelcrafting.
+local DISENCHANT_SPELL = 13262
+local SKILL_LINES = { MILL = 773, PROSPECT = 755 }
+function Compat.CanDestroy(kind)
+    if kind == "DE" then
+        if C_SpellBook and C_SpellBook.IsSpellKnown then return C_SpellBook.IsSpellKnown(DISENCHANT_SPELL) end
+        return IsPlayerSpell and IsPlayerSpell(DISENCHANT_SPELL) or false
+    end
+    local skillLine = SKILL_LINES[kind]
+    if not skillLine or not GetProfessions then return false end
+    for _, index in ipairs({ GetProfessions() }) do
+        if index and select(7, GetProfessionInfo(index)) == skillLine then return true end
+    end
+    return false
+end
+
 function Compat.IsAuctionHouseOpen()
     return AuctionHouseFrame ~= nil and AuctionHouseFrame:IsShown()
 end

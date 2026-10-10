@@ -26,6 +26,8 @@ local TAG_COLORS = {
     SKIP = { 0.55, 0.55, 0.55 },
     MAIL = { 0.85, 0.75, 1 },
     CANCEL = { 1, 0.5, 0.35 },
+    SHOP = { 0.4, 0.85, 1 },
+    DESTROY = { 0.75, 0.55, 1 },
 }
 
 local function Column(parent, name, template, justify)
@@ -62,7 +64,7 @@ local function StartStep(step)
     if not step or not step.key then return false end
     if step.kind == "POST" then
         return ns.Sell:PutInSellBox(step.key)
-    elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" then
+    elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" or step.kind == "SHOP" then
         return Compat.ShowAtAuctionHouse(step.key, Util.NamedLink(step.key), step.price)
     end
     return false
@@ -146,6 +148,9 @@ local function SetStep(row, step)
     elseif step.kind == "MAIL" then
         row.icon:SetTexture(MAIL_ICON)
         row.name:SetText(step.count > 0 and L.PLAN_MAIL_ITEMS:format(step.count) or L.PLAN_MAIL_NAME)
+    elseif step.kind == "DESTROY" then
+        row.icon:SetTexture(Compat.GetItemIconByID(Util.ItemIDFromKey(step.key) or 0))
+        row.name:SetText(L["PLAN_DESTROY_ITEMS_" .. step.destroyKind]:format(step.units))
     else
         local itemID = Util.ItemIDFromKey(step.key) or Util.PET_CAGE_ITEM_ID
         row.icon:SetTexture(Compat.GetItemIconByID(itemID))
