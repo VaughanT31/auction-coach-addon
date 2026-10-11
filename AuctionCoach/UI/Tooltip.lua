@@ -10,7 +10,8 @@ local function OnTooltipSetItem(tooltip)
     if not ns.db or not ns.db.settings.tooltip or not ns.realmGroup then return end
 
     local _, link = tooltip:GetItem()
-    if not link then return end
+    -- Links can be secret values in restricted content; never touch those.
+    if not link or (issecretvalue and issecretvalue(link)) then return end
 
     local lines = Rules:ForLink(link)
     if not lines or #lines == 0 then return end

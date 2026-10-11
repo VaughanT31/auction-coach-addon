@@ -129,13 +129,19 @@ end
 -- fallback in case a client sends it as plain system text.
 local SOLD = Enum.AuctionHouseNotification and Enum.AuctionHouseNotification.AuctionSold
 
+-- In restricted content (instances, combat) the game can hand addons secret
+-- strings that error when read; those are skipped.
+local function Readable(value)
+    return type(value) == "string" and not (issecretvalue and issecretvalue(value))
+end
+
 ns.Events:On("AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION", function(_, notification, text, auctionID)
-    if not ns.db or notification ~= SOLD or type(text) ~= "string" then return end
+    if not ns.db or notification ~= SOLD or not Readable(text) then return end
     Sales:OnSold(text, Util.Now(), auctionID)
 end)
 
 ns.Events:On("CHAT_MSG_SYSTEM", function(_, message)
-    if not soldPattern or not ns.db or type(message) ~= "string" then return end
+    if not soldPattern or not ns.db or not Readable(message) then return end
     local name = message:match(soldPattern)
     if name then Sales:OnSold(name, Util.Now()) end
 end)

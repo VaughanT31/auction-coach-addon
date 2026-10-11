@@ -7,6 +7,7 @@
 - **Today's Plan, destroy instead of selling:** when disenchanting, milling or prospecting something in your bags is worth clearly more than selling it, the plan says so in one step per kind ("Mill 40 herbs, about 120g more than selling"), and those items leave the post and vendor steps. Only for what this character can do (Disenchant, Inscription, Jewelcrafting), and only once Auction Coach has learned the item's yield.
 - **Settings:** switches for the destroy line on tooltips and for the shopping list chat alerts, in the Auction Coach options.
 - **Gold history:** hover a day to see each character's gold and the warband bank's that day. A note shows when gold is still waiting in a mailbox, since sales are counted when you collect them.
+- **Fixed:** a Lua error that repeated in dungeons and raids when a system message or item tooltip was hidden from addons (Midnight's secret values).
 
 ## 0.7.0
 
