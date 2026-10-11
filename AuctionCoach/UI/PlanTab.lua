@@ -273,6 +273,7 @@ local function Refresh(panel, reason)
     end
     if #plan.elsewhere > 0 then notes[#notes + 1] = ElsewhereText(plan.elsewhere) end
     if #plan.steps > 0 and not plan.hasSpeed then notes[#notes + 1] = L.PLAN_NO_SPEED end
+    for _, note in ipairs(ns.Calendar:PlanNotes()) do notes[#notes + 1] = note end
     panel.footer:SetText(table.concat(notes, "\n"))
 
     local n = 0

@@ -18,6 +18,9 @@
 --   commodities = {                    -- region-wide items (reagents, consumables...)
 --     ["190396"] = { m = 0, n = 0, h = 0, l = 0, s = 0, t = 0, u = 0, un = 0, w = 0, wn = 0 },
 --   },
+--   calendar = {                       -- what the weekday and the Darkmoon Faire do to prices
+--     consumables = { p = { 1.2, 0.4, -0.8, 0, -0.5, 0.3, -0.6 }, s = { 15, 14, 13, 14, 14, 15, 15 }, f = 3.1, fw = 2 },
+--   },
 --   destroy = {                        -- what items destroy into, from players who share
 --     ["236761"] = { k = "MILL", n = 4, u = 380, o = { ["245807"] = 0.45 } },
 --     ["dx:3:11"] = { k = "DE", n = 2, u = 40, o = { ["243599"] = 1.3 } },
@@ -41,6 +44,12 @@
 --   n  how many players' destroying it is averaged from (at least 2)
 --   u  how many items they destroyed in all
 --   o  quantity of each material per item destroyed
+-- Calendar fields (optional, per item group: consumables, tradegoods):
+--   p   price % against each item's own average, per weekday (1 = Monday,
+--       UTC days), from the region's most sold items of the last 8 weeks
+--   s   share of the week's sales per weekday, in %
+--   f   % change in Darkmoon Faire weeks over the week before; fw = how many
+--       Faire weeks that is averaged from
 -- Item keys follow the addon's format, see AuctionCoach/Core/Util.lua.
 
 AuctionCoachData = {

@@ -1,8 +1,10 @@
--- Auction Coach - "Deals" tab, three views:
+-- Auction Coach - "Deals" tab, four views:
 --   Deals         items listed well below their usual price on this realm
 --   Other realms  cross-realm flips between the player's realms (Advice/Flips.lua)
 --   Shopping      the shopping list, with what each item is listed at now
 --                 (Data/Shopping.lua); items are added from the bar below
+--   Craft         craft or sell: your recipes' profit over their materials
+--                 (Advice/Crafting.lua)
 -- At the AH, clicking a row opens that item's listings. Buying is always
 -- left to the player.
 
@@ -15,8 +17,8 @@ ns.DealsTab = DealsTab
 local ROW_HEIGHT = 22
 -- Older than this, the "prices are old" hint replaces the empty message.
 local OLD_AFTER = 2 * 3600
-local MODES = { "deals", "flips", "shopping" }
-local MODE_WIDTH, MODE_HEIGHT = 92, 20
+local MODES = { "deals", "flips", "shopping", "craft" }
+local MODE_WIDTH, MODE_HEIGHT = 86, 20
 local ADD_BAR_HEIGHT = 30
 
 -- Column layout: x offset and width, shared by header and rows.
@@ -32,6 +34,7 @@ local HEADERS = {
     deals = { price = "DEALS_COL_PRICE", usual = "DEALS_COL_USUAL", profit = "DEALS_COL_PROFIT", speed = "SELL_COL_SPEED" },
     flips = { price = "FLIPS_COL_BUY", usual = "FLIPS_COL_SELL", profit = "DEALS_COL_PROFIT", speed = "SELL_COL_SPEED" },
     shopping = { price = "SHOP_COL_LOWEST", usual = "SHOP_COL_MAX", profit = "SHOP_COL_STATUS", speed = nil },
+    craft = { price = "CRAFT_COL_COST", usual = "CRAFT_COL_VALUE", profit = "DEALS_COL_PROFIT", speed = "SELL_COL_SPEED" },
 }
 
 local STATUS_COLORS = {
@@ -56,6 +59,7 @@ end
 local function TooltipLines(row)
     if row.kind == "flips" then return Phrases.Flip(row.entry) end
     if row.kind == "shopping" then return Phrases.Shop(row.entry) end
+    if row.kind == "craft" then return Phrases.Craft(row.entry) end
     return Phrases.Deal(row.entry)
 end
 
@@ -142,6 +146,13 @@ local function SetRow(row, entry, kind)
         row.usual:SetText(Util.FormatMoneyIcons(entry.max))
         row.profit:SetText(STATUS_COLORS[entry.status] .. L["SHOP_STATUS_" .. entry.status] .. "|r")
         row.speed:SetText("")
+    elseif kind == "craft" then
+        row.name:SetText(name .. " |cff9d9d9d" .. Util.ShortName(entry.char) .. "|r")
+        row.price:SetText(Util.FormatMoneyIcons(entry.cost))
+        row.usual:SetText(Util.FormatMoneyIcons(entry.value))
+        row.profit:SetText((entry.profit > 0 and "|cff66ff66" or "|cffff7070")
+            .. Phrases.SignedMoney(entry.profit, Util.FormatMoneyIcons) .. "|r")
+        row.speed:SetText(Speed(entry.salesPerDay))
     else
         if kind == "flips" then
             name = name .. " |cff9d9d9d" .. L.FLIPS_ROUTE:format(entry.buyRealm, entry.sellRealm) .. "|r"
@@ -323,6 +334,19 @@ local function ModeContent()
             empty = ns.Prices.ActiveData() and L.FLIPS_EMPTY or L.FLIPS_NEED_APP
         end
         return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit), empty, list.items
+    elseif mode == "craft" then
+        local list = ns.Crafting:List()
+        local worth = 0
+        for _, item in ipairs(list.items) do
+            if item.profit > 0 then worth = worth + 1 end
+        end
+        local empty = ""
+        if list.recipes == 0 then
+            empty = L.CRAFT_NEED_RECIPES
+        elseif #list.items == 0 then
+            empty = L.CRAFT_NO_PRICES
+        end
+        return L.CRAFT_TITLE:format(worth, #list.items), L.CRAFT_SUB, empty, list.items
     elseif mode == "shopping" then
         local items = ns.Shopping:Items()
         local buy = 0
@@ -358,7 +382,7 @@ local function Refresh(panel, reason)
     panel.content:SetHeight(math.max(1, #entries * ROW_HEIGHT))
 end
 
--- Opens the Deals tab on one view ("deals", "flips" or "shopping").
+-- Opens the Deals tab on one view ("deals", "flips", "shopping" or "craft").
 function DealsTab:ShowMode(newMode)
     ns.MainWindow:ShowTab(L.TAB_DEALS)
     if panelRef then
@@ -370,3 +394,4 @@ end
 ns.MainWindow:AddTab({ name = L.TAB_DEALS, Build = Build, Refresh = Refresh })
 ns.MainWindow:RefreshOn("AC_LIVE_PRICE")
 ns.MainWindow:RefreshOn("AC_SHOPPING_CHANGED")
+ns.MainWindow:RefreshOn("AC_RECIPES_CHANGED")

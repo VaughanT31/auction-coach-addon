@@ -63,6 +63,16 @@ function Util.FormatMoneyIcons(copper)
     return copper .. COPPER_ICON
 end
 
+-- "Zed" from a character key "Zed-Draenor".
+function Util.ShortName(charKey)
+    return charKey and (charKey:match("^([^%-]+)") or charKey) or "?"
+end
+
+-- "2.1x" for a price ratio.
+function Util.FormatRatio(ratio)
+    return string.format("%.1fx", ratio)
+end
+
 function Util.FormatAge(timestamp)
     local age = Util.Now() - (timestamp or 0)
     if age < 120 then

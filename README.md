@@ -111,7 +111,12 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.8.0)**
+**Just added (0.9.0)**
+- **Craft or sell:** which of your recipes make more on the AH than their materials, on the Deals tab.
+- **Manipulation warnings:** a note when a price looks pushed up by someone resetting the market.
+- **Market calendar hints:** what today and the Darkmoon Faire usually do to consumable and trade good prices, in Today's Plan and the post helper.
+
+**Added in 0.8.0**
 - **Shared destroy values:** what everyone's disenchanting, milling and prospecting yields, through the desktop app, so values show before you have destroyed anything yourself.
 - **Today's Plan** now lists your shopping list buys first, and tells you when disenchanting, milling or prospecting beats selling.
 - Settings for the destroy tooltip line and shopping alerts; per-character gold in the gold history.
@@ -129,15 +134,13 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - **Auctions tab:** see which of your auctions have been undercut and what to do about each one.
 
 **Next**
-- **Market calendar** on the website: weekly reset, Darkmoon Faire, holidays and patch days, and what they usually do to prices.
 - Auction Coach prices inside popular crafting addons.
+- **Craft or sell** in Today's Plan: craft steps when a recipe is clearly worth it.
 
 **Later**
 - **Optional accounts** on the website (no Blizzard login needed) so your saved reports follow you to any device, updated by the desktop app.
 - **My auctions** on the website: what you have listed, what has been undercut and what has sold.
 - **Alerts outside the game** (Discord first): undercut, sold, or a deal on your shopping list.
-- Warnings about price manipulation.
-- **Craft or sell:** which of your recipes are worth crafting for the Auction House right now, and whether to sell the reagents instead.
 - Other languages, a code-signed installer and a macOS desktop app.
 
 Never planned: automatic buying, posting or cancelling, or TSM-style groups and price formulas. Auction Coach advises, you click.

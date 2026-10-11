@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0
+
+- **Craft or sell (new view on the Deals tab):** your characters' recipes, with what one craft's materials sell for against what the crafted item sells for, after the AH cut. Crafts that make money come first; for the rest it says selling the materials makes more. Open each character's profession window once and Auction Coach learns their recipes (the expansion shown there). Hovering a crafted item says what crafting it makes too.
+- **Manipulation warnings:** when an item's lowest listing is far above what it usually is and its market value has jumped with it, the tooltip and the post helper say the price looks pushed up (someone may have bought out the cheap listings to reset it), so you don't buy into it or count on that price. Deals whose usual price itself looks pushed up are marked and left out of Today's Plan. Needs the desktop app's price history.
+- **Market calendar hints:** Today's Plan notes when today usually means higher or lower prices for consumables and trade goods, and in Darkmoon Faire weeks what the Faire usually does. The post helper says which day consumables or trade goods usually sell best. From the server's price history, through the desktop app; it shows up once there are a few weeks of history.
+- **Server:** when more realms are wanted than the server collects, the realms the most players use come first, and realms already being collected keep their place.
+
+## 0.8.1
+
+- **Fixed:** a Lua error that repeated in dungeons and raids when a system message or item tooltip was hidden from addons (Midnight's secret values).
+
 ## 0.8.0
 
 - **Shared destroy values:** players who share through the desktop app (0.6.0 or later) now also share what their disenchanting, milling and prospecting gives. Tooltips and Today's Plan use the average from everyone until you have destroyed enough of something yourself, so values show from the start: "Mills into about 38g of materials each (from 4 players' milling)". Your own results take over once you have enough of them. `/ac destroy` shows how many shared values you have.
@@ -7,7 +18,6 @@
 - **Today's Plan, destroy instead of selling:** when disenchanting, milling or prospecting something in your bags is worth clearly more than selling it, the plan says so in one step per kind ("Mill 40 herbs, about 120g more than selling"), and those items leave the post and vendor steps. Only for what this character can do (Disenchant, Inscription, Jewelcrafting), and only once Auction Coach has learned the item's yield.
 - **Settings:** switches for the destroy line on tooltips and for the shopping list chat alerts, in the Auction Coach options.
 - **Gold history:** hover a day to see each character's gold and the warband bank's that day. A note shows when gold is still waiting in a mailbox, since sales are counted when you collect them.
-- **Fixed:** a Lua error that repeated in dungeons and raids when a system message or item tooltip was hidden from addons (Midnight's secret values).
 
 ## 0.7.0
 

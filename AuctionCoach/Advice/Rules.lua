@@ -68,6 +68,48 @@ function Rules:IsWorthWarning(key, link)
 end
 
 -- ---------------------------------------------------------------------
+-- Manipulation
+--
+-- A "reset": someone buys out the cheap listings and relists them far
+-- higher, hoping others buy or match the new price. It shows as the lowest
+-- listing sitting well above what the lowest listing usually is, with the
+-- market value up on its 14-day average too. Needs server data (usual
+-- lowest and 14-day average), so the addon's own scans alone never flag it.
+-- ---------------------------------------------------------------------
+
+-- Lowest listing at least this many times its usual lowest...
+local PUSHED_MIN = 1.6
+-- ...and the market value this far above its 14-day average.
+local PUSHED_VALUE = 1.3
+-- Only judged on a lowest price seen this recently.
+local PUSHED_MAX_AGE = 6 * 3600
+-- A usual lowest this far above the 14-day market value has itself been
+-- raised lately (a reset that has held for days), so it isn't a safe
+-- resell price for a deal.
+local SHAKY_USUAL = 1.25
+
+-- { ratio = lowest / usual lowest, usual = usual lowest } when the price
+-- looks pushed up, otherwise nil. price is a Prices:Get result.
+function Rules.Pushed(price, now)
+    if not price or not price.min or not price.usualMin or price.usualMin <= 0 then return nil end
+    if (now or Util.Now()) - (price.minAt or 0) > PUSHED_MAX_AGE then return nil end
+    local ratio = price.min / price.usualMin
+    if ratio < PUSHED_MIN then return nil end
+    if price.historical and price.historical > 0 and price.value
+        and price.value < price.historical * PUSHED_VALUE then
+        return nil
+    end
+    return { ratio = ratio, usual = price.usualMin }
+end
+
+-- True when an item's usual lowest is itself suspiciously high against its
+-- 14-day market value (see SHAKY_USUAL).
+function Rules.ShakyUsual(price)
+    return price ~= nil and price.usualMin ~= nil and price.historical ~= nil and price.historical > 0
+        and price.usualMin > price.historical * SHAKY_USUAL
+end
+
+-- ---------------------------------------------------------------------
 -- Selling
 -- ---------------------------------------------------------------------
 
@@ -118,6 +160,8 @@ function Rules:SuggestPrice(key, link)
         sellTime = price.sharedSell,
         competition = ns.Competition:Score(key),
         undercut = ns.Undercuts:Typical(key),
+        pushed = Rules.Pushed(price),
+        calendar = ns.Calendar:ForItem(key, link),
     }
     result.contested, result.undercutEvery = ns.Styles:Contested(result.competition, result.undercut)
 
@@ -183,6 +227,8 @@ function Rules:ForLink(link)
     if Util.Now() - (price.t or 0) > STALE_AFTER then
         Add(Phrases.Stale(price), "warn")
     end
+    local pushed = Rules.Pushed(price)
+    if pushed then Add(Phrases.Pushed(pushed), "warn") end
 
     local afterCut = Util.AfterCut(price.value)
     local count = ns.Inventory:GetCount(key)
@@ -205,6 +251,9 @@ function Rules:ForLink(link)
         local progress = ns.Destroy:Progress(key, link)
         if progress then Add(Phrases.DestroyProgress(progress), "muted") end
     end
+
+    local craft = ns.Crafting:ForOutput(key)
+    if craft then Add(Phrases.CraftTooltip(craft), craft.profit > 0 and "good" or "muted") end
 
     local wanted = ns.Shopping:Get(key)
     if wanted then

@@ -54,6 +54,8 @@ local DEFAULTS = {
     goldDays = {},
     -- What destroying items has yielded (Data/Destroy.lua).
     destroy = {},
+    -- Recipes each character knows, for craft or sell (Data/Recipes.lua).
+    recipes = {},
 }
 
 -- MIGRATIONS[n] upgrades a database from version n - 1 to version n.

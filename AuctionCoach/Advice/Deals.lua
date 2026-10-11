@@ -118,11 +118,14 @@ local function Evaluate(key, price, now, minDiscount, minProfit)
         discount = discount,
         profit = profit,
         salesPerDay = price.salesPerDay,
+        -- The usual price it would resell at may itself be pushed up.
+        shaky = ns.Rules.ShakyUsual(price) or nil,
     }
 end
 
 -- Returns {
---   items = { { key, price, priceAt, resell, discount, profit, salesPerDay }, ... }
+--   items = { { key, price, priceAt, resell, discount, profit, salesPerDay,
+--             shaky = the resell price may be pushed up }, ... }
 --           best profit first, at most MAX_DEALS
 --   newest = time of the newest price seen, nil when there are none
 --   hasData = true when Data.lua with prices is loaded

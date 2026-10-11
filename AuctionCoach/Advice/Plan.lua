@@ -253,7 +253,12 @@ end
 -- name and are all listed cheaply are one decision for the player.
 local function BuyCandidates(list)
     local groups, order = {}, {}
+    -- A deal whose resell price may be pushed up is never a plan step.
+    local safe = {}
     for _, d in ipairs(ns.Deals:List().items) do
+        if not d.shaky then safe[#safe + 1] = d end
+    end
+    for _, d in ipairs(safe) do
         local link = Util.NamedLink(d.key)
         local name = link and ns.Sales.PlainName(link) or d.key
         local group = groups[name]

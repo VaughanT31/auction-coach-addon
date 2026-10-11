@@ -22,6 +22,100 @@ function Phrases.Stale(price)
     return L.TT_STALE:format(Util.FormatAge(price.t))
 end
 
+-- ---------------------------------------------------------------------
+-- Craft or sell (Advice/Crafting.lua)
+-- ---------------------------------------------------------------------
+
+local function SignedMoney(copper, money)
+    money = money or Util.FormatMoney
+    return copper < 0 and ("-" .. money(-copper)) or money(copper)
+end
+Phrases.SignedMoney = SignedMoney
+
+-- Tooltip line on a crafted item.
+function Phrases.CraftTooltip(c)
+    local who = Util.ShortName(c.char)
+    if c.profit > 0 then
+        return L.CRAFT_TT_PROFIT:format(who, Util.FormatMoney(c.cost), Util.FormatMoney(c.profit))
+    end
+    return L.CRAFT_TT_LOSS:format(who, Util.FormatMoney(c.cost), Util.FormatMoney(c.value))
+end
+
+-- Why, for the Deals tab's craft view.
+function Phrases.Craft(c, money)
+    money = money or Util.FormatMoney
+    local lines = {
+        L.CRAFT_WHO:format(Util.ShortName(c.char), c.profession or "?"),
+        L.CRAFT_COST:format(money(c.cost)),
+        L.CRAFT_VALUE:format(money(c.value)),
+    }
+    if c.profit > 0 then
+        lines[#lines + 1] = L.CRAFT_VERDICT_CRAFT:format(money(c.profit))
+    else
+        lines[#lines + 1] = L.CRAFT_VERDICT_SELL:format(money(-c.profit))
+    end
+    if c.salesPerDay then
+        lines[#lines + 1] = c.salesPerDay < 1 and L.SELL_SPEED_SLOW
+            or L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(c.salesPerDay + 0.5)))
+    end
+    lines[#lines + 1] = L.CRAFT_NOTE
+    return lines
+end
+
+-- ---------------------------------------------------------------------
+-- Market calendar (Advice/Calendar.lua)
+-- ---------------------------------------------------------------------
+
+local function Percent(p)
+    return math.floor(math.abs(p) + 0.5)
+end
+
+local function Effect(p)
+    return (p >= 0 and L.CAL_ABOVE or L.CAL_BELOW):format(Percent(p))
+end
+
+-- "Today (Wednesday) consumables usually sell 3% above their weekly
+-- average, trade goods 2% below."
+function Phrases.CalendarToday(weekday, groups)
+    local parts = {}
+    for i, g in ipairs(groups) do
+        local name = L["CAL_GROUP_" .. g.group:upper()]
+        parts[#parts + 1] = (i == 1) and L.CAL_FIRST:format(name:lower(), Effect(g.percent))
+            or L.CAL_NEXT:format(name:lower(), Effect(g.percent))
+    end
+    return L.CAL_TODAY:format(L["WEEKDAY_" .. weekday], table.concat(parts, ", "))
+end
+
+function Phrases.CalendarFaire(groups)
+    local parts = {}
+    for _, g in ipairs(groups) do
+        parts[#parts + 1] = L.CAL_FAIRE_PART:format(L["CAL_GROUP_" .. g.group:upper()]:lower(),
+            (g.percent >= 0 and L.CAL_HIGHER or L.CAL_LOWER):format(Percent(g.percent)))
+    end
+    return L.CAL_FAIRE:format(table.concat(parts, ", "))
+end
+
+-- One line for the sell advice: the usual best day, or that it's today.
+function Phrases.CalendarItem(c)
+    local name = L["CAL_GROUP_" .. c.group:upper()]
+    local text
+    if c.bestToday then
+        text = L.CAL_ITEM_TODAY:format(name:lower(), Percent(c.bestPercent))
+    else
+        text = L.CAL_ITEM_BEST:format(name, L["WEEKDAY_" .. c.best], Percent(c.bestPercent), Effect(c.today))
+    end
+    if c.faire then
+        text = text .. " " .. L.CAL_ITEM_FAIRE:format((c.faire >= 0 and L.CAL_HIGHER or L.CAL_LOWER):format(Percent(c.faire)))
+    end
+    return text
+end
+
+-- Rules.Pushed result: the lowest listing is far above its usual.
+function Phrases.Pushed(p, money)
+    money = money or Util.FormatMoney
+    return L.TT_PUSHED:format(Util.FormatRatio(p.ratio), money(p.usual))
+end
+
 function Phrases.VendorBetter(vendorPrice)
     return L.TT_VENDOR_BETTER:format(Util.FormatMoney(vendorPrice))
 end
@@ -141,6 +235,12 @@ function Phrases.Sell(s, money)
             lines[#lines + 1] = L.SELL_USUAL:format(money(s.usual))
         end
     end
+    if s.pushed then
+        lines[#lines + 1] = L.SELL_PUSHED:format(Util.FormatRatio(s.pushed.ratio), money(s.pushed.usual))
+    end
+    if s.calendar then
+        lines[#lines + 1] = Phrases.CalendarItem(s.calendar)
+    end
     lines[#lines + 1] = Phrases.SellTime(s.sellTime)
     if s.salesPerDay then
         if s.salesPerDay < 1 then
@@ -180,6 +280,7 @@ function Phrases.Deal(d, money)
         L.DEAL_PROFIT:format(money(d.resell), money(d.profit)),
     }
     lines[#lines + 1] = L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(d.salesPerDay + 0.5)))
+    if d.shaky then lines[#lines + 1] = L.DEAL_SHAKY end
     lines[#lines + 1] = L.DEAL_SEEN:format(Util.FormatAge(d.priceAt))
     lines[#lines + 1] = L.DEAL_CHECK
     return lines
