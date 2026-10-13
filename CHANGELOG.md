@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0
+
+- **Craft steps in Today's Plan:** when a recipe the character you're on knows clearly makes more than selling its materials, and the materials are in your bags, bank or warband bank, the plan says "Craft 2x Flask" with the gold it should bring in. It crafts only as many as should sell before you're back, and the materials it uses aren't suggested for posting as well.
+- **Craft or sell knows your quality:** for reagents and consumables, where each quality is its own item, Auction Coach learns which quality each character makes when the profession window is open, and prices that quality instead of the lowest one.
+- **Concentration:** when concentration would make the next quality, the Craft view and the plan say how much more it's worth per craft. It's never counted in the profit, since you decide where your concentration goes.
+
 ## 0.9.0
 
 - **Craft or sell (new view on the Deals tab):** your characters' recipes, with what one craft's materials sell for against what the crafted item sells for, after the AH cut. Crafts that make money come first; for the rest it says selling the materials makes more. Open each character's profession window once and Auction Coach learns their recipes (the expansion shown there). Hovering a crafted item says what crafting it makes too.

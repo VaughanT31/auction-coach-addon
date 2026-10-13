@@ -8,6 +8,12 @@
 --       r  { { ids = { itemID, ... }, n = quantity }, ... }  required
 --          reagents per slot; ids are the slot's quality versions
 --       p  profession name (the expansion line, "Midnight Tailoring")
+--       For recipes whose quality changes the item made (reagents,
+--       consumables), when the game says:
+--       qo { [quality] = itemID }  the item made at each quality
+--       bq quality this character makes with the cheapest materials
+--       cq quality with concentration, when that's higher
+--       cc concentration it costs
 --     },
 --   }
 --
@@ -68,7 +74,41 @@ function Recipes.Read(recipeID, professionName)
     if not slots or #slots == 0 then return nil end
     local qMin = schematic.quantityMin or 1
     local qMax = schematic.quantityMax or qMin
-    return { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName }
+    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName }
+    Recipes.ReadQuality(recipeID, recipe)
+    return recipe
+end
+
+-- Which quality this character makes, with and without concentration, and
+-- which item each quality is. Only kept when the qualities are different
+-- items (gear keeps one item ID, so its quality can't be priced apart).
+function Recipes.ReadQuality(recipeID, recipe)
+    local trade = C_TradeSkillUI
+    local qualities = Call(trade.GetQualitiesForRecipe, recipeID)
+    if type(qualities) ~= "table" or #qualities < 2 then return end
+    local outputs, distinct, seen = {}, 0, {}
+    for i, qualityID in ipairs(qualities) do
+        local data = Call(trade.GetRecipeOutputItemData, recipeID, nil, nil, qualityID)
+        local itemID = type(data) == "table" and data.itemID or nil
+        if itemID then
+            outputs[i] = itemID
+            if not seen[itemID] then
+                seen[itemID] = true
+                distinct = distinct + 1
+            end
+        end
+    end
+    if distinct < 2 then return end
+    local base = Call(trade.GetCraftingOperationInfo, recipeID, {}, nil, false)
+    local quality = type(base) == "table" and tonumber(base.craftingQuality) or nil
+    if not quality or not outputs[quality] then return end
+    recipe.qo, recipe.bq = outputs, quality
+    local focused = Call(trade.GetCraftingOperationInfo, recipeID, {}, nil, true)
+    local better = type(focused) == "table" and tonumber(focused.craftingQuality) or nil
+    if better and better > quality and outputs[better] then
+        recipe.cq = better
+        recipe.cc = tonumber(focused.concentrationCost) or tonumber(base.concentrationCost)
+    end
 end
 
 -- Reads every recipe of the expansion shown in the profession window.

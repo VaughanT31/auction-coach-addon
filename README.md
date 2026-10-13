@@ -111,7 +111,14 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.9.0)**
+**Just added (desktop app 0.7)**
+- **Alerts outside the game:** when one of your listings is undercut, or something on your shopping list hits your price, a Windows notification and, if you link it, a Discord direct message.
+
+**Just added (0.10.0)**
+- **Craft steps in Today's Plan:** crafts that clearly beat selling the materials, as many as should sell.
+- **Craft or sell knows your quality**, and what concentration would add.
+
+**Added in 0.9.0**
 - **Craft or sell:** which of your recipes make more on the AH than their materials, on the Deals tab.
 - **Manipulation warnings:** a note when a price looks pushed up by someone resetting the market.
 - **Market calendar hints:** what today and the Darkmoon Faire usually do to consumable and trade good prices, in Today's Plan and the post helper.
@@ -135,12 +142,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 
 **Next**
 - Auction Coach prices inside popular crafting addons.
-- **Craft or sell** in Today's Plan: craft steps when a recipe is clearly worth it.
 
 **Later**
 - **Optional accounts** on the website (no Blizzard login needed) so your saved reports follow you to any device, updated by the desktop app.
 - **My auctions** on the website: what you have listed, what has been undercut and what has sold.
-- **Alerts outside the game** (Discord first): undercut, sold, or a deal on your shopping list.
 - Other languages, a code-signed installer and a macOS desktop app.
 
 Never planned: automatic buying, posting or cancelling, or TSM-style groups and price formulas. Auction Coach advises, you click.

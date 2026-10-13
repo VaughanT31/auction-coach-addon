@@ -5,9 +5,14 @@
 -- Materials are valued at what they sell for, even ones you already own:
 -- crafting with them means not selling them. Each slot uses its cheapest
 -- quality. The crafted item is valued at its market value after the AH
--- cut, for the quantity one craft makes on average; quality bonuses from
--- skill or concentration aren't counted, so a skilled crafter may do a bit
--- better than shown.
+-- cut, for the quantity one craft makes on average.
+--
+-- Quality: when the game told Data/Recipes.lua which quality the character
+-- makes (reagents and consumables, where each quality is its own item),
+-- that quality's item is the one priced. If concentration makes a better
+-- quality, what that's worth is worked out too, but never counted in the
+-- profit: concentration is limited and the player decides where it goes.
+-- Gear keeps one item ID for every quality, so it is priced as one item.
 
 local _, ns = ...
 local Util = ns.Util
@@ -39,26 +44,64 @@ local function MaterialCost(recipe)
     return total
 end
 
+-- The item this character makes: the quality item when known, else the
+-- recipe's output.
+function Crafting.OutputOf(recipe)
+    if recipe.qo and recipe.bq and recipe.qo[recipe.bq] then return recipe.qo[recipe.bq], recipe.bq end
+    return recipe.o, nil
+end
+
 -- One recipe priced: { key, recipeID, profession, char, cost, value,
--- profit, salesPerDay } or nil when anything is missing a price.
+-- profit, salesPerDay, quality, concentration = { quality, cost, extra } }
+-- or nil when anything is missing a price.
 function Crafting.Evaluate(recipeID, recipe, charKey)
-    local key = tostring(recipe.o)
+    local outputID, quality = Crafting.OutputOf(recipe)
+    local key = tostring(outputID)
     if ns.Rules:IsJunk(key) then return nil end
-    local each, price = PriceOf(recipe.o)
+    local each, price = PriceOf(outputID)
+    -- A quality item nobody has priced yet: fall back to the recipe's
+    -- output rather than showing nothing.
+    if not each and outputID ~= recipe.o then
+        outputID, quality = recipe.o, nil
+        key = tostring(outputID)
+        each, price = PriceOf(outputID)
+    end
     if not each then return nil end
     local cost = MaterialCost(recipe)
     if not cost then return nil end
-    local value = math.floor(Util.AfterCut(each) * (recipe.q or 1))
-    return {
+    local made = recipe.q or 1
+    local value = math.floor(Util.AfterCut(each) * made)
+    local e = {
         key = key,
         recipeID = recipeID,
+        recipe = recipe,
         profession = recipe.p,
         char = charKey,
         cost = math.floor(cost),
         value = value,
         profit = value - math.floor(cost),
         salesPerDay = price and price.salesPerDay,
+        quality = quality,
     }
+    if quality and recipe.cq and recipe.qo[recipe.cq] then
+        local better = PriceOf(recipe.qo[recipe.cq])
+        if better and better > each then
+            e.concentration = {
+                quality = recipe.cq,
+                cost = recipe.cc,
+                extra = math.floor(Util.AfterCut(better - each) * made),
+            }
+        end
+    end
+    return e
+end
+
+-- Every item key a recipe can make, so the tooltip on any quality of it
+-- finds the recipe.
+local function OutputKeys(recipe)
+    local keys = { [tostring(recipe.o)] = true }
+    for _, itemID in pairs(recipe.qo or {}) do keys[tostring(itemID)] = true end
+    return keys
 end
 
 -- Every priced recipe of this realm group's characters, best profit first
@@ -66,7 +109,7 @@ end
 -- how many recipes are known at all }.
 function Crafting:List()
     if cache then return cache end
-    local result = { items = {}, recipes = 0 }
+    local result = { items = {}, recipes = 0, byKey = {} }
     if not ns.db or not ns.realmGroup then return result end
     local best = {}
     for charKey, known in pairs(ns.db.recipes or {}) do
@@ -75,7 +118,10 @@ function Crafting:List()
             for recipeID, recipe in pairs(known) do
                 result.recipes = result.recipes + 1
                 local e = Crafting.Evaluate(recipeID, recipe, charKey)
-                if e and (not best[e.key] or e.profit > best[e.key].profit) then best[e.key] = e end
+                if e and (not best[e.key] or e.profit > best[e.key].profit) then
+                    best[e.key] = e
+                    e.outputs = OutputKeys(recipe)
+                end
             end
         end
     end
@@ -85,16 +131,73 @@ function Crafting:List()
         return a.key < b.key
     end)
     for i = #result.items, MAX_ITEMS + 1, -1 do result.items[i] = nil end
+    for _, e in ipairs(result.items) do
+        for key in pairs(e.outputs) do
+            if not result.byKey[key] then result.byKey[key] = e end
+        end
+    end
     cache = result
     return result
 end
 
--- The best known recipe for a crafted item key, priced, or nil.
+-- The best known recipe for a crafted item key (any of its qualities),
+-- priced, or nil.
 function Crafting:ForOutput(key)
-    for _, e in ipairs(self:List().items) do
-        if e.key == key then return e end
+    return self:List().byKey[key]
+end
+
+-- One character's recipes, priced, best profit first: for Today's Plan,
+-- which can only suggest what the character you're on can craft.
+function Crafting:ForCharacter(charKey)
+    local list = {}
+    for recipeID, recipe in pairs(ns.db and ns.db.recipes and ns.db.recipes[charKey] or {}) do
+        local e = Crafting.Evaluate(recipeID, recipe, charKey)
+        if e then list[#list + 1] = e end
     end
-    return nil
+    table.sort(list, function(a, b)
+        if a.profit ~= b.profit then return a.profit > b.profit end
+        return a.key < b.key
+    end)
+    return list
+end
+
+-- How many crafts the materials in have = { [key] = count } allow, using
+-- the cheapest quality of each slot first. Returns the count and the
+-- materials it uses, { [key] = count }.
+function Crafting.Possible(recipe, have)
+    local crafts = math.huge
+    for _, slot in ipairs(recipe.r or {}) do
+        local owned = 0
+        for _, id in ipairs(slot.ids) do owned = owned + (have[tostring(id)] or 0) end
+        crafts = math.min(crafts, math.floor(owned / slot.n))
+    end
+    if crafts == math.huge or crafts <= 0 then return 0, {} end
+    return crafts, Crafting.Uses(recipe, crafts, have)
+end
+
+-- The materials crafts of a recipe take from have, cheapest quality first.
+function Crafting.Uses(recipe, crafts, have)
+    local uses = {}
+    for _, slot in ipairs(recipe.r or {}) do
+        local need = slot.n * crafts
+        local ids = {}
+        for _, id in ipairs(slot.ids) do ids[#ids + 1] = id end
+        table.sort(ids, function(a, b)
+            local pa, pb = PriceOf(a) or math.huge, PriceOf(b) or math.huge
+            if pa ~= pb then return pa < pb end
+            return a < b
+        end)
+        for _, id in ipairs(ids) do
+            local key = tostring(id)
+            local take = math.min(need, (have[key] or 0) - (uses[key] or 0))
+            if take > 0 then
+                uses[key] = (uses[key] or 0) + take
+                need = need - take
+            end
+            if need <= 0 then break end
+        end
+    end
+    return uses
 end
 
 function Crafting:Invalidate()

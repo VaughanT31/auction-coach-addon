@@ -47,7 +47,7 @@ function Phrases.Craft(c, money)
     local lines = {
         L.CRAFT_WHO:format(Util.ShortName(c.char), c.profession or "?"),
         L.CRAFT_COST:format(money(c.cost)),
-        L.CRAFT_VALUE:format(money(c.value)),
+        c.quality and L.CRAFT_VALUE_QUALITY:format(c.quality, money(c.value)) or L.CRAFT_VALUE:format(money(c.value)),
     }
     if c.profit > 0 then
         lines[#lines + 1] = L.CRAFT_VERDICT_CRAFT:format(money(c.profit))
@@ -58,7 +58,10 @@ function Phrases.Craft(c, money)
         lines[#lines + 1] = c.salesPerDay < 1 and L.SELL_SPEED_SLOW
             or L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(c.salesPerDay + 0.5)))
     end
-    lines[#lines + 1] = L.CRAFT_NOTE
+    if c.concentration then
+        lines[#lines + 1] = L.CRAFT_CONCENTRATION:format(c.concentration.cost or "?", money(c.concentration.extra))
+    end
+    lines[#lines + 1] = c.quality and L.CRAFT_NOTE_QUALITY or L.CRAFT_NOTE
     return lines
 end
 
@@ -329,6 +332,8 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_SHOP:format(money(step.price), money(step.max))
     elseif kind == "DESTROY" then
         return L.PLAN_SHORT_DESTROY:format(money(step.gain))
+    elseif kind == "CRAFT" then
+        return L.PLAN_SHORT_CRAFT:format(money(step.gain))
     elseif kind == "SKIP" then
         local s = step.suggestion
         if s.action == "HOLD" then
@@ -399,6 +404,19 @@ function Phrases.PlanDetails(step, money)
         end
         lines[#lines + 1] = table.concat(names, ", ")
         lines[#lines + 1] = L.PLAN_WHY_DESTROY_COUNTED:format(money(step.gold))
+    elseif kind == "CRAFT" then
+        lines[#lines + 1] = L.PLAN_WHY_CRAFT:format(step.count, money(step.gain))
+        lines[#lines + 1] = L.PLAN_WHY_CRAFT_MATS
+        if step.sold then
+            lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.made),
+                ns.Styles:WindowHours(), money(step.gold))
+        else
+            lines[#lines + 1] = L.PLAN_WHY_UNKNOWN:format(money(step.value))
+        end
+        if step.craft.concentration then
+            lines[#lines + 1] = L.CRAFT_CONCENTRATION:format(step.craft.concentration.cost or "?",
+                money(step.craft.concentration.extra))
+        end
     elseif kind == "SKIP" then
         for _, line in ipairs(Phrases.Sell(step.suggestion, money)) do lines[#lines + 1] = line end
     end

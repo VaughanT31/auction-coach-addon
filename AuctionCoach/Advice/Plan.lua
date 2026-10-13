@@ -21,6 +21,11 @@
 --   DESTROY items in the bags worth more disenchanted, milled or prospected
 --           than sold (Data/Destroy.lua), one step per kind, only for what
 --           this character can do. Those items leave the POST and VENDOR steps.
+--   CRAFT   recipes this character knows that clearly make more than
+--           selling their materials (Advice/Crafting.lua), when the
+--           materials are in the bags, bank or warband bank. As many
+--           crafts as should sell before the player is back. The materials
+--           they use leave the POST steps.
 --   SKIP    items better left alone today (prices crashed, or undercut far
 --           faster than the player checks back). Shown, never counted.
 --
@@ -54,6 +59,8 @@ local COST = {
     SHOP = 40,      -- find it and buy it
     DESTROY = 15,   -- open the profession or target the item
     DESTROY_CAST = 3, -- per disenchant, or per mill/prospect of five
+    CRAFT = 35,     -- open the profession, find the recipe, post what it made
+    CRAFT_EACH = 4, -- per craft
 }
 
 -- Places a step may need to walk to first, and how long that takes.
@@ -74,6 +81,13 @@ local MAX_SKIPS = 3
 local DESTROY_MARGIN = 1.1
 local DESTROY_FACTOR = 0.8
 local DESTROY_KINDS = { DE = true, MILL = true, PROSPECT = true }
+-- A craft is suggested only when it clearly beats selling the materials:
+-- by this share of their value and at least this much per craft.
+local CRAFT_MARGIN = 0.15
+local CRAFT_MIN_PROFIT = 10000
+local MAX_CRAFT_STEPS = 3
+-- Without a sales rate, craft only a few.
+local UNKNOWN_CRAFTS = 5
 
 -- ---------------------------------------------------------------------
 -- Ranking (pure: no WoW API)
@@ -313,6 +327,74 @@ local function DestroyCandidates(groups, list)
     end
 end
 
+-- Materials this character can craft with: bags, bank, reagent bank and
+-- the warband bank, as { [key] = count }.
+local function CraftingMaterials()
+    local have = {}
+    local char = ns.db.characters[ns.charKey]
+    local inv = char and char.inventory or {}
+    for _, list in ipairs({ inv.bags or {}, inv.bank or {}, inv.reagentBank or {}, ns.db.warbank or {} }) do
+        for key, count in pairs(list) do have[key] = (have[key] or 0) + count end
+    end
+    return have
+end
+
+-- Craft candidates for this character, and the materials they use
+-- ({ [key] = count }), which then aren't posted.
+function Plan.CraftCandidates(list)
+    local reserved = {}
+    if not ns.Crafting or not ns.db.recipes or not ns.db.recipes[ns.charKey] then return reserved end
+    local left = CraftingMaterials()
+    local steps = 0
+    for _, e in ipairs(ns.Crafting:ForCharacter(ns.charKey)) do
+        if steps >= MAX_CRAFT_STEPS then break end
+        if e.profit >= math.max(CRAFT_MIN_PROFIT, e.cost * CRAFT_MARGIN) then
+            local crafts = ns.Crafting.Possible(e.recipe, left)
+            local made = e.recipe.q or 1
+            if crafts > 0 then
+                local wanted = ExpectedSold(math.huge, e.salesPerDay)
+                if wanted then
+                    crafts = math.min(crafts, math.max(1, math.floor(wanted / made)))
+                else
+                    crafts = math.min(crafts, UNKNOWN_CRAFTS)
+                end
+                local uses = ns.Crafting.Uses(e.recipe, crafts, left)
+                for key, count in pairs(uses) do
+                    left[key] = left[key] - count
+                    reserved[key] = (reserved[key] or 0) + count
+                end
+                local total = crafts * made
+                local sold = ExpectedSold(total, e.salesPerDay)
+                local each = e.value / made
+                steps = steps + 1
+                list[#list + 1] = {
+                    id = "CRAFT:" .. tostring(e.recipeID), kind = "CRAFT", key = e.key, recipeID = e.recipeID,
+                    count = crafts, made = total, sold = sold, craft = e,
+                    gain = e.profit * crafts, value = e.value * crafts,
+                    gold = math.floor(each * (sold or total * UNKNOWN_SPEED_FACTOR)),
+                    seconds = COST.CRAFT + COST.CRAFT_EACH * crafts, ah = true,
+                }
+            end
+        end
+    end
+    return reserved
+end
+
+-- What's left of an item once crafting has taken its share: a copy with
+-- the smaller count, or nil when it's all used.
+local function AfterCrafting(item, reserved)
+    local take = reserved[item.key]
+    if not take or take <= 0 then return item end
+    local used = math.min(take, item.count)
+    reserved[item.key] = take - used
+    if used >= item.count then return nil end
+    local copy = {}
+    for k, v in pairs(item) do copy[k] = v end
+    copy.count = item.count - used
+    copy.value = item.value and math.floor(item.value * copy.count / item.count) or nil
+    return copy
+end
+
 -- Shopping list items to buy now, pinned: { step, ... } that fit the gold.
 local function ShopSteps(money)
     local steps, spend = {}, 0
@@ -354,7 +436,11 @@ function Plan:Build(minutes)
     local candidates = {}
     local vendorGold, vendorItems = 0, 0
     local destroyGroups = {}
-    for _, item in ipairs(ns.Sell:List().items) do
+    -- Crafts first: the materials they use aren't posted as well.
+    local reserved = Plan.CraftCandidates(candidates)
+    for _, listed in ipairs(ns.Sell:List().items) do
+      local item = AfterCrafting(listed, reserved)
+      if item then
         local s = item.suggestion
         if s.salesPerDay then result.hasSpeed = true end
         local d, sellEach = DestroyInstead(item)
@@ -380,13 +466,15 @@ function Plan:Build(minutes)
             vendorGold = vendorGold + s.vendor * item.count
             vendorItems = vendorItems + 1
         end
+      end
     end
     -- Bank items worth posting. Crashed or contested ones are left out
     -- quietly: the "leave alone" list is about what is in the bags.
-    for _, item in ipairs(BankItems()) do
-        local s = item.suggestion
-        if s.salesPerDay then result.hasSpeed = true end
-        if s.action == "POST" and s.contested ~= "HEAVY" then
+    for _, listed in ipairs(BankItems()) do
+        local item = AfterCrafting(listed, reserved)
+        local s = item and item.suggestion
+        if s and s.salesPerDay then result.hasSpeed = true end
+        if s and s.action == "POST" and s.contested ~= "HEAVY" then
             candidates[#candidates + 1] = PostCandidate(item)
         end
     end

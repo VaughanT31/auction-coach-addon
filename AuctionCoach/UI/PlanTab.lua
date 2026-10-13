@@ -28,6 +28,7 @@ local TAG_COLORS = {
     CANCEL = { 1, 0.5, 0.35 },
     SHOP = { 0.4, 0.85, 1 },
     DESTROY = { 0.75, 0.55, 1 },
+    CRAFT = { 1, 0.65, 0.3 },
 }
 
 local function Column(parent, name, template, justify)
@@ -151,6 +152,10 @@ local function SetStep(row, step)
     elseif step.kind == "DESTROY" then
         row.icon:SetTexture(Compat.GetItemIconByID(Util.ItemIDFromKey(step.key) or 0))
         row.name:SetText(L["PLAN_DESTROY_ITEMS_" .. step.destroyKind]:format(step.units))
+    elseif step.kind == "CRAFT" then
+        row.icon:SetTexture(Compat.GetItemIconByID(Util.ItemIDFromKey(step.key) or 0))
+        local name = Util.NamedLink(step.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
+        row.name:SetText(L.PLAN_CRAFT_NAME:format(step.count, name))
     else
         local itemID = Util.ItemIDFromKey(step.key) or Util.PET_CAGE_ITEM_ID
         row.icon:SetTexture(Compat.GetItemIconByID(itemID))
