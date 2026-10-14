@@ -356,7 +356,7 @@ local function ModeContent()
         return L.SHOP_TITLE:format(#items, buy), L.SHOP_SUB, #items == 0 and L.SHOP_EMPTY or "", items
     end
     local list = ns.Deals:List()
-    local sub = L.DEALS_SUB:format(math.floor(s.dealMinDiscount * 100 + 0.5), minProfit)
+    local sub = L.DEALS_SUB:format(math.floor(s.dealMinDiscount * 100 + 0.5), s.dealMinSales or 10, minProfit)
         .. (Compat.IsAuctionHouseOpen() and (" " .. L.DEALS_SUB_AH) or "")
     return L.DEALS_TITLE:format(#list.items), sub, #list.items == 0 and DealsEmptyText(list) or "", list.items
 end

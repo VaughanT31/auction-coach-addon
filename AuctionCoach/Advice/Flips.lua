@@ -21,9 +21,10 @@ local Flips = {}
 ns.Flips = Flips
 
 local MAX_AGE = 3 * 3600
--- Gear sells slower than reagents; one sale every two days is enough for
--- a single item.
-local MIN_SALES_PER_DAY = 0.5
+-- Gear sells slower than reagents, so flips keep a lower bar than deals,
+-- but the item still has to sell daily and not be buried in listings.
+local MIN_SALES_PER_DAY = 1
+local MIN_CHANCE = 0.5
 local MIN_GAIN = 0.25 -- the other realm must pay at least 25% more
 local MAX_FLIPS = 100
 
@@ -77,9 +78,11 @@ function Flips.Evaluate(key, buy, sell, now, minProfit)
     local profit = Util.AfterCut(resell) - buy.min
     if profit < minProfit then return nil end
     if not sell.salesPerDay or sell.salesPerDay < MIN_SALES_PER_DAY then return nil end
+    local chance = ns.Deals.ResellChance(sell.salesPerDay, sell.listed)
+    if chance < MIN_CHANCE then return nil end
     return {
         key = key, price = buy.min, priceAt = buy.minAt or buy.t, resell = resell,
-        profit = profit, salesPerDay = sell.salesPerDay,
+        profit = profit, salesPerDay = sell.salesPerDay, listed = sell.listed, chance = chance,
     }
 end
 

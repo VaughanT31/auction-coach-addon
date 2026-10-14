@@ -138,6 +138,8 @@ local function FromData(key, realmName)
         sharedUndercut = row.u and { seconds = row.u, count = row.un or 0 } or nil,
         sharedSell = row.w and { seconds = row.w, count = row.wn or 0 } or nil,
         salesPerDay = row.s,
+        -- Units listed right now at or below the usual lowest price.
+        listed = row.c,
         t = row.t or data.generatedAt or 0,
         source = "data",
     }
@@ -170,6 +172,8 @@ end
 --   usualMin     what the lowest listing normally is: 7-day average of the
 --                hourly lowest price (Data.lua only)
 --   salesPerDay  estimated sales per day (Data.lua only)
+--   listed       units listed right now at or below the usual lowest
+--                price: the queue a resold item joins (Data.lua only)
 -- }
 function Prices:Get(key, groupKey, realmName)
     if not key or not ns.db then return nil end
@@ -194,6 +198,7 @@ function Prices:Get(key, groupKey, realmName)
         sharedUndercut = data.sharedUndercut,
         sharedSell = data.sharedSell,
         salesPerDay = data.salesPerDay,
+        listed = data.listed,
         qty = scan.qty,
     }
     if (scan.minAt or 0) >= data.t then

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+
+- **Deals that actually resell:** an item now has to sell at least 10 a day across the Auction House to count as a deal (change it in the options under Deals: "Sells at least"). Items that sold about once a day showed up before, and they're hard to resell however cheap they are.
+- **Counts the competition:** with the desktop app's data, a deal also needs a fair chance of reselling before you're back: the sales expected in that time against the copies already listed at or under the usual price. One sale a day with 30 copies listed is no deal. Each deal now says how many are listed, and Today's Plan uses the same chance for buy steps.
+- **Other realms:** flips need at least one sale a day (was one every two days) and the same fair chance of reselling.
+- **Updated for patch 12.1.5.**
+
 ## 0.10.0
 
 - **Craft steps in Today's Plan:** when a recipe the character you're on knows clearly makes more than selling its materials, and the materials are in your bags, bank or warband bank, the plan says "Craft 2x Flask" with the gold it should bring in. It crafts only as many as should sell before you're back, and the materials it uses aren't suggested for posting as well.

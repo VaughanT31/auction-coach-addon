@@ -125,6 +125,10 @@ local function Build()
         function(copper) return math.floor((copper or 0) / GOLD + 0.5) end,
         function(gold) return gold * GOLD end,
         function(gold) return L.OPT_GOLD:format(gold) end)
+    Slider("dealMinSales", L.OPT_DEAL_SALES, L.OPT_DEAL_SALES_TIP, 10, 1, 100, 1,
+        function(count) return count or 10 end,
+        function(count) return count end,
+        function(count) return L.OPT_PER_DAY:format(count) end)
 
     Settings.RegisterAddOnCategory(category)
 end

@@ -36,7 +36,7 @@ When you put an item in the sell box, the **post helper** suggests a price and s
 
 ### Deals
 
-The **Deals** tab lists items listed well below their usual price that sell every day, with your profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
+The **Deals** tab lists items listed well below their usual price that sell at least 10 a day and aren't buried in other listings, with your profit after the AH cut. At the AH, click a row to open its listings. Buying is up to you.
 
 Two more views on the same tab:
 

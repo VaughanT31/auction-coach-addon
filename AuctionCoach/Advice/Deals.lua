@@ -20,15 +20,25 @@ ns.Deals = Deals
 -- Lowest prices older than this have probably been bought already.
 -- Server data is up to about 90 minutes old when it arrives.
 local MAX_AGE = 3 * 3600
--- Items that sell less often than this are hard to resell.
-local MIN_SALES_PER_DAY = 1
+-- A deal needs a fair chance of reselling before the player is back.
+local MIN_CHANCE = 0.5
 local MAX_DEALS = 100
 
 local cache, cacheAt
 
 local function Settings()
     local s = ns.db.settings
-    return s.dealMinDiscount or 0.3, s.dealMinProfit or 5 * 10000
+    return s.dealMinDiscount or 0.3, s.dealMinProfit or 5 * 10000, s.dealMinSales or 10
+end
+
+-- Chance one bought item resells within the seller style's window: the
+-- sales expected in that time, shared out over the units already listed
+-- at or below the resell price (listed, from Data.lua) plus the player's.
+-- Without listed (older data) only the sales speed counts.
+function Deals.ResellChance(salesPerDay, listed, hours)
+    hours = hours or ns.Styles:WindowHours()
+    local sold = (salesPerDay or 0) * hours / 24
+    return math.min(1, sold / math.max(1, listed or 1))
 end
 
 -- Keys of everything that might be a deal, using the raw rows only, so
@@ -90,7 +100,7 @@ local function OwnListings()
     return own
 end
 
-local function Evaluate(key, price, now, minDiscount, minProfit)
+local function Evaluate(key, price, now, minDiscount, minProfit, minSales)
     local low = price.min
     if not low or low <= 0 then return nil end
     -- Grey items do not resell: their listings are mostly gold sellers.
@@ -108,7 +118,10 @@ local function Evaluate(key, price, now, minDiscount, minProfit)
     local discount = 1 - low / resell
     local profit = Util.AfterCut(resell) - low
     if discount < minDiscount or profit < minProfit then return nil end
-    if not price.salesPerDay or price.salesPerDay < MIN_SALES_PER_DAY then return nil end
+    -- Something that sells once a day is no deal, however cheap.
+    if not price.salesPerDay or price.salesPerDay < minSales then return nil end
+    local chance = Deals.ResellChance(price.salesPerDay, price.listed)
+    if chance < MIN_CHANCE then return nil end
 
     return {
         key = key,
@@ -118,6 +131,8 @@ local function Evaluate(key, price, now, minDiscount, minProfit)
         discount = discount,
         profit = profit,
         salesPerDay = price.salesPerDay,
+        listed = price.listed,
+        chance = chance,
         -- The usual price it would resell at may itself be pushed up.
         shaky = ns.Rules.ShakyUsual(price) or nil,
     }
@@ -125,6 +140,7 @@ end
 
 -- Returns {
 --   items = { { key, price, priceAt, resell, discount, profit, salesPerDay,
+--             listed, chance = of reselling within the seller window,
 --             shaky = the resell price may be pushed up }, ... }
 --           best profit first, at most MAX_DEALS
 --   newest = time of the newest price seen, nil when there are none
@@ -138,7 +154,7 @@ function Deals:List()
     if not ns.db or not ns.realmGroup then return result end
 
     local now = Util.Now()
-    local minDiscount, minProfit = Settings()
+    local minDiscount, minProfit, minSales = Settings()
     local own = OwnListings()
 
     local candidates
@@ -146,7 +162,7 @@ function Deals:List()
     for key in pairs(candidates) do
         local price = not own[key] and ns.Prices:Get(key)
         if price then
-            local deal = Evaluate(key, price, now, minDiscount, minProfit)
+            local deal = Evaluate(key, price, now, minDiscount, minProfit, minSales)
             if deal then table.insert(result.items, deal) end
         end
     end

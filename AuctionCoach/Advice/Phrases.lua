@@ -282,7 +282,12 @@ function Phrases.Deal(d, money)
         L.DEAL_LISTED:format(money(d.price), math.floor(d.discount * 100 + 0.5), money(d.resell)),
         L.DEAL_PROFIT:format(money(d.resell), money(d.profit)),
     }
-    lines[#lines + 1] = L.SELL_SPEED:format(BreakUpLargeNumbers(math.floor(d.salesPerDay + 0.5)))
+    local speed = BreakUpLargeNumbers(math.floor(d.salesPerDay + 0.5))
+    if d.listed then
+        lines[#lines + 1] = L.DEAL_SPEED_LISTED:format(speed, BreakUpLargeNumbers(d.listed))
+    else
+        lines[#lines + 1] = L.SELL_SPEED:format(speed)
+    end
     if d.shaky then lines[#lines + 1] = L.DEAL_SHAKY end
     lines[#lines + 1] = L.DEAL_SEEN:format(Util.FormatAge(d.priceAt))
     lines[#lines + 1] = L.DEAL_CHECK

@@ -37,6 +37,8 @@
 --   w  typical seconds until such a listing first sells; wn = how many sales
 --      (u/un and w/wn only appear once at least 3 posts back them)
 --   s  estimated sales per day
+--   c  units listed right now at or below the usual lowest price (or the
+--      market value when there is no usual lowest yet)
 --   t  unix time of the snapshot this row came from (optional, defaults to generatedAt)
 -- Destroy fields (optional, desktop app 0.8 and later): per source, an item key
 -- or a gear group "dx:<quality>:<expansion>":

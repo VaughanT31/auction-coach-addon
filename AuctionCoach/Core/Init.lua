@@ -23,6 +23,8 @@ local DEFAULTS = {
         -- least this much profit after the AH cut (copper).
         dealMinDiscount = 0.3,
         dealMinProfit = 5 * 10000,
+        -- Deals must sell at least this many a day (market-wide).
+        dealMinSales = 10,
         -- Chat line with what each sale made.
         saleMessages = true,
         -- At login, warn when the desktop app's prices are old (Data/Freshness.lua).

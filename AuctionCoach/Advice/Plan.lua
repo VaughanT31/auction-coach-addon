@@ -257,10 +257,10 @@ local function AuctionCandidates(list)
     end
 end
 
--- Chance one bought item resells before the player is back: its sales
--- per day spread over the seller style's window, at most certain.
-local function ResellChance(salesPerDay)
-    return math.min(1, (salesPerDay or 0) * ns.Styles:WindowHours() / 24)
+-- Chance one bought item resells before the player is back, counting
+-- the copies already listed at that price (Deals.ResellChance).
+local function ResellChance(deal)
+    return ns.Deals.ResellChance(deal.salesPerDay, deal.listed)
 end
 
 -- Deals, one step per item name: several different items that share a
@@ -290,7 +290,7 @@ local function BuyCandidates(list)
         local best = deals[1]
         local gold, spend, chance = 0, 0, 0
         for _, d in ipairs(deals) do
-            local c = ResellChance(d.salesPerDay)
+            local c = ResellChance(d)
             gold = gold + d.profit * BUY_FACTOR * c
             spend = spend + d.price
             chance = math.max(chance, c)
