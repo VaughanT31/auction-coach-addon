@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 121500
 ## Title: Auction Coach Data
 ## Notes: Price data for Auction Coach. Written by the Auction Coach desktop app, do not edit.
 ## Author: CtrlShift_Zed

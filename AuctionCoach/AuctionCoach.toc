@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 121500
 ## Title: Auction Coach
 ## Notes: Plain-English Auction House advice: what your stuff is worth and what to sell.
 ## Author: CtrlShift_Zed
