@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Craft or sell prices what you'd really get:** a crafted item is valued at the lowest listing when that's below its usual price, since a new post has to undercut it. Items with a few cheap listings and a big overpriced stack looked hugely profitable before (Blood Knight's Armor Kit showed 16,900g when it sells for about 1,000g).
+- The Craft view's title no longer gets cut off.
+
 ## 0.11.0
 
 - **Deals that actually resell:** an item now has to sell at least 10 a day across the Auction House to count as a deal (change it in the options under Deals: "Sells at least"). Items that sold about once a day showed up before, and they're hard to resell however cheap they are.

@@ -4,8 +4,11 @@
 --
 -- Materials are valued at what they sell for, even ones you already own:
 -- crafting with them means not selling them. Each slot uses its cheapest
--- quality. The crafted item is valued at its market value after the AH
--- cut, for the quantity one craft makes on average.
+-- quality. The crafted item is valued at what it would sell for after the
+-- AH cut, for the quantity one craft makes on average: its market value,
+-- or the lowest listing when that's lower, since a new post has to undercut
+-- it. (An item with a few cheap listings and a big overpriced stack has a
+-- market value far above what anything actually sells for.)
 --
 -- Quality: when the game told Data/Recipes.lua which quality the character
 -- makes (reagents and consumables, where each quality is its own item),
@@ -27,6 +30,16 @@ local cache
 local function PriceOf(itemID)
     local price = ns.Prices:Get(tostring(itemID))
     return price and price.value or nil, price
+end
+
+-- What a crafted item sells for: its market value, or the lowest listing
+-- when that's lower.
+local function SellPriceOf(itemID)
+    local price = ns.Prices:Get(tostring(itemID))
+    if not price or not price.value then return nil, price end
+    local each = price.value
+    if price.min and price.min > 0 and price.min < each then each = price.min end
+    return each, price
 end
 
 -- Cost of one craft's materials, or nil when a material has no price.
@@ -58,13 +71,13 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
     local outputID, quality = Crafting.OutputOf(recipe)
     local key = tostring(outputID)
     if ns.Rules:IsJunk(key) then return nil end
-    local each, price = PriceOf(outputID)
+    local each, price = SellPriceOf(outputID)
     -- A quality item nobody has priced yet: fall back to the recipe's
     -- output rather than showing nothing.
     if not each and outputID ~= recipe.o then
         outputID, quality = recipe.o, nil
         key = tostring(outputID)
-        each, price = PriceOf(outputID)
+        each, price = SellPriceOf(outputID)
     end
     if not each then return nil end
     local cost = MaterialCost(recipe)
@@ -84,7 +97,7 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
         quality = quality,
     }
     if quality and recipe.cq and recipe.qo[recipe.cq] then
-        local better = PriceOf(recipe.qo[recipe.cq])
+        local better = SellPriceOf(recipe.qo[recipe.cq])
         if better and better > each then
             e.concentration = {
                 quality = recipe.cq,
