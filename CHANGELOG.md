@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.1
 
 - **Craft or sell prices what you'd really get:** a crafted item is valued at the lowest listing when that's below its usual price, since a new post has to undercut it. Items with a few cheap listings and a big overpriced stack looked hugely profitable before (Blood Knight's Armor Kit showed 16,900g when it sells for about 1,000g).
 - The Craft view's title no longer gets cut off.
