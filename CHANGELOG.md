@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0
+
+- **Gold per hour:** type `/ac gph` and press **Start** when you start farming. The window shows your gold per hour, the time, gold looted, what your looted and gathered items are worth, and your best items so far. Only looting and gathering count: quest rewards, vendor and AH sales don't.
+- Items are valued at what they sell for on the AH after the cut, or at the vendor when that pays more (or they can't go on the AH), and the value follows the latest prices.
+- Started, paused and stopped by hand only, so keys and raids never count; you get a reminder if you enter a dungeon or raid with a session running. A /reload or logout keeps it going without counting the time away.
+- **History** lists your last 30 sessions with where you farmed, how long and the gold per hour.
+
 ## 0.12.0
 
 - **Cheapest materials:** open one of your recipes and a panel beside the profession window lists each quality you can make, with the cheapest mix of material qualities that gets there, what those materials sell for, and the profit when each quality is its own item. The game itself says which quality each mix makes, so it follows Blizzard's rules exactly.
