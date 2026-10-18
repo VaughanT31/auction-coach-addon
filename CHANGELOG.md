@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.2
+
+- **Usual prices ignore overpriced walls:** when only a couple of copies were listed at the real price and big overpriced stacks sat above them, the usual price came out near the overpriced stacks. That made cheap listings look like huge deals and crafts look far more profitable than they are. Now a big jump in price after two listings (or two copies) ends the average. Your own AH scans use the new rule straight away; the desktop app's prices follow once the server is updated.
+
 ## 0.11.1
 
 - **Craft or sell prices what you'd really get:** a crafted item is valued at the lowest listing when that's below its usual price, since a new post has to undercut it. Items with a few cheap listings and a big overpriced stack looked hugely profitable before (Blood Knight's Armor Kit showed 16,900g when it sells for about 1,000g).

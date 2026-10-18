@@ -15,12 +15,13 @@ ns.Prices = Prices
 -- Averages the cheapest 15% of quantity, extending to 30% while prices stay
 -- within 20% of the previous listing. Troll listings at silly prices sit
 -- far above that chunk, so they never move the market value.
--- Old items can have so few real listings that troll stacks hold most of
--- the quantity, so the average also stops at a cliff: a price more than
--- CLIFF times the previous one, once CLIFF_MIN_LISTINGS listings are in.
--- One cheap listing alone never counts as the market (it may be a deal).
+-- Some items have so few real listings that troll stacks hold most of the
+-- quantity, so the average also stops at a cliff: a price more than CLIFF
+-- times the previous one, once CLIFF_MIN_LISTINGS listings or
+-- CLIFF_MIN_UNITS units are in. A single cheap unit alone never counts as
+-- the market (it may be a deal).
 -- Must stay identical to market_value in the platform (shared/pricing.py).
-local CLIFF, CLIFF_MIN_LISTINGS = 5, 3
+local CLIFF, CLIFF_MIN_LISTINGS, CLIFF_MIN_UNITS = 5, 2, 2
 
 function Prices.MarketValue(listings)
     -- Same order as Python's sorted(): price, then quantity.
@@ -41,7 +42,7 @@ function Prices.MarketValue(listings)
 
     for i = 1, #listings do
         local price, qty = listings[i][1], listings[i][2]
-        if i > CLIFF_MIN_LISTINGS and price > lastPrice * CLIFF then
+        if lastPrice and (i - 1 >= CLIFF_MIN_LISTINGS or sumQty >= CLIFF_MIN_UNITS) and price > lastPrice * CLIFF then
             break
         end
         if sumQty >= lowTarget then
