@@ -19,33 +19,68 @@ ns.MaterialPanel = Panel
 local WIDTH = 330
 local ROW_HEIGHT = 22
 local MAX_ROWS = 10
-local TOP = -52
+local SUB_Y = -34
 
 local GREEN = "|cff66dd77"
 local RED = "|cffff6666"
 local GREY = "|cff999999"
 
-local frame, rows, subText
-local current            -- { recipeID, plan, values }
+local frame, rows, subText, headers
+local current            -- { recipeID, plan, values, tiers }
 
 local function Enabled()
     return ns.db and ns.db.settings.materialPicker ~= false
 end
 
-local function QualityIcon(quality)
-    if not quality then return "" end
-    for _, atlas in ipairs({ "Professions-Icon-Quality-Tier" .. quality .. "-Small", "Professions-ChatIcon-Quality-Tier" .. quality }) do
-        if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then
-            return CreateAtlasMarkup(atlas, 18, 18)
-        end
+local function AtlasMarkup(atlas)
+    if type(atlas) == "string" and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then
+        return CreateAtlasMarkup(atlas, 18, 18)
     end
+    return nil
+end
+
+local function Try(fn, ...)
+    if not fn then return nil end
+    local ok, result = pcall(fn, ...)
+    return ok and result or nil
+end
+
+-- The game's own icon for an item's quality, when this client can say:
+-- Midnight's two qualities (a silver and a gold star) look different from
+-- the older three and five.
+local function ItemQualityIcon(itemID, reagent)
+    if not itemID or not C_TradeSkillUI then return nil end
+    local get = reagent and C_TradeSkillUI.GetItemReagentQualityInfo or C_TradeSkillUI.GetItemCraftedQualityInfo
+    local info = Try(get, itemID)
+    if type(info) == "table" then
+        return AtlasMarkup(info.iconSmall) or AtlasMarkup(info.iconChat) or AtlasMarkup(info.iconInventory)
+    end
+    return nil
+end
+
+-- A quality icon: the item's own when known, else by how many qualities
+-- the recipe has (2 = Midnight's stars).
+local function QualityIcon(quality, itemID, tiers, reagent)
+    if not quality then return "" end
+    local own = ItemQualityIcon(itemID, reagent)
+    if own then return own end
+    local names
+    if tiers == 2 then
+        names = { "Professions-Icon-Quality-12-Tier" .. quality .. "-Small", "Professions-ChatIcon-Quality-12-Tier" .. quality,
+            "Professions-Icon-Quality-12-Tier" .. quality }
+    else
+        names = { "Professions-Icon-Quality-Tier" .. quality .. "-Small", "Professions-ChatIcon-Quality-Tier" .. quality }
+    end
+    for _, atlas in ipairs(names) do
+        local markup = AtlasMarkup(atlas)
+        if markup then return markup end
+    end
+    if tiers == 2 then return quality == 1 and L.MAT_SILVER or L.MAT_GOLD end
     return "R" .. quality
 end
 
 local function ReagentQuality(itemID)
-    local get = C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQualityByItemInfo
-    local ok, quality = pcall(get or function() end, itemID)
-    return ok and quality or nil
+    return Try(C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQualityByItemInfo, itemID)
 end
 
 local function ItemName(itemID)
@@ -92,10 +127,10 @@ local function ShowRowTooltip(row)
     local entry = row.entry
     if not entry then return end
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(L.MAT_TIP_TITLE:format(QualityIcon(entry.quality)), 1, 1, 1)
+    GameTooltip:AddLine(L.MAT_TIP_TITLE:format(row.icon or QualityIcon(entry.quality)), 1, 1, 1)
     for _, m in ipairs(entry.mix) do
         local each = ns.MaterialPicker.PriceOf(m.itemID) or 0
-        GameTooltip:AddDoubleLine(("%dx %s %s"):format(m.n, ItemName(m.itemID), QualityIcon(ReagentQuality(m.itemID))),
+        GameTooltip:AddDoubleLine(("%dx %s %s"):format(m.n, ItemName(m.itemID), QualityIcon(ReagentQuality(m.itemID), m.itemID, nil, true)),
             Util.FormatMoney(each * m.n), 1, 1, 1, 0.8, 0.8, 0.8)
     end
     if current and current.plan.fixed > 0 then
@@ -111,8 +146,6 @@ end
 local function CreateRow(index)
     local row = CreateFrame("Frame", nil, frame)
     row:SetHeight(ROW_HEIGHT)
-    row:SetPoint("TOPLEFT", 12, TOP - 18 - (index - 1) * ROW_HEIGHT)
-    row:SetPoint("RIGHT", -12, 0)
     row:EnableMouse(true)
     Skin.RowBand(row)
     local highlight = row:CreateTexture(nil, "HIGHLIGHT")
@@ -146,10 +179,13 @@ local function Create()
     subText:SetPoint("TOPLEFT", 14, -34)
     subText:SetPoint("RIGHT", -14, 0)
     subText:SetJustifyH("LEFT")
-    local headers = { { 16, 90, L.MAT_COL_QUALITY }, { 108, 76, L.MAT_COL_COST, "RIGHT" }, { 188, 76, L.MAT_COL_PROFIT, "RIGHT" } }
-    for _, h in ipairs(headers) do
+    subText:SetWordWrap(true)
+    headers = {}
+    local columns = { { 16, 90, L.MAT_COL_QUALITY }, { 108, 76, L.MAT_COL_COST, "RIGHT" }, { 188, 76, L.MAT_COL_PROFIT, "RIGHT" } }
+    for _, h in ipairs(columns) do
         local fs = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        fs:SetPoint("TOPLEFT", h[1], TOP)
+        fs.x = h[1]
+        headers[#headers + 1] = fs
         fs:SetWidth(h[2])
         fs:SetJustifyH(h[4] or "LEFT")
         fs:SetText(h[3])
@@ -157,6 +193,24 @@ local function Create()
     rows = {}
     for i = 1, MAX_ROWS do rows[i] = CreateRow(i) end
     if ProfessionsFrame then ProfessionsFrame:HookScript("OnHide", function() frame:Hide() end) end
+end
+
+-- Puts the headings and rows under the description, however many lines it
+-- wraps to. Returns the y where the rows end.
+local function Layout(count)
+    local y = SUB_Y - math.ceil(subText:GetStringHeight()) - 10
+    for _, fs in ipairs(headers) do
+        fs:ClearAllPoints()
+        fs:SetPoint("TOPLEFT", fs.x, y)
+        fs:SetShown(count > 0)
+    end
+    y = y - 18
+    for i, row in ipairs(rows) do
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", 12, y - (i - 1) * ROW_HEIGHT)
+        row:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
+    end
+    return y - count * ROW_HEIGHT
 end
 
 function Panel:Hide()
@@ -181,10 +235,12 @@ function Panel:Show(recipeID)
         current = nil
         subText:SetText(L.MAT_NO_PRICE)
         for _, row in ipairs(rows) do row:Hide() end
-        frame:SetHeight(76)
+        frame:SetHeight(-Layout(0) + 4)
     else
         local recipe = ns.Recipes.Read(recipeID, nil)
-        current = { recipeID = recipeID, plan = plan, values = ns.MaterialPicker.Values(recipe) }
+        local qualities = Try(trade.GetQualitiesForRecipe, recipeID)
+        current = { recipeID = recipeID, plan = plan, values = ns.MaterialPicker.Values(recipe),
+            tiers = type(qualities) == "table" and #qualities or nil }
         subText:SetText(current.values and L.MAT_SUB or L.MAT_SUB_GEAR)
         local shown = math.min(#plan.qualities, MAX_ROWS)
         for i, row in ipairs(rows) do
@@ -192,7 +248,8 @@ function Panel:Show(recipeID)
             row.entry = entry
             row:SetShown(entry ~= nil)
             if entry then
-                local label = QualityIcon(entry.quality)
+                row.icon = QualityIcon(entry.quality, recipe and recipe.qo and recipe.qo[entry.quality], current.tiers)
+                local label = row.icon
                 if entry.concentration then label = label .. " " .. GREY .. L.MAT_CONC:format(entry.concentration) .. "|r" end
                 row.quality:SetText(label)
                 row.cost:SetText(Util.FormatMoney(entry.cost))
@@ -205,7 +262,7 @@ function Panel:Show(recipeID)
                 end
             end
         end
-        frame:SetHeight(-TOP + 18 + shown * ROW_HEIGHT + 12)
+        frame:SetHeight(-Layout(shown) + 12)
     end
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 6, 0)
