@@ -35,6 +35,8 @@ local DEFAULTS = {
         shoppingAlerts = true,
         -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).
         destroyTooltip = true,
+        -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).
+        materialPicker = true,
         minimapHide = false,
         minimapAngle = 200,
     },

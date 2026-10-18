@@ -114,7 +114,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Just added (desktop app 0.7)**
 - **Alerts outside the game:** when one of your listings is undercut, or something on your shopping list hits your price, a Windows notification and, if you link it, a Discord direct message.
 
-**Just added (0.10.0)**
+**Just added (0.12.0)**
+- **Cheapest materials:** beside the profession window, each quality you can make with the cheapest mix of material qualities that gets there, its cost and profit, and a Use button that fills the recipe in. The game itself says which quality each mix makes.
+
+**Added in 0.10.0**
 - **Craft steps in Today's Plan:** crafts that clearly beat selling the materials, as many as should sell.
 - **Craft or sell knows your quality**, and what concentration would add.
 

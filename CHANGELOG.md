@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0
+
+- **Cheapest materials:** open one of your recipes and a panel beside the profession window lists each quality you can make, with the cheapest mix of material qualities that gets there, what those materials sell for, and the profit when each quality is its own item. The game itself says which quality each mix makes, so it follows Blizzard's rules exactly.
+- **Concentration rows** show up only when concentration reaches a quality with cheaper materials, with how much concentration it costs.
+- Hover a row for the materials, how many of each quality. **Use** puts that mix in the recipe. Turn the panel off with "Cheapest materials" in the options.
+
 ## 0.11.2
 
 - **Usual prices ignore overpriced walls:** when only a couple of copies were listed at the real price and big overpriced stacks sat above them, the usual price came out near the overpriced stacks. That made cheap listings look like huge deals and crafts look far more profitable than they are. Now a big jump in price after two listings (or two copies) ends the average. Your own AH scans use the new rule straight away; the desktop app's prices follow once the server is updated.
