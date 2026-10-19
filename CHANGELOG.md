@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0
+
+- **Exact amounts at the mailbox:** the game's sale message only names the item, never how many sold, so a stack can't be counted when it sells. Open the mailbox and Auction Coach now says exactly what the sale mails hold, one line per item: *Mailbox: Void-Shrouded Tincture sold 112, 2,021g after the AH cut (3 sales).* Each mail is reported once, however often you open the mailbox.
+- **Sold so far on the Auctions tab:** a stack that has partly sold shows how many went, for example *x777 112 sold*, and its tooltip says *112 of 889 sold so far* with the gold after the cut.
+- The chat line when a stack sells no longer suggests the whole stack went: it gives the price each and says the mailbox has the exact amount.
+- **Deals are judged on what they really resell for:** a few cheap items under a big stack of normal listings now resell just under those listings, not at an inflated "usual" price. The usual price itself is now the typical hour's lowest, so hours when only silly-priced stacks were left no longer push it up (one scroll showed 9,830g profit when it really makes about 125g). The Deals column is now called Resell.
+- **With desktop app 0.8:** when something sells while the game is closed, a Windows notification and Discord message say exactly how many sold, for how much after the cut, and how many are still listed. Sales during play stay in the game's chat. Checked against the hourly Auction House snapshot.
+
 ## 0.13.0
 
 - **Gold per hour:** type `/ac gph` and press **Start** when you start farming. The window shows your gold per hour, the time, gold looted, what your looted and gathered items are worth, and your best items so far. Only looting and gathering count: quest rewards, vendor and AH sales don't.

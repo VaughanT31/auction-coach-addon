@@ -4,8 +4,10 @@
 -- its price and quantity. When WoW says "A buyer has been found for your
 -- auction of X", the matching post is found and Auction Coach adds what
 -- the sale made after the AH cut. The message only names the item, so for
--- a stack (which can sell in parts) the line gives the price each and what
--- the whole stack makes.
+-- a stack (which can sell in parts) the line gives the price each and says
+-- the exact amount comes with the mail: the "Auction successful" mail's
+-- invoice names how many sold, and the mailbox summary (ScanMail) reports
+-- each of those once.
 --
 --   db.posts[group] = { { k = item key, v = unit price, q = quantity,
 --                         p = posted, s = first sale, n = sale messages,
@@ -81,7 +83,7 @@ function Sales:Message(post)
     if post.q == 1 then
         return L.SALE_ONE:format(link, money(Util.AfterCut(post.v)))
     end
-    return L.SALE_STACK:format(link, money(post.v), post.q, money(Util.AfterCut(post.v * post.q)))
+    return L.SALE_STACK:format(link, money(post.v))
 end
 
 -- The post with this auction ID, if Blizzard reported it when posting.
@@ -114,6 +116,82 @@ function Sales:OnSold(itemName, now, auctionID)
 end
 
 -- ---------------------------------------------------------------------
+-- The mailbox: exact amounts
+-- ---------------------------------------------------------------------
+
+-- Each "Auction successful" mail's invoice names the item, how many sold
+-- and (in the mail) the gold after the cut. A mail has no ID, so it is
+-- remembered by item, count, gold and when it expires (now + days left,
+-- in 15 minute steps, with a step either side for rounding) until it
+-- expires: reported once however often the mailbox is opened.
+-- In restricted content (instances, combat) the game can hand addons secret
+-- strings that error when read; those are skipped.
+local function Readable(value)
+    return type(value) == "string" and not (issecretvalue and issecretvalue(value))
+end
+
+local MAIL_STEP = 900
+
+local function MailSig(name, count, money, step)
+    return name .. "|" .. count .. "|" .. money .. "|" .. step
+end
+
+-- One line per item for sale mails not reported before. Returns the lines.
+function Sales:ScanMail(now)
+    if not ns.db or not GetInboxInvoiceInfo or not GetInboxNumItems then return {} end
+    now = now or Util.Now()
+    ns.db.mailSeen = ns.db.mailSeen or {}
+    local seenMail = ns.db.mailSeen
+    for sig, expires in pairs(seenMail) do
+        if expires < now then seenMail[sig] = nil end
+    end
+    local order, byItem = {}, {}
+    for i = 1, GetInboxNumItems() do
+        local invoiceType, itemName, _, _, _, _, _, _, _, _, count = GetInboxInvoiceInfo(i)
+        if invoiceType == "seller" and Readable(itemName) then
+            local _, _, _, _, money, _, daysLeft = GetInboxHeaderInfo(i)
+            money, count = money or 0, math.max(1, count or 1)
+            local expires = now + math.floor((daysLeft or 0) * 86400)
+            local step = math.floor(expires / MAIL_STEP)
+            local known
+            for d = -1, 1 do
+                if seenMail[MailSig(itemName, count, money, step + d)] then known = true end
+            end
+            if not known then
+                seenMail[MailSig(itemName, count, money, step)] = expires
+                local entry = byItem[itemName]
+                if not entry then
+                    entry = { name = itemName, count = 0, money = 0, mails = 0 }
+                    byItem[itemName] = entry
+                    order[#order + 1] = entry
+                end
+                entry.count, entry.money, entry.mails = entry.count + count, entry.money + money, entry.mails + 1
+            end
+        end
+    end
+    local lines = {}
+    for _, entry in ipairs(order) do
+        local gold = Util.FormatMoneyIcons(entry.money)
+        if entry.count == 1 then
+            lines[#lines + 1] = L.MAIL_SOLD_ONE:format(entry.name, gold)
+        else
+            local amount = BreakUpLargeNumbers and BreakUpLargeNumbers(entry.count) or tostring(entry.count)
+            local text = L.MAIL_SOLD:format(entry.name, amount, gold)
+            if entry.mails > 1 then text = text .. " " .. L.MAIL_SALES:format(entry.mails) end
+            lines[#lines + 1] = text
+        end
+    end
+    return lines
+end
+
+-- How many of an auction sold so far: what was posted (found by auction
+-- ID) minus what is still listed. nil when the post isn't known.
+function Sales:PostedFor(auctionID)
+    local post = self:FindPostByID(auctionID)
+    return post and post.q or nil
+end
+
+-- ---------------------------------------------------------------------
 -- Events
 -- ---------------------------------------------------------------------
 
@@ -129,15 +207,21 @@ end
 -- fallback in case a client sends it as plain system text.
 local SOLD = Enum.AuctionHouseNotification and Enum.AuctionHouseNotification.AuctionSold
 
--- In restricted content (instances, combat) the game can hand addons secret
--- strings that error when read; those are skipped.
-local function Readable(value)
-    return type(value) == "string" and not (issecretvalue and issecretvalue(value))
-end
 
 ns.Events:On("AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION", function(_, notification, text, auctionID)
     if not ns.db or notification ~= SOLD or not Readable(text) then return end
     Sales:OnSold(text, Util.Now(), auctionID)
+end)
+
+-- The mailbox: print what the sale mails say, once each. A short wait
+-- lets the inbox finish loading (it fires this several times).
+ns.Events:On("MAIL_INBOX_UPDATE", function()
+    if not ns.db or not ns.db.settings.saleMessages then return end
+    Util.Debounce("mailSales", 1, function()
+        for _, line in ipairs(Sales:ScanMail(Util.Now())) do
+            Util.Print(line)
+        end
+    end)
 end)
 
 ns.Events:On("CHAT_MSG_SYSTEM", function(_, message)

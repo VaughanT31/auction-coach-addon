@@ -47,7 +47,7 @@ Two more views on the same tab:
 
 ### And also
 
-- **Sale messages:** when an auction sells, a chat line says what it made after the AH cut.
+- **Sale messages:** when an auction sells, a chat line says so. The game doesn't say how many of a stack sold, so the mailbox gives the exact amount: open it and one line per item says how many sold and the gold after the AH cut. Partly sold stacks show *112 sold* on the Auctions tab.
 - **Undercut timing:** learns how fast each item gets undercut, so you know which ones need watching.
 - **Fits how you play:** tell it whether you check the AH rarely, often or constantly (casual, active or camper), and the advice adapts.
 - **Grey items:** says to vendor them. Most grey AH listings are gold sellers moving gold, so their AH prices are not real.
@@ -111,10 +111,13 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (desktop app 0.7)**
+**Just added (0.14.0 and desktop app 0.8)**
+- **Exact sold amounts:** at the mailbox, on the Auctions tab, and as a Discord message or Windows notification when something sells while the game is closed.
+
+**Added in desktop app 0.7**
 - **Alerts outside the game:** when one of your listings is undercut, or something on your shopping list hits your price, a Windows notification and, if you link it, a Discord direct message.
 
-**Just added (0.13.0)**
+**Added in 0.13.0**
 - **Gold per hour:** `/ac gph` starts a farming session by hand and shows gold per hour from looting and gathering, your best items and a history of past sessions.
 
 **Added in 0.12.0**

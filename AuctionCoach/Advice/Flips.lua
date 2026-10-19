@@ -60,10 +60,12 @@ local function KeysOn(r, data)
 end
 
 -- What the item usually sells for on the sell realm: its usual lowest,
--- or the market value when the market has dropped below that.
+-- or the market value when the market has dropped below that, and never
+-- above where the next listings up start (the wall).
 local function ResellPrice(price)
     local resell = price.usualMin or price.value
     if price.value and price.usualMin and price.value < price.usualMin then resell = price.value end
+    if resell and price.wall and price.wall < resell then resell = price.wall end
     return resell
 end
 

@@ -31,14 +31,18 @@
 --   m  market value (average of the cheapest chunk of listings)
 --   n  lowest price
 --   h  14-day average market value
---   l  usual lowest price: 7-day average of the hourly lowest price
+--   l  usual lowest price: 7-day median of the hourly lowest price
+--   r  where the listings above the cheapest ones start (the first listing more
+--      than 1.5 times the one before it), only when that is below l: a
+--      resale has to come in under it
 --   u  typical seconds until a listing posted at the lowest price gets undercut,
 --      from players who share their posts (opt-in); un = how many posts
 --   w  typical seconds until such a listing first sells; wn = how many sales
 --      (u/un and w/wn only appear once at least 3 posts back them)
 --   s  estimated sales per day
 --   c  units listed right now at or below the usual lowest price (or the
---      market value when there is no usual lowest yet)
+--      market value when there is no usual lowest yet), or under r when
+--      there is one
 --   t  unix time of the snapshot this row came from (optional, defaults to generatedAt)
 -- Destroy fields (optional, desktop app 0.8 and later): per source, an item key
 -- or a gear group "dx:<quality>:<expansion>":

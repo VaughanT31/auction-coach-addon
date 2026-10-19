@@ -64,7 +64,8 @@ end
 
 -- Returns {
 --   items      { { key, unit, quantity, auctions, left, action, lowest,
---                  lowestAt, newPrice, vendorGold, suggestion }, ... },
+--                  lowestAt, newPrice, vendorGold, suggestion,
+--                  sold, posted (when part of a stack already sold) }, ... },
 --              things to do first, then by value
 --   undercut   how many entries are REPOST, CANCEL or WAIT
 --   at         when the auctions were last read (nil = never)
@@ -86,6 +87,12 @@ function Auctions:List()
         end
         entry.quantity = entry.quantity + a.q
         entry.auctions = entry.auctions + 1
+        -- Sold so far: posted (the post with this auction ID) minus still listed.
+        local posted = a.id and ns.Sales and ns.Sales:PostedFor(a.id)
+        if posted and posted > a.q then
+            entry.sold = (entry.sold or 0) + (posted - a.q)
+            entry.posted = (entry.posted or 0) + posted
+        end
         -- The soonest to expire, so "time left" never overstates.
         if a.left and (not entry.left or a.left < entry.left) then entry.left = a.left end
     end

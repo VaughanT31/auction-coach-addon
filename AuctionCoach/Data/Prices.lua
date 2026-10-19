@@ -134,12 +134,13 @@ local function FromData(key, realmName)
         min = row.n,
         historical = row.h,
         usualMin = row.l,
+        wall = row.r,
         -- From players who share their posts (opt-in): typical seconds until
         -- undercut and until the first sale, and how many posts that is from.
         sharedUndercut = row.u and { seconds = row.u, count = row.un or 0 } or nil,
         sharedSell = row.w and { seconds = row.w, count = row.wn or 0 } or nil,
         salesPerDay = row.s,
-        -- Units listed right now at or below the usual lowest price.
+        -- Units listed right now below where a resale would go.
         listed = row.c,
         t = row.t or data.generatedAt or 0,
         source = "data",
@@ -170,11 +171,14 @@ end
 --   historical   14-day average market value (Data.lua only)
 --   sharedUndercut, sharedSell  { seconds, count } from players who share
 --                (Data.lua only): typical time until undercut / first sale
---   usualMin     what the lowest listing normally is: 7-day average of the
+--   usualMin     what the lowest listing normally is: 7-day median of the
 --                hourly lowest price (Data.lua only)
+--   wall         where the listings above the cheap ones start, when that is
+--                below usualMin: a resale has to come in under it (Data.lua only)
 --   salesPerDay  estimated sales per day (Data.lua only)
 --   listed       units listed right now at or below the usual lowest
---                price: the queue a resold item joins (Data.lua only)
+--                price (under the wall when there is one): the queue a resold
+--                item joins (Data.lua only)
 -- }
 function Prices:Get(key, groupKey, realmName)
     if not key or not ns.db then return nil end
@@ -196,6 +200,7 @@ function Prices:Get(key, groupKey, realmName)
         source = newer.source,
         historical = data.historical,
         usualMin = data.usualMin,
+        wall = data.wall,
         sharedUndercut = data.sharedUndercut,
         sharedSell = data.sharedSell,
         salesPerDay = data.salesPerDay,

@@ -78,6 +78,10 @@ local function ShowRowTooltip(row)
     end
     local left = ns.Auctions.FormatLeft(entry.left)
     if left then GameTooltip:AddLine(L.AUCTIONS_TIME_LEFT:format(left), 0.75, 0.75, 0.75) end
+    if entry.sold and entry.sold > 0 and entry.posted then
+        GameTooltip:AddLine(L.AUCTIONS_SOLD_OF:format(BreakUpLargeNumbers(entry.sold), BreakUpLargeNumbers(entry.posted),
+            Util.FormatMoney(Util.AfterCut(entry.unit * entry.sold))), 0.2, 1, 0.6)
+    end
     GameTooltip:AddLine(L.AUCTIONS_LISTED_VALUE:format(Util.FormatMoney(ns.Auctions.ListedValue(entry))), 0.75, 0.75, 0.75)
     GameTooltip:Show()
 end
@@ -118,6 +122,9 @@ local function SetRow(row, entry)
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
     local name = Util.NamedLink(entry.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
     if entry.quantity > 1 then name = name .. " x" .. BreakUpLargeNumbers(entry.quantity) end
+    if entry.sold and entry.sold > 0 then
+        name = name .. " |cff33ff99" .. L.AUCTIONS_SOLD:format(BreakUpLargeNumbers(entry.sold)) .. "|r"
+    end
     row.name:SetText(name)
     row.yours:SetText(Util.FormatMoneyIcons(entry.unit))
 

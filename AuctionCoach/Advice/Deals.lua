@@ -10,6 +10,8 @@
 -- with usual lowest, not with the market value, means a cheap listing
 -- that sits unsold for days turns into the usual price instead of a
 -- "deal", and troll stacks above the real listings never make one.
+-- Nor can a resale go above the next listings up (the wall): 13 scrolls at
+-- 16g under 142 at 150g resell at 150g, however high the usual lowest was.
 
 local _, ns = ...
 local Util = ns.Util
@@ -54,13 +56,15 @@ local function Candidates(minDiscount)
         if t and (not newest or t > newest) then newest = t end
     end
 
-    local function Check(key, low, usual)
+    local function Check(key, low, usual, wall)
+        if usual and wall and wall < usual then usual = wall end
         if low and usual and low > 0 and low < usual * ratio and not key:find(":b") then
             keys[key] = true
         end
     end
 
-    -- Usual lowest from Data.lua, which beats the scan's own running average.
+    -- Usual lowest from Data.lua (capped at the wall), which beats the
+    -- scan's own running average.
     local dataUsual = {}
     local data = ns.Prices.ActiveData()
     if data then
@@ -70,10 +74,10 @@ local function Candidates(minDiscount)
             for key, row in pairs(items) do
                 if row.l then
                     hasHistory = true
-                    dataUsual[key] = row.l
+                    dataUsual[key] = (row.r and row.r < row.l) and row.r or row.l
                 end
                 Seen(row.t or data.generatedAt)
-                Check(key, row.n, row.l)
+                Check(key, row.n, row.l, row.r)
             end
         end
     end
@@ -108,11 +112,15 @@ local function Evaluate(key, price, now, minDiscount, minProfit, minSales)
     if now - (price.minAt or 0) > MAX_AGE then return nil end
 
     -- Relisting means matching the usual lowest price, unless the whole
-    -- market has dropped below it.
+    -- market has dropped below it or the next listings up start lower.
     local resell = price.usualMin
     if not resell or resell <= 0 then return nil end
     if price.value and price.value > low and price.value < resell then
         resell = price.value
+    end
+    local wall
+    if price.wall and price.wall > low and price.wall < resell then
+        resell, wall = price.wall, true
     end
 
     local discount = 1 - low / resell
@@ -133,6 +141,8 @@ local function Evaluate(key, price, now, minDiscount, minProfit, minSales)
         salesPerDay = price.salesPerDay,
         listed = price.listed,
         chance = chance,
+        -- Resells under the next listings up, not at the usual price.
+        wall = wall,
         -- The usual price it would resell at may itself be pushed up.
         shaky = ns.Rules.ShakyUsual(price) or nil,
     }
@@ -141,6 +151,7 @@ end
 -- Returns {
 --   items = { { key, price, priceAt, resell, discount, profit, salesPerDay,
 --             listed, chance = of reselling within the seller window,
+--             wall = resell is where the next listings up start,
 --             shaky = the resell price may be pushed up }, ... }
 --           best profit first, at most MAX_DEALS
 --   newest = time of the newest price seen, nil when there are none

@@ -279,7 +279,8 @@ end
 function Phrases.Deal(d, money)
     money = money or Util.FormatMoney
     local lines = {
-        L.DEAL_LISTED:format(money(d.price), math.floor(d.discount * 100 + 0.5), money(d.resell)),
+        d.wall and L.DEAL_LISTED_WALL:format(money(d.price), money(d.resell))
+            or L.DEAL_LISTED:format(money(d.price), math.floor(d.discount * 100 + 0.5), money(d.resell)),
         L.DEAL_PROFIT:format(money(d.resell), money(d.profit)),
     }
     local speed = BreakUpLargeNumbers(math.floor(d.salesPerDay + 0.5))
