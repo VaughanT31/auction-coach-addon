@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.1
+
+- **Scans that never started:** the Auction House handles one request at a time, and when it opens the game's own window searches straight away. A scan asked for at that moment could be dropped without a reply, and after 2 minutes Auction Coach gave up. The scan now waits until the Auction House is ready and asks again if nothing arrives.
+- A scan whose data is still arriving after 2 minutes is no longer stopped.
+
 ## 0.14.0
 
 - **Exact amounts at the mailbox:** the game's sale message only names the item, never how many sold, so a stack can't be counted when it sells. Open the mailbox and Auction Coach now says exactly what the sale mails hold, one line per item: *Mailbox: Void-Shrouded Tincture sold 112, 2,021g after the AH cut (3 sales).* Each mail is reported once, however often you open the mailbox.

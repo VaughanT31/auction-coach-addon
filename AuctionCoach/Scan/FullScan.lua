@@ -48,10 +48,28 @@ function FullScan:Start(manual)
     self.state = "waiting"
     self.progress = 0
     self.startedAt = Util.Now()
+    self.sends = 0
     ns:GetRealmData().lastFullScanStart = self.startedAt
     Util.Print(L.SCAN_STARTED)
-    C_AuctionHouse.ReplicateItems()
+    self:Send()
     self:StartPolling()
+end
+
+-- The AH handles one request at a time: a request sent while another is
+-- still in flight (the default AH window searches as soon as it opens) is
+-- dropped by the server without any reply. So the request goes out only
+-- once the AH is ready, and the ticker sends it again while no data has
+-- arrived. A repeat while the 15 minute limit runs is simply ignored.
+local function Ready()
+    return not C_AuctionHouse.IsThrottledMessageSystemReady or C_AuctionHouse.IsThrottledMessageSystemReady()
+end
+
+function FullScan:Send()
+    if not Ready() then return false end
+    self.sends = self.sends + 1
+    self.lastSend = Util.Now()
+    C_AuctionHouse.ReplicateItems()
+    return true
 end
 
 -- ---------------------------------------------------------------------
@@ -232,7 +250,11 @@ BeginProcessing = Guarded(BeginProcessing)
 
 -- REPLICATE_ITEM_LIST_UPDATE does not always arrive, so also poll the
 -- replicate list and start once its size has been stable for 2 seconds.
-local POLL_TIMEOUT = 120
+-- With no data at all the scan stops after NO_DATA_TIMEOUT; once data is
+-- coming in it gets up to ARRIVING_TIMEOUT to finish arriving.
+local NO_DATA_TIMEOUT = 120
+local ARRIVING_TIMEOUT = 300
+local RESEND_AFTER = 20
 
 function FullScan:StartPolling()
     self:StopPolling()
@@ -243,6 +265,9 @@ function FullScan:StartPolling()
             return
         end
         local count = C_AuctionHouse.GetNumReplicateItems() or 0
+        if count == 0 and Util.Now() - (self.lastSend or 0) >= RESEND_AFTER then
+            self:Send()
+        end
         if count > 0 and count == lastCount then
             stableTicks = stableTicks + 1
             if stableTicks >= 2 then BeginProcessing() end
@@ -250,8 +275,12 @@ function FullScan:StartPolling()
             stableTicks = 0
         end
         lastCount = count
-        if self.state == "waiting" and Util.Now() - self.startedAt > POLL_TIMEOUT then
+        if self.state ~= "waiting" then return end
+        local waited = Util.Now() - self.startedAt
+        if count == 0 and waited > NO_DATA_TIMEOUT then
             self:Abort(L.SCAN_NO_DATA)
+        elseif waited > ARRIVING_TIMEOUT then
+            self:Abort(L.SCAN_FAILED)
         end
     end)
 end

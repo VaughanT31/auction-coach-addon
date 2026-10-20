@@ -41,7 +41,7 @@ L.SCAN_BUSY = "A scan is already running."
 L.SCAN_PROGRESS = "Scanning... %d%%"
 L.SCAN_WAITING = "Waiting for scan data..."
 L.SCAN_AUTO_LATER = "Full scans are allowed once every 15 minutes. Auction Coach will scan automatically in %s if the Auction House is still open."
-L.SCAN_NO_DATA = "Blizzard sent no scan data after 2 minutes, so the scan was stopped. Full scans are limited to one every 15 minutes, and other auction addons (Auctionator, TSM) can use that up. Try /ac scan again later."
+L.SCAN_NO_DATA = "Blizzard sent no scan data after 2 minutes, so the scan was stopped. Blizzard allows one full scan every 15 minutes, counting scans from your other characters and from other auction addons. Try /ac scan again in 15 minutes."
 L.SCAN_ERROR = "The scan stopped because of an error: %s"
 
 -- Status
