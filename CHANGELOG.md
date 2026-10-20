@@ -6,7 +6,7 @@
 - **Sold so far on the Auctions tab:** a stack that has partly sold shows how many went, for example *x777 112 sold*, and its tooltip says *112 of 889 sold so far* with the gold after the cut.
 - The chat line when a stack sells no longer suggests the whole stack went: it gives the price each and says the mailbox has the exact amount.
 - **Deals are judged on what they really resell for:** a few cheap items under a big stack of normal listings now resell just under those listings, not at an inflated "usual" price. The usual price itself is now the typical hour's lowest, so hours when only silly-priced stacks were left no longer push it up (one scroll showed 9,830g profit when it really makes about 125g). The Deals column is now called Resell.
-- **With desktop app 0.8:** when something sells while the game is closed, a Windows notification and Discord message say exactly how many sold, for how much after the cut, and how many are still listed. Sales during play stay in the game's chat. Checked against the hourly Auction House snapshot.
+- **With desktop app 0.9:** when something sells while the game is closed, a Windows notification and Discord message say exactly how many sold, for how much after the cut, and how many are still listed. Sales during play stay in the game's chat. Checked against the hourly Auction House snapshot.
 
 ## 0.13.0
 

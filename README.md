@@ -67,7 +67,7 @@ Log in, open the Auction House once and Auction Coach scans it. The advice start
 
 The free Windows app sits in the tray and downloads fresh prices every hour, with 14-day averages and sales estimates. These make deals, sell chances and Today's Plan much better.
 
-1. **Download** `AuctionCoachSetup-0.5.0.exe` from the [desktop app release](https://github.com/VaughanT31/auction-coach-addon/releases/tag/desktop-v0.5.0).
+1. **Download** the [latest desktop app installer](https://auctioncoach.ctrlshiftzed.com/v1/desktop/download) (all versions are on the [releases page](https://github.com/VaughanT31/auction-coach-addon/releases)).
 2. **Run it.** Windows may say it protected your PC, because the installer is not code signed yet: click **More info**, then **Run anyway**. No admin rights needed.
 3. **Pick your WoW folder.** The app usually finds it on its own: click it, then **Continue**.
 4. **Pick your realms.** Your characters' realms are ticked for you if you have logged in with the addon before. Check the **Region** (EU or US), tick any others you play, then **Save realms**.
@@ -111,7 +111,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.14.0 and desktop app 0.8)**
+**Just added (0.14.0 and desktop app 0.9)**
 - **Exact sold amounts:** at the mailbox, on the Auctions tab, and as a Discord message or Windows notification when something sells while the game is closed.
 
 **Added in desktop app 0.7**
