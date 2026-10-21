@@ -141,7 +141,7 @@ local function SetRow(row, entry, kind)
     local name = Util.NamedLink(entry.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
 
     if kind == "shopping" then
-        row.name:SetText(name)
+        row.name:SetText(entry.need and (name .. " |cff9d9d9dx" .. entry.need .. "|r") or name)
         row.price:SetText(entry.lowest and Util.FormatMoneyIcons(entry.lowest) or "|cff9d9d9d-|r")
         row.usual:SetText(Util.FormatMoneyIcons(entry.max))
         row.profit:SetText(STATUS_COLORS[entry.status] .. L["SHOP_STATUS_" .. entry.status] .. "|r")

@@ -4,7 +4,9 @@
 -- Shopping view shows it, its tooltip says so, and a chat line points it
 -- out (once per item per ALERT_EVERY).
 --
---   db.shopping[itemKey] = { max = copper each, added = unix time }
+--   db.shopping[itemKey] = { max = copper each, added = unix time,
+--                            need = how many (optional), note = who added
+--                            it, such as "Patron Planner" (optional) }
 --
 -- Buying is always left to the player.
 
@@ -25,9 +27,13 @@ local function List()
     return ns.db.shopping
 end
 
-function Shopping:Add(key, maxPrice, link)
+function Shopping:Add(key, maxPrice, link, need, note)
     if not key or not maxPrice or maxPrice <= 0 then return false end
-    List()[key] = { max = math.floor(maxPrice), added = Util.Now() }
+    List()[key] = {
+        max = math.floor(maxPrice), added = Util.Now(),
+        need = tonumber(need) and need > 0 and math.floor(need) or nil,
+        note = type(note) == "string" and note ~= "" and note or nil,
+    }
     if link and not Util.LinkHasName(ns.db.links[key]) then ns.db.links[key] = link end
     alertedAt[key] = nil
     ns.Events:Fire("AC_SHOPPING_CHANGED")
@@ -67,7 +73,7 @@ function Shopping:Items()
     for key, entry in pairs(List()) do
         local price = ns.Prices:Get(key)
         items[#items + 1] = {
-            key = key, max = entry.max,
+            key = key, max = entry.max, need = entry.need, note = entry.note,
             lowest = price and price.min, lowestAt = price and (price.minAt or price.t),
             status = Shopping.Evaluate(entry, price, now),
         }

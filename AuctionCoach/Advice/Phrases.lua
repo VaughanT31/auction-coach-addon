@@ -475,6 +475,9 @@ end
 function Phrases.Shop(item, money)
     money = money or Util.FormatMoney
     local lines = { L.SHOP_TT:format(money(item.max)) }
+    if item.need then
+        lines[#lines + 1] = item.note and L.SHOP_TT_NEED_FOR:format(item.need, item.note) or L.SHOP_TT_NEED:format(item.need)
+    end
     if item.status == "BUY" then
         lines[#lines + 1] = L.SHOP_WHY_BUY:format(money(item.lowest), Util.FormatAge(item.lowestAt))
     elseif item.status == "WAIT" then

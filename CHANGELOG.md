@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0
+
+- **Other addons can fill your shopping list:** an item can now go on the list with how many you need and who added it. Patron Planner uses this to send what your queued crafting orders still need, and the Deals tab's Shopping view shows the count (*Sunfire Silk x12*) with *You need 12 (added by Patron Planner)* in the tooltip. Auction Coach still tells you when each one is listed at or under your price.
+- For addon authors: `AuctionCoachAPI.AddToShoppingList(item, count, maxPrice, note)` and `AuctionCoachAPI.RemoveFromShoppingList(item)`.
+- The **Cheapest materials** panel moves under Patron Planner's order queue when both are beside the profession window, instead of covering it.
+
 ## 0.14.1
 
 - **Scans that never started:** the Auction House handles one request at a time, and when it opens the game's own window searches straight away. A scan asked for at that moment could be dropped without a reply, and after 2 minutes Auction Coach gave up. The scan now waits until the Auction House is ready and asks again if nothing arrives.

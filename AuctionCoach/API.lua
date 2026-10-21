@@ -14,6 +14,12 @@
 --   AuctionCoachAPI.GetPriceInfo(item)       table with all of the above plus updated, source
 --   AuctionCoachAPI.GetSuggestedPrice(item)  price to post at, and the action:
 --                                            "POST" | "HOLD" | "VENDOR" | "NO_DATA"
+--   AuctionCoachAPI.AddToShoppingList(item, count, maxPrice, note)
+--                                            puts an item on the shopping list:
+--                                            how many, the most to pay each
+--                                            (copper) and who asked ("Patron
+--                                            Planner"); true when added
+--   AuctionCoachAPI.RemoveFromShoppingList(item)   true when it was there
 
 local _, ns = ...
 local Util = ns.Util
@@ -85,6 +91,19 @@ function API.GetSuggestedPrice(item)
     if not key then return nil, "NO_DATA" end
     local s = ns.Rules:SuggestPrice(key, link)
     return s.price, s.action
+end
+
+function API.AddToShoppingList(item, count, maxPrice, note)
+    if not API.IsReady() then return false end
+    local key, link = KeyFor(item)
+    if not key or type(maxPrice) ~= "number" or maxPrice <= 0 then return false end
+    return ns.Shopping:Add(key, maxPrice, link, count, note)
+end
+
+function API.RemoveFromShoppingList(item)
+    if not API.IsReady() then return false end
+    local key = KeyFor(item)
+    return key and ns.Shopping:Remove(key) or false
 end
 
 AuctionCoachAPI = API

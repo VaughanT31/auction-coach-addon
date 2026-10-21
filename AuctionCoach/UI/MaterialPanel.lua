@@ -264,9 +264,27 @@ function Panel:Show(recipeID)
         end
         frame:SetHeight(-Layout(shown) + 12)
     end
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 6, 0)
+    Panel:Place()
     frame:Show()
+end
+
+-- Beside the profession window, or under Patron Planner's order queue when
+-- that's showing there too (it moves again when the queue opens or closes).
+local hookedQueue
+function Panel:Place()
+    if not frame then return end
+    local queue = _G.PatronPlannerQueuePanel
+    if queue and not hookedQueue then
+        hookedQueue = true
+        queue:HookScript("OnShow", function() Panel:Place() end)
+        queue:HookScript("OnHide", function() Panel:Place() end)
+    end
+    frame:ClearAllPoints()
+    if queue and queue:IsShown() then
+        frame:SetPoint("TOPLEFT", queue, "BOTTOMLEFT", 0, -6)
+    else
+        frame:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 6, 0)
+    end
 end
 
 -- The recipe the profession window is showing.
