@@ -59,6 +59,7 @@ UI\SessionWindow.lua
 UI\AuctionsTab.lua
 UI\GoldHistoryWindow.lua
 UI\PostHelper.lua
+UI\ShoppingPanel.lua
 UI\VendorGuard.lua
 UI\ShareWindow.lua
 UI\Options.lua

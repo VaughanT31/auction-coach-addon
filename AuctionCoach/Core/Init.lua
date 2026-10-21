@@ -33,6 +33,8 @@ local DEFAULTS = {
         planMinutes = 15,
         -- Chat line when a shopping list item is listed at or below its max.
         shoppingAlerts = true,
+        -- The shopping list beside the AH when it opens (UI/ShoppingPanel.lua).
+        shoppingPanel = true,
         -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).
         destroyTooltip = true,
         -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).

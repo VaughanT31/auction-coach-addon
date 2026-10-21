@@ -104,6 +104,7 @@ local function Build()
     Checkbox("materialPicker", L.OPT_MAT_PICKER, L.OPT_MAT_PICKER_TIP, true, function(on)
         if not on and ns.MaterialPanel then ns.MaterialPanel:Hide() end
     end)
+    Checkbox("shoppingPanel", L.OPT_SHOP_PANEL, L.OPT_SHOP_PANEL_TIP, true)
     Checkbox("shoppingAlerts", L.OPT_SHOP_ALERTS, L.OPT_SHOP_ALERTS_TIP, true)
 
     Header(L.PLAN_TITLE_EMPTY)

@@ -97,9 +97,11 @@ function Shopping:CountToBuy()
     return n
 end
 
--- Chat line for items that just became buyable.
+-- Chat line for items that just became buyable. Not while the shopping
+-- panel is open beside the AH: it already shows them.
 local function Alert()
     if not ns.db or not ns.realmGroup or ns.db.settings.shoppingAlerts == false then return end
+    if ns.ShoppingPanel and ns.ShoppingPanel:IsShown() then return end
     local now = Util.Now()
     for _, item in ipairs(Shopping:Items()) do
         if item.status == "BUY" and now - (alertedAt[item.key] or 0) > ALERT_EVERY then
@@ -112,6 +114,7 @@ end
 
 for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_LIVE_PRICE", "AC_DATA_CHANGED", "AUCTION_HOUSE_SHOW" }) do
     ns.Events:On(event, function()
+        -- After the shopping panel has had its chance to open.
         Util.Debounce("shoppingAlert", 1, Alert)
     end)
 end
@@ -159,6 +162,8 @@ ns:RegisterCommand("shop", function(args)
     elseif action == "alerts" then
         ns.db.settings.shoppingAlerts = ns.db.settings.shoppingAlerts == false
         Util.Print(ns.db.settings.shoppingAlerts and L.SHOP_ALERTS_ON or L.SHOP_ALERTS_OFF)
+    elseif ns.ShoppingPanel and ns.Compat.IsAuctionHouseOpen() and ns.ShoppingPanel:Open() then
+        -- At the AH: the panel beside it.
     elseif ns.DealsTab then
         ns.DealsTab:ShowMode("shopping")
     end

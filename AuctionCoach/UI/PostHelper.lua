@@ -95,6 +95,7 @@ function PostHelper:Refresh()
     panel.use:SetShown(s.price ~= nil)
     panel:Show()
     Layout()
+    if ns.ShoppingPanel then ns.ShoppingPanel:Place() end
 end
 
 -- How many the player is about to post, from the sell frame.
@@ -126,6 +127,7 @@ end
 function PostHelper:Hide()
     current = nil
     if panel then panel:Hide() end
+    if ns.ShoppingPanel then ns.ShoppingPanel:Place() end
 end
 
 -- Fills in the sell frame's price box. Only ever on the player's click.
