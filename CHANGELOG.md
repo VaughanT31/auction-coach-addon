@@ -1,8 +1,11 @@
 # Changelog
 
-## 0.15.0
+## 0.15.1
 
 - **Your shopping list at the Auction House:** open the AH with items on your list and the list opens beside it: what you need, the lowest listing now against your max, and *Buy now* items first. Click an item to search for it, right-click to take it off. It sits under the price helper while you're selling, the chat line no longer repeats what the panel already shows, and `/ac shop` opens it again if you closed it. Turn it off in the options (Shopping list at the Auction House).
+
+## 0.15.0
+
 - **Other addons can fill your shopping list:** an item can now go on the list with how many you need and who added it. Patron Planner uses this to send what your queued crafting orders still need, and the Deals tab's Shopping view shows the count (*Sunfire Silk x12*) with *You need 12 (added by Patron Planner)* in the tooltip. Auction Coach still tells you when each one is listed at or under your price.
 - For addon authors: `AuctionCoachAPI.AddToShoppingList(item, count, maxPrice, note)` and `AuctionCoachAPI.RemoveFromShoppingList(item)`.
 - The **Cheapest materials** panel moves under Patron Planner's order queue when both are beside the profession window, instead of covering it.
