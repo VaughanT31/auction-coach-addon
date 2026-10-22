@@ -164,7 +164,7 @@ local function Create()
     add:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText(L.SHOP_PANEL_ADD)
-        GameTooltip:AddLine(L.SHOP_PANEL_ADD_TIP, 1, 1, 1, true)
+        GameTooltip:AddLine(ns.ShoppingEditor.Hint(L.SHOP_PANEL_ADD_TIP, L.SHOP_ADD_TIP_CLICK), 1, 1, 1, true)
         GameTooltip:Show()
     end)
     add:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -251,7 +251,7 @@ function ShoppingPanel:Draw()
         if line and line.item then SetItem(row, line.item) elseif line then SetHeader(row, line.header) end
     end
     local hidden = math.max(0, #lines - LINES)
-    panel.footer:SetText(hidden > 0 and L.SHOP_PANEL_SCROLL or L.SHOP_PANEL_HINT)
+    panel.footer:SetText(hidden > 0 and L.SHOP_PANEL_SCROLL or ns.ShoppingEditor.Hint(L.SHOP_PANEL_HINT))
 end
 
 function ShoppingPanel:Refresh()

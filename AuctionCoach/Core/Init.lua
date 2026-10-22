@@ -35,8 +35,10 @@ local DEFAULTS = {
         shoppingAlerts = true,
         -- The shopping list beside the AH when it opens (UI/ShoppingPanel.lua).
         shoppingPanel = true,
-        -- Alt-click an item link to add it to the shopping list (UI/ShoppingEditor.lua).
-        shopAltClick = true,
+        -- The click that adds an item link to the shopping list: alt, ctrlalt,
+        -- shiftalt, ctrlshift or off (UI/ShoppingEditor.lua). Nil until picked,
+        -- so an old "Alt-click" checkbox left off still counts.
+        shopClick = nil,
         -- Open the main window with the Auction House (UI/MainWindow.lua).
         openWithAH = false,
         -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).

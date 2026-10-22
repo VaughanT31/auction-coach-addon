@@ -2,7 +2,7 @@
 -- commands (0.16):
 --   Item     a small window with the item, how many and the most to pay
 --            each. Opened by Alt-clicking any item link (bags, chat, the
---            AH; option "Alt-click adds to the shopping list"), the
+--            AH; the click is picked in the options), the
 --            shopping panel's Add button, or Edit in a row's menu.
 --   Craft    the same window for a recipe's materials (the Cheapest
 --            materials panel's + button): how many crafts, then each
@@ -319,11 +319,49 @@ function Editor:RowMenu(owner, item)
     end)
 end
 
--- Alt-click any item link (bags, chat, the AH) to add it.
+-- The modifier keys for each choice of the "Add to the shopping list with"
+-- option. Exactly these keys must be held, so Alt-click stays free for other
+-- addons when another choice is picked.
+Editor.CLICKS = {
+    alt = { alt = true },
+    ctrlalt = { ctrl = true, alt = true },
+    shiftalt = { shift = true, alt = true },
+    ctrlshift = { ctrl = true, shift = true },
+}
+Editor.CLICK_ORDER = { "alt", "ctrlalt", "shiftalt", "ctrlshift", "off" }
+
+-- The picked click. Before the option, a checkbox turned Alt-click off.
+function Editor.ClickMode()
+    local settings = ns.db and ns.db.settings
+    if not settings then return "alt" end
+    if settings.shopClick == nil and settings.shopAltClick == false then settings.shopClick = "off" end
+    return Editor.CLICKS[settings.shopClick] and settings.shopClick or (settings.shopClick == "off" and "off" or "alt")
+end
+
+-- "Alt-click", "Ctrl-Alt-click" ... for the hints, or nil when it's off.
+function Editor.ClickName()
+    local mode = Editor.ClickMode()
+    return mode ~= "off" and L["SHOP_CLICK_" .. mode:upper()] or nil
+end
+
+-- A hint with "<click> any item to add it." after it, or without when it's off.
+-- clickFormat is the sentence with %s for the click (default L.SHOP_CLICK_HINT).
+function Editor.Hint(text, clickFormat)
+    local click = Editor.ClickName()
+    if not click then return text end
+    return text .. " " .. (clickFormat or L.SHOP_CLICK_HINT):format(click)
+end
+
+local function ClickHeld()
+    local keys = Editor.CLICKS[Editor.ClickMode()]
+    return keys ~= nil and IsAltKeyDown() == (keys.alt == true) and IsControlKeyDown() == (keys.ctrl == true)
+        and IsShiftKeyDown() == (keys.shift == true)
+end
+
+-- The picked click on any item link (bags, chat, the AH) adds it.
 if HandleModifiedItemClick then
     hooksecurefunc("HandleModifiedItemClick", function(link)
-        if not ns.db or ns.db.settings.shopAltClick == false then return end
-        if not IsAltKeyDown() or IsShiftKeyDown() or IsControlKeyDown() then return end
+        if not ns.db or not ClickHeld() then return end
         if type(link) ~= "string" or not (link:find("|Hitem:") or link:find("|Hbattlepet:")) then return end
         Editor:AddItem(link)
     end)

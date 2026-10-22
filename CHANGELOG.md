@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.2
+
+- **Pick the click that adds to your shopping list:** if Alt-click already does something for you, like adding items to sell with another addon, choose Ctrl-Alt, Shift-Alt or Ctrl-Shift-click instead in the options (*Add to the shopping list with*), or turn it off. Alt-click is still the default, and the hints show whichever you pick.
+
 ## 0.17.1
 
 - **Open with the Auction House:** a new option opens Auction Coach when you open the Auction House and closes it when you leave, unless you already had it open. Off by default.

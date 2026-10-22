@@ -122,7 +122,12 @@ local function Build()
     Checkbox("openWithAH", L.OPT_OPEN_WITH_AH, L.OPT_OPEN_WITH_AH_TIP, false)
     Checkbox("shoppingPanel", L.OPT_SHOP_PANEL, L.OPT_SHOP_PANEL_TIP, true)
     Checkbox("shoppingAlerts", L.OPT_SHOP_ALERTS, L.OPT_SHOP_ALERTS_TIP, true)
-    Checkbox("shopAltClick", L.OPT_SHOP_ALT, L.OPT_SHOP_ALT_TIP, true)
+    if ns.ShoppingEditor then ns.ShoppingEditor.ClickMode() end -- an old Alt-click checkbox left off becomes Off
+    local clicks = {}
+    for _, mode in ipairs(ns.ShoppingEditor and ns.ShoppingEditor.CLICK_ORDER or { "alt" }) do
+        clicks[#clicks + 1] = { mode, mode == "off" and L.OPT_SHOP_CLICK_OFF or L["SHOP_CLICK_" .. mode:upper()] }
+    end
+    Dropdown("shopClick", L.OPT_SHOP_CLICK, L.OPT_SHOP_CLICK_TIP, "alt", clicks)
 
     Header(L.PLAN_TITLE_EMPTY)
     Slider("planMinutes", L.OPT_PLAN, L.OPT_PLAN_TIP, 15, 5, 60, 5,

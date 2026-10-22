@@ -350,7 +350,7 @@ local function ModeContent()
         for _, item in ipairs(items) do
             if item.status == "BUY" then buy = buy + 1 end
         end
-        return L.SHOP_TITLE:format(#items, buy), L.SHOP_SUB, #items == 0 and L.SHOP_EMPTY or "", items
+        return L.SHOP_TITLE:format(#items, buy), ns.ShoppingEditor.Hint(L.SHOP_SUB), #items == 0 and L.SHOP_EMPTY or "", items
     end
     local list = ns.Deals:List()
     local sub = L.DEALS_SUB:format(math.floor(s.dealMinDiscount * 100 + 0.5), s.dealMinSales or 10, minProfit)
