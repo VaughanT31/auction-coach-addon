@@ -270,17 +270,31 @@ end
 
 -- Beside the profession window, or under Patron Planner's order queue when
 -- that's showing there too (it moves again when the queue opens or closes).
-local hookedQueue
+-- Patron Planner makes its queue whenever its Orders tab first refreshes,
+-- before or after this panel shows, so rather than hooking it this checks
+-- a few times a second while showing and moves when the queue comes or goes.
+local underQueue = false
+local sinceCheck = 0
+local function QueueShown()
+    local queue = _G.PatronPlannerQueuePanel
+    return queue ~= nil and queue:IsShown()
+end
+
 function Panel:Place()
     if not frame then return end
-    local queue = _G.PatronPlannerQueuePanel
-    if queue and not hookedQueue then
-        hookedQueue = true
-        queue:HookScript("OnShow", function() Panel:Place() end)
-        queue:HookScript("OnHide", function() Panel:Place() end)
+    if not frame.watchingQueue then
+        frame.watchingQueue = true
+        frame:HookScript("OnUpdate", function(_, elapsed)
+            sinceCheck = sinceCheck + elapsed
+            if sinceCheck < 0.2 then return end
+            sinceCheck = 0
+            if QueueShown() ~= underQueue then Panel:Place() end
+        end)
     end
+    local queue = _G.PatronPlannerQueuePanel
+    underQueue = QueueShown()
     frame:ClearAllPoints()
-    if queue and queue:IsShown() then
+    if underQueue then
         frame:SetPoint("TOPLEFT", queue, "BOTTOMLEFT", 0, -6)
     else
         frame:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 6, 0)

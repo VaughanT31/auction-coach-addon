@@ -51,6 +51,61 @@ function Shopping:Get(key)
     return key and ns.db and ns.db.shopping and ns.db.shopping[key]
 end
 
+-- Bought at the AH: what was bought comes off the count, and the item
+-- comes off the list once it's all bought (or when it had no count).
+function Shopping:Bought(key, quantity)
+    local entry = self:Get(key)
+    if not entry then return end
+    quantity = math.max(1, quantity or 1)
+    local link = Util.NamedLink(key) or key
+    if entry.need and quantity < entry.need then
+        entry.need = entry.need - quantity
+        ns.Events:Fire("AC_SHOPPING_CHANGED")
+        Util.Print(L.SHOP_BOUGHT_SOME:format(quantity, link, entry.need))
+    else
+        self:Remove(key)
+        Util.Print(L.SHOP_BOUGHT_ALL:format(link))
+    end
+end
+
+-- Purchases, seen through Blizzard's own calls. Commodities: the confirm
+-- names the item and how many, then COMMODITY_PURCHASE_SUCCEEDED says it
+-- went through. Other items: a bid at the buyout price is a purchase, and
+-- AUCTION_HOUSE_PURCHASE_COMPLETED names the auction.
+local commodity
+local buyouts = {}
+
+local function RememberCommodity(itemID, quantity)
+    if itemID and quantity then commodity = { itemID = itemID, quantity = quantity } end
+end
+hooksecurefunc(C_AuctionHouse, "StartCommoditiesPurchase", RememberCommodity)
+hooksecurefunc(C_AuctionHouse, "ConfirmCommoditiesPurchase", RememberCommodity)
+
+ns.Events:On("COMMODITY_PURCHASE_SUCCEEDED", function()
+    local c = commodity
+    commodity = nil
+    if c and ns.db then Shopping:Bought(Util.SimpleItemKey(c.itemID), c.quantity) end
+end)
+ns.Events:On("COMMODITY_PURCHASE_FAILED", function() commodity = nil end)
+
+hooksecurefunc(C_AuctionHouse, "PlaceBid", function(auctionID, bidAmount)
+    local ok, info = pcall(C_AuctionHouse.GetAuctionInfoByID, auctionID)
+    if ok and info and info.itemLink and info.buyoutAmount and bidAmount and bidAmount >= info.buyoutAmount then
+        buyouts[auctionID] = { link = info.itemLink, quantity = info.quantity }
+    end
+end)
+
+ns.Events:On("AUCTION_HOUSE_PURCHASE_COMPLETED", function(_, auctionID)
+    local b = auctionID and buyouts[auctionID]
+    if not b then return end
+    buyouts[auctionID] = nil
+    if ns.db then Shopping:Bought(Util.ItemKeyFromLink(b.link), b.quantity) end
+end)
+ns.Events:On("AUCTION_HOUSE_CLOSED", function()
+    commodity = nil
+    wipe(buyouts)
+end)
+
 -- One entry's state on this realm. Pure apart from the price passed in:
 -- price is Prices:Get's result or nil.
 --   status "BUY"      listed at or below the max, seen recently

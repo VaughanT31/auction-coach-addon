@@ -69,7 +69,7 @@ local function CreateRow(index)
         if mouse == "RightButton" then
             ns.Shopping:Remove(item.key)
         else
-            Compat.ShowAtAuctionHouse(item.key, Util.NamedLink(item.key), item.lowest)
+            Compat.ShowAtAuctionHouse(item.key, Util.NamedLink(item.key), item.lowest, item.need)
         end
     end)
     row:SetScript("OnEnter", function(self)

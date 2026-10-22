@@ -129,13 +129,56 @@ function Compat.IsAuctionHouseOpen()
     return AuctionHouseFrame ~= nil and AuctionHouseFrame:IsShown()
 end
 
+-- How many to buy, set in Blizzard's commodity buy frame the same way its
+-- own price rows do it (the CommoditiesQuantitySelectionChanged event, so
+-- the total price follows). Set straight away, then again once the
+-- listings arrive, since only then is it capped to what's for sale and
+-- priced. Kept for a while so it also lands when the item was opened from
+-- a name search and clicked afterwards.
+local PENDING_FOR = 30
+local pendingQuantity
+
+local function ApplyQuantity(itemID, quantity)
+    local event = AuctionHouseFrameMixin and AuctionHouseFrameMixin.Event
+        and AuctionHouseFrameMixin.Event.CommoditiesQuantitySelectionChanged
+    local buy = AuctionHouseFrame.CommoditiesBuyFrame
+    if not (event and buy and buy.BuyDisplay and buy.BuyDisplay:IsVisible()) then return false end
+    if buy.BuyDisplay:GetItemID() ~= itemID then return false end
+    return pcall(AuctionHouseFrame.TriggerEvent, AuctionHouseFrame, event, quantity)
+end
+
+-- Registered on first use: Compat loads before Events.
+local listening = false
+local function ListenForResults()
+    if listening then return end
+    listening = true
+    ns.Events:On("COMMODITY_SEARCH_RESULTS_UPDATED", function(_, itemID)
+        local p = pendingQuantity
+        if not p or p.itemID ~= itemID then return end
+        if GetTime() > p.expires then pendingQuantity = nil return end
+        -- After Blizzard's own handler has marked the results loaded.
+        C_Timer.After(0, function()
+            if pendingQuantity == p and ApplyQuantity(p.itemID, p.quantity) then pendingQuantity = nil end
+        end)
+    end)
+end
+
 -- Opens this item's listings at the Auction House, the same as clicking
 -- it in the browse results. If Blizzard's frame has changed, or the item
 -- is not cached yet, searches for its name instead. Returns true when
--- something was shown.
-function Compat.ShowAtAuctionHouse(key, link, minPrice)
+-- something was shown. quantity (optional) fills in how many to buy for
+-- commodities.
+function Compat.ShowAtAuctionHouse(key, link, minPrice, quantity)
     if not Compat.IsAuctionHouseOpen() then return false end
     local Util = ns.Util
+
+    local itemID = not key:find("^p:") and Util.ItemIDFromKey(key)
+    if quantity and quantity > 0 and itemID then
+        pendingQuantity = { itemID = itemID, quantity = quantity, expires = GetTime() + PENDING_FOR }
+        ListenForResults()
+    else
+        pendingQuantity = nil
+    end
 
     local itemKey
     local species, level = key:match("^p:(%d+):(%d+)")
@@ -150,9 +193,24 @@ function Compat.ShowAtAuctionHouse(key, link, minPrice)
     end
 
     if AuctionHouseFrame.SelectBrowseResult and C_AuctionHouse.GetItemKeyInfo(itemKey) then
+        -- Blizzard only searches when a listings view is first shown. When
+        -- one is already open (another item picked from here a moment ago)
+        -- nothing searches for the new item and it sits on "Searching...",
+        -- so start that search ourselves, as its refresh button would.
+        local lists = {}
+        for _, frame in ipairs({ AuctionHouseFrame.CommoditiesBuyFrame, AuctionHouseFrame.ItemBuyFrame }) do
+            local list = frame and frame.ItemList
+            if list and list:IsVisible() then lists[#lists + 1] = list end
+        end
         local ok = pcall(AuctionHouseFrame.SelectBrowseResult, AuctionHouseFrame,
             { itemKey = itemKey, minPrice = minPrice })
-        if ok then return true end
+        if ok then
+            for _, list in ipairs(lists) do
+                if list:IsVisible() and list.refreshResultsFunc then pcall(list.refreshResultsFunc) end
+            end
+            if pendingQuantity then ApplyQuantity(pendingQuantity.itemID, pendingQuantity.quantity) end
+            return true
+        end
     end
 
     local name = link and link:match("%[(.-)%]")
