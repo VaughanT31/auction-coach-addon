@@ -1,10 +1,13 @@
 # Changelog
 
+## 0.15.3
+
+- **Gold per hour is easier to find:** a *Gold per hour* button sits at the end of the main window's tabs (green while a session is running), and Shift-click on the minimap button or the addons button opens it too. The minimap button's tooltip shows your running session's time and gold per hour. `/ac gph` still works.
+
 ## 0.15.2
 
 - **Shopping list fills in how many you need:** clicking an item on the shopping list now sets the Auction House quantity to the amount on your list (*x12* puts 12 in Quantity, with the total price to match). If fewer are listed, it takes all that's there.
 - **Bought items come off the shopping list:** buy an item at the Auction House and it's taken off your list. Buy fewer than you need and the count goes down instead (*bought 5, 7 more to go*).
-- **Gold per hour is easier to find:** a *Gold per hour* button sits at the end of the main window's tabs (green while a session is running), and Shift-click on the minimap button or the addons button opens it too. The minimap button's tooltip shows your running session's time and gold per hour. `/ac gph` still works.
 - Fixed: **Cheapest materials** could sit on top of Patron Planner's order queue. It now moves under the queue whenever the queue appears, and back beside the profession window when it closes.
 - Fixed: picking a second item from the shopping list while the first one's listings were still open left the Auction House stuck on *Searching...*.
 
