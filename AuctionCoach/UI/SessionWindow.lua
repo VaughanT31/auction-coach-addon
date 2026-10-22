@@ -67,7 +67,10 @@ local function Line(y)
 end
 
 local function Create()
-    frame = Skin.Window("AuctionCoachSessionWindow", WIDTH, HEIGHT)
+    -- Not closed by Escape or a loading screen: it stays up while farming
+    -- until closed with its X (or the button / Shift-click that opened it).
+    frame = Skin.Window("AuctionCoachSessionWindow", WIDTH, HEIGHT, nil, true)
+    frame.closeButton:HookScript("OnClick", function() ns.db.gphOpen = nil end)
     frame:SetPoint("CENTER", 300, 0)
     frame.title:SetText(L.GPH_TITLE)
 
@@ -175,14 +178,26 @@ end
 function Window:Toggle()
     if not frame then Create() end
     frame:SetShown(not frame:IsShown())
+    ns.db.gphOpen = frame:IsShown() or nil
     self:Refresh()
 end
 
 function Window:Show()
     if not frame then Create() end
     frame:Show()
+    ns.db.gphOpen = true
     self:Refresh()
 end
+
+-- Open again after a zone change, portal, /reload or login when it was
+-- open before and there's a session to show.
+ns.Events:On("PLAYER_ENTERING_WORLD", function()
+    C_Timer.After(0, function()
+        if ns.db and ns.db.gphOpen and ns.Session:Current() and not (frame and frame:IsShown()) then
+            Window:Show()
+        end
+    end)
+end)
 
 -- One line for tooltips (the main window's button, the minimap button):
 -- the running or paused session, or nil when there is none.

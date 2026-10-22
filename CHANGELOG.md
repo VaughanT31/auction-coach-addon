@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.4
+
+- Fixed: the **Gold per hour** window closed when you changed zones or took a portal. It now stays open until you close it with its X, the *Gold per hour* button or Shift-click, so Escape no longer closes it either. If it was open, it also comes back after a /reload or logging in while a session is running. Your session itself was never lost.
+
 ## 0.15.3
 
 - **Gold per hour is easier to find:** a *Gold per hour* button sits at the end of the main window's tabs (green while a session is running), and Shift-click on the minimap button or the addons button opens it too. The minimap button's tooltip shows your running session's time and gold per hour. `/ac gph` still works.

@@ -35,7 +35,9 @@ end
 
 -- A movable window with a title and a close button, closed by Escape.
 -- name must be a unique global frame name.
-function Skin.Window(name, width, height, strata)
+-- keepOnEscape: Escape (and anything else that closes all windows) leaves
+-- it open, for trackers kept up while playing.
+function Skin.Window(name, width, height, strata, keepOnEscape)
     local frame = CreateFrame("Frame", name, UIParent, "BackdropTemplate")
     frame:SetSize(width, height)
     frame:SetFrameStrata(strata or "HIGH")
@@ -52,7 +54,7 @@ function Skin.Window(name, width, height, strata)
         self:Raise()
         Skin.Backdrop(self)
     end)
-    table.insert(UISpecialFrames, name)
+    if not keepOnEscape then table.insert(UISpecialFrames, name) end
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.title:SetPoint("TOPLEFT", 16, -14)
