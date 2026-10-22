@@ -37,6 +37,8 @@ local DEFAULTS = {
         shoppingPanel = true,
         -- Alt-click an item link to add it to the shopping list (UI/ShoppingEditor.lua).
         shopAltClick = true,
+        -- Open the main window with the Auction House (UI/MainWindow.lua).
+        openWithAH = false,
         -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).
         destroyTooltip = true,
         -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).

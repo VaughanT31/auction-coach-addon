@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1
+
+- **Open with the Auction House:** a new option opens Auction Coach when you open the Auction House and closes it when you leave, unless you already had it open. Off by default.
+
 ## 0.17.0
 
 - **A bigger window if you want one:** drag the bottom right corner of the main window to make it bigger. The columns get wider with it, so long names and the Other realms view fit. It never goes smaller than it started, and remembers its size and place.

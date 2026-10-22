@@ -262,6 +262,19 @@ for _, event in ipairs({
     MainWindow:RefreshOn(event)
 end
 
+-- Open with the Auction House when the player asked for it, and close with
+-- it again, but only when it was the AH that opened the window.
+local openedByAH = false
+ns.Events:On("AUCTION_HOUSE_SHOW", function()
+    if not ns.db or not ns.db.settings.openWithAH or MainWindow:IsShown() then return end
+    MainWindow:Toggle()
+    openedByAH = MainWindow:IsShown()
+end)
+ns.Events:On("AUCTION_HOUSE_CLOSED", function()
+    if openedByAH and MainWindow:IsShown() then frame:Hide() end
+    openedByAH = false
+end)
+
 -- Rows show "Loading item..." until the client has the item's name. Redraw
 -- once the names asked for have arrived.
 ns.Events:On("GET_ITEM_INFO_RECEIVED", function()
