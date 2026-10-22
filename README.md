@@ -118,7 +118,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - **Alerts outside the game:** when one of your listings is undercut, or something on your shopping list hits your price, a Windows notification and, if you link it, a Discord direct message.
 
 **Added in 0.13.0**
-- **Gold per hour:** `/ac gph` starts a farming session by hand and shows gold per hour from looting and gathering, your best items and a history of past sessions.
+- **Gold per hour:** the *Gold per hour* button in the main window, Shift-click on the minimap or addons button, or `/ac gph` opens it. You start a farming session by hand, and it shows gold per hour from looting and gathering, your best items and a history of past sessions.
 
 **Added in 0.12.0**
 - **Cheapest materials:** beside the profession window, each quality you can make with the cheapest mix of material qualities that gets there, its cost and profit, and a Use button that fills the recipe in. The game itself says which quality each mix makes.

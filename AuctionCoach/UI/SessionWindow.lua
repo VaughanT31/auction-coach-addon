@@ -184,6 +184,19 @@ function Window:Show()
     self:Refresh()
 end
 
+-- One line for tooltips (the main window's button, the minimap button):
+-- the running or paused session, or nil when there is none.
+function Window:StatusLine()
+    local s = ns.Session:Current()
+    if not s then return nil end
+    local t = ns.Session:Totals(s)
+    local rate = t and t.perHour and L.GPH_PER_HOUR:format(Util.FormatMoney(t.perHour)) or "-"
+    if ns.Session:Running() then
+        return L.GPH_STATUS_RUNNING:format(Clock(t and t.seconds), rate)
+    end
+    return L.GPH_STATUS_PAUSED:format(Clock(t and t.seconds), rate)
+end
+
 ns.Events:On("AC_SESSION_CHANGED", function() Window:Refresh() end)
 
 -- /ac gph [start | pause | stop]

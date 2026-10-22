@@ -193,6 +193,8 @@ end
 function AuctionCoach_OnAddonCompartmentClick(_, mouseButton)
     if mouseButton == "RightButton" and ns.Options then
         ns.Options:Open()
+    elseif IsShiftKeyDown() and ns.SessionWindow then
+        ns.SessionWindow:Toggle()
     elseif ns.MainWindow then
         ns.MainWindow:Toggle()
     end

@@ -57,6 +57,8 @@ local function Create()
     button:SetScript("OnClick", function(_, mouseButton)
         if mouseButton == "RightButton" then
             ns.Options:Open()
+        elseif IsShiftKeyDown() then
+            ns.SessionWindow:Toggle()
         else
             ns.MainWindow:Toggle()
         end
@@ -72,7 +74,13 @@ local function Create()
         GameTooltip:SetText(L.ADDON_TITLE)
         GameTooltip:AddLine(L.MINIMAP_LEFT, 1, 1, 1)
         GameTooltip:AddLine(L.MINIMAP_RIGHT, 1, 1, 1)
+        GameTooltip:AddLine(L.MINIMAP_SHIFT, 1, 1, 1)
         GameTooltip:AddLine(L.MINIMAP_DRAG, 0.6, 0.6, 0.6)
+        local status = ns.SessionWindow and ns.SessionWindow:StatusLine()
+        if status then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(status, 0.4, 1, 0.4, true)
+        end
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)

@@ -17,6 +17,7 @@ local frame
 local tabs = {}
 local activeTab
 local priceStatus
+local UpdateGphButton
 
 -- How old the prices are, beside the close button: grey, or amber when old
 -- (the desktop app has probably stopped).
@@ -64,6 +65,21 @@ local function Create()
         tab.Build(panel)
     end
 
+    -- Gold per hour, at the end of the tab row: its own window, so a
+    -- button rather than a tab. Green while a session is running.
+    local gph = ns.Skin.Button(frame, L.GPH_TITLE, 118, TAB_HEIGHT)
+    gph:SetPoint("TOPRIGHT", -16, TABS_Y)
+    gph:SetScript("OnClick", function() if ns.SessionWindow then ns.SessionWindow:Toggle() end end)
+    gph:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(L.GPH_TITLE)
+        local status = ns.SessionWindow and ns.SessionWindow:StatusLine()
+        GameTooltip:AddLine(status or L.GPH_BUTTON_TIP, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    gph:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    frame.gphButton = gph
+
     -- Divider under the tab row.
     local divider = frame:CreateTexture(nil, "ARTWORK")
     divider:SetColorTexture(1, 1, 1, 0.06)
@@ -77,9 +93,20 @@ local function Create()
     priceStatus:SetJustifyH("RIGHT")
 
     -- Hooked, not set: Skin.Window already re-snaps the border on show.
-    frame:HookScript("OnShow", function() MainWindow:Refresh() end)
+    frame:HookScript("OnShow", function()
+        UpdateGphButton()
+        MainWindow:Refresh()
+    end)
     SelectTab(1)
 end
+
+-- The gold per hour button's label: green while a session is running.
+UpdateGphButton = function()
+    local button = frame and frame.gphButton
+    if not button then return end
+    button:SetNormalFontObject(ns.Session and ns.Session:Running() and GameFontGreen or GameFontNormal)
+end
+ns.Events:On("AC_SESSION_CHANGED", UpdateGphButton)
 
 function MainWindow:IsShown()
     return frame ~= nil and frame:IsShown()
