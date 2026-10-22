@@ -68,6 +68,21 @@ local function Dropdown(field, name, tooltip, default, choices, onChange)
     Settings.CreateDropdown(category, setting, Choices, tooltip)
 end
 
+-- A checkbox that reads and writes through its own functions.
+local function CustomCheckbox(key, name, tooltip, default, Get, Set)
+    local setting = Settings.RegisterProxySetting(category, "AuctionCoach_" .. key,
+        Settings.VarType.Boolean, name, default, Get, Set)
+    Settings.CreateCheckbox(category, setting, tooltip)
+end
+
+-- A button row; skipped if this client lacks the helper.
+local function Button(name, buttonText, onClick, tooltip)
+    if not (SettingsPanel and SettingsPanel.GetLayout and CreateSettingsButtonInitializer) then return end
+    pcall(function()
+        SettingsPanel:GetLayout(category):AddInitializer(CreateSettingsButtonInitializer(name, buttonText, onClick, tooltip, true))
+    end)
+end
+
 local function Header(text)
     if not (SettingsPanel and SettingsPanel.GetLayout and CreateSettingsListSectionHeaderInitializer) then
         return
@@ -113,6 +128,33 @@ local function Build()
         function(minutes) return minutes or 15 end,
         function(minutes) return minutes end,
         function(minutes) return L.OPT_MINUTES:format(minutes) end)
+    CustomCheckbox("planSkipChar", L.OPT_PLAN_SKIP_CHAR, L.OPT_PLAN_SKIP_CHAR_TIP, false,
+        function() return ns.Plan:CharacterLeftOut() end,
+        function(value)
+            ns.db.settings.planSkipChars = ns.db.settings.planSkipChars or {}
+            ns.db.settings.planSkipChars[ns.charKey] = value or nil
+            Changed()
+        end)
+    Button(L.OPT_PLAN_HIDDEN, L.OPT_PLAN_HIDDEN_BUTTON, function()
+        local n = ns.Plan:HiddenCount()
+        ns.Plan:ShowHidden()
+        print(L.OPT_PLAN_HIDDEN_DONE:format(n))
+        Changed()
+    end, L.OPT_PLAN_HIDDEN_TIP)
+
+    Header(L.OPT_TABS)
+    for _, tabName in ipairs(ns.MainWindow:TabNames()) do
+        CustomCheckbox("tab_" .. tabName, L.OPT_TAB_SHOW:format(tabName), L.OPT_TABS_TIP, true,
+            function()
+                local hidden = ns.db.settings.hiddenTabs
+                return not (hidden and hidden[tabName])
+            end,
+            function(value)
+                ns.db.settings.hiddenTabs = ns.db.settings.hiddenTabs or {}
+                ns.db.settings.hiddenTabs[tabName] = (not value) or nil
+                ns.MainWindow:UpdateTabs()
+            end)
+    end
 
     Header(L.OPT_PROTECTION)
     Checkbox("vendorGuard", L.OPT_GUARD, L.OPT_GUARD_TIP, true)

@@ -43,6 +43,12 @@
 -- the bank costs time once, the first time a step needs it. Buys also
 -- need the gold to pay for them.
 --
+-- Items the player hid (settings.planHidden[key], right-click a step) are
+-- never suggested. A character left out (settings.planSkipChars[charKey])
+-- gets no selling, vendoring, destroying or crafting from its own bags,
+-- bank or mail, for a main keeping its raid consumables; deals, shopping,
+-- reposts of what it already listed and the warband bank still count.
+--
 -- Plan.Select does the ranking and has no WoW API calls, so it can be
 -- tested outside the game.
 
@@ -172,6 +178,11 @@ function Plan.Odds(count, salesPerDay, hours)
     return sold, first
 end
 
+-- Items the player hid from the plan (right-click a step).
+local function HiddenItems()
+    return ns.db.settings.planHidden or {}
+end
+
 -- Plan.Odds for the time until the player is back (seller style window).
 local function ExpectedSold(count, salesPerDay)
     return Plan.Odds(count, salesPerDay, ns.Styles:WindowHours())
@@ -286,7 +297,9 @@ end
 -- Own listings someone has undercut (REPOST), or that a vendor now pays
 -- more for (CANCEL), from Advice/Auctions.lua.
 local function AuctionCandidates(list)
+    local hidden = HiddenItems()
     for _, entry in ipairs(ns.Auctions:List().items) do
+      if not hidden[entry.key] then
         local s = entry.suggestion
         local sold, first = ExpectedSold(entry.quantity, s.salesPerDay)
         if entry.action == "REPOST" and first and first < FAST_ENOUGH then
@@ -307,6 +320,7 @@ local function AuctionCandidates(list)
                 gold = entry.vendorGold, seconds = COST.CANCEL * entry.auctions, ah = true,
             }
         end
+      end
     end
 end
 
@@ -325,7 +339,7 @@ local function BuyCandidates(list)
     -- A flip has to resell soon to be gold today, not gold stuck in the AH.
     local slow = 0
     for _, d in ipairs(ns.Deals:List().items) do
-        if not d.shaky then
+        if not d.shaky and not HiddenItems()[d.key] then
             if ResellChance(d) >= FAST_ENOUGH then safe[#safe + 1] = d else slow = slow + 1 end
         end
     end
@@ -397,16 +411,40 @@ local function CraftingMaterials()
     return have
 end
 
+-- Whether a character's own items are left out of the plan.
+function Plan:CharacterLeftOut(charKey)
+    local skip = ns.db.settings.planSkipChars
+    return skip ~= nil and skip[charKey or ns.charKey] == true
+end
+
+function Plan:Hide(key)
+    if not key then return end
+    ns.db.settings.planHidden = ns.db.settings.planHidden or {}
+    ns.db.settings.planHidden[key] = true
+end
+
+function Plan:HiddenCount()
+    local n = 0
+    for _ in pairs(HiddenItems()) do n = n + 1 end
+    return n
+end
+
+function Plan:ShowHidden()
+    ns.db.settings.planHidden = {}
+end
+
 -- Craft candidates for this character, and the materials they use
 -- ({ [key] = count }), which then aren't posted.
 function Plan.CraftCandidates(list)
     local reserved = {}
     if not ns.Crafting or not ns.db.recipes or not ns.db.recipes[ns.charKey] then return reserved end
+    if Plan:CharacterLeftOut() then return reserved end
+    local hidden = HiddenItems()
     local left = CraftingMaterials()
     local steps = 0
     for _, e in ipairs(ns.Crafting:ForCharacter(ns.charKey)) do
         if steps >= MAX_CRAFT_STEPS then break end
-        if e.profit >= math.max(CRAFT_MIN_PROFIT, e.cost * CRAFT_MARGIN) then
+        if not hidden[e.key] and e.profit >= math.max(CRAFT_MIN_PROFIT, e.cost * CRAFT_MARGIN) then
             local crafts = ns.Crafting.Possible(e.recipe, left)
             local made = e.recipe.q or 1
             local wanted, first = ExpectedSold(math.huge, e.salesPerDay)
@@ -487,6 +525,8 @@ end
 --   elsewhere    { { owner, value }, ... } sellable value on other
 --                characters, most first
 --   hasSpeed     true when sales rates (desktop app data) were available
+--   hidden       how many items the player hid from the plan
+--   leftOut      true when this character's own items are left out
 -- }
 function Plan:Build(minutes)
     local result = { steps = {}, gold = 0, seconds = 0, skips = {}, slow = {}, slowDeals = 0, left = 0,
@@ -501,10 +541,14 @@ function Plan:Build(minutes)
     local candidates = {}
     local vendorGold, vendorItems = 0, 0
     local destroyGroups = {}
+    local hidden = HiddenItems()
+    local leftOut = Plan:CharacterLeftOut()
+    result.leftOut = leftOut
+    result.hidden = Plan:HiddenCount()
     -- Crafts first: the materials they use aren't posted as well.
     local reserved = Plan.CraftCandidates(candidates)
-    for _, listed in ipairs(ns.Sell:List().items) do
-      local item = AfterCrafting(listed, reserved)
+    for _, listed in ipairs(leftOut and {} or ns.Sell:List().items) do
+      local item = not hidden[listed.key] and AfterCrafting(listed, reserved)
       if item then
         local s = item.suggestion
         if s.salesPerDay then result.hasSpeed = true end
@@ -536,7 +580,8 @@ function Plan:Build(minutes)
     -- Bank items worth posting. Crashed or contested ones are left out
     -- quietly: the "leave alone" list is about what is in the bags.
     for _, listed in ipairs(BankItems()) do
-        local item = AfterCrafting(listed, reserved)
+        local item = not hidden[listed.key] and not (leftOut and listed.from == "bank")
+            and AfterCrafting(listed, reserved)
         local s = item and item.suggestion
         if s and s.salesPerDay then result.hasSpeed = true end
         if s and s.action == "POST" and s.contested ~= "HEAVY" then
@@ -547,12 +592,14 @@ function Plan:Build(minutes)
     -- they need no extra walk.
     local mailStep = MailStep()
     if mailStep then
-        for _, item in ipairs(MailItems()) do
+        for _, item in ipairs(leftOut and {} or MailItems()) do
+          if not hidden[item.key] then
             local s = item.suggestion
             if s.salesPerDay then result.hasSpeed = true end
             if s.action == "POST" and s.contested ~= "HEAVY" then
                 AddPost(result, candidates, item)
             end
+          end
         end
     end
     if vendorItems > 0 then
@@ -597,7 +644,7 @@ function Plan:Build(minutes)
     end
 
     for _, o in ipairs(ns.Treasure:Compute().owners) do
-        if o.owner ~= ns.charKey and o.owner ~= "warband" and o.value > 0 then
+        if o.owner ~= ns.charKey and o.owner ~= "warband" and o.value > 0 and not Plan:CharacterLeftOut(o.owner) then
             result.elsewhere[#result.elsewhere + 1] = o
         end
     end

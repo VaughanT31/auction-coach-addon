@@ -41,6 +41,12 @@ local DEFAULTS = {
         destroyTooltip = true,
         -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).
         materialPicker = true,
+        -- Today's Plan: items never suggested, characters whose own items
+        -- are left out (Advice/Plan.lua).
+        planHidden = {},
+        planSkipChars = {},
+        -- Main window tabs hidden in the options, its size and place (UI/MainWindow.lua).
+        hiddenTabs = {},
         minimapHide = false,
         minimapAngle = 200,
     },

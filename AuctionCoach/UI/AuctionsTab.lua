@@ -10,10 +10,10 @@ local ROW_HEIGHT = 24
 
 -- Column layout: x offset and width, shared by header and rows.
 local COLUMNS = {
-    name = { 24, 200 },
+    name = { 24, 200, 0.5 },
     yours = { 230, 86 },
     lowest = { 322, 86 },
-    advice = { 420, 160 },
+    advice = { 420, 160, 0.5 },
 }
 
 local ACTION_COLORS = {
@@ -24,14 +24,7 @@ local ACTION_COLORS = {
     UNKNOWN = { 0.55, 0.55, 0.55 },
 }
 
-local function Column(parent, name, template, justify)
-    local fs = parent:CreateFontString(nil, "OVERLAY", template)
-    fs:SetPoint("LEFT", COLUMNS[name][1], 0)
-    fs:SetWidth(COLUMNS[name][2])
-    fs:SetJustifyH(justify or "LEFT")
-    fs:SetWordWrap(false)
-    return fs
-end
+local Column = ns.Skin.Columns(COLUMNS)
 
 local function AdviceText(entry)
     if entry.action == "REPOST" then

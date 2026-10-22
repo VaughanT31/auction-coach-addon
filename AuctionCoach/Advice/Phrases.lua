@@ -299,6 +299,29 @@ end
 -- Today's Plan
 -- ---------------------------------------------------------------------
 
+-- Why the Other realms view is empty: what was compared and how far the
+-- items got (Flips:List().why), most useful first.
+function Phrases.FlipsWhy(list, minProfit)
+    local lines = { L.FLIPS_EMPTY }
+    if #list.noPrices > 0 then
+        lines[#lines + 1] = L.FLIPS_WHY_NO_PRICES:format(table.concat(list.noPrices, ", "))
+    end
+    if list.compared == 0 then
+        lines[#lines + 1] = L.FLIPS_WHY_NOTHING
+        return table.concat(lines, "\n\n")
+    end
+    lines[#lines + 1] = L.FLIPS_WHY_COMPARED:format(BreakUpLargeNumbers(list.compared), list.realms)
+    for _, reason in ipairs(ns.Flips.REASONS) do
+        local n = list.why[reason]
+        if n and n > 0 then
+            local text = L["FLIPS_WHY_" .. reason]
+            lines[#lines + 1] = "- " .. (reason == "PROFIT" and text:format(BreakUpLargeNumbers(n), minProfit)
+                or text:format(BreakUpLargeNumbers(n)))
+        end
+    end
+    return table.concat(lines, "\n")
+end
+
 -- "3", "about 2.5" or "less than one" items.
 local function Amount(n)
     if n < 1 then return L.PLAN_LESS_THAN_ONE end

@@ -66,6 +66,45 @@ function Skin.Window(name, width, height, strata, keepOnEscape)
     return frame
 end
 
+-- Columns for a list in the main window. spec = { name = { x, width,
+-- grow } }: grow is the share of the window's extra width (over its
+-- smallest size) the column takes, and columns to its right move along.
+-- Returns Column(parent, name, template, justify) making a font string in
+-- that column; they all move when the window is resized.
+function Skin.Columns(spec)
+    local order = {}
+    for name in pairs(spec) do order[#order + 1] = name end
+    table.sort(order, function(a, b) return spec[a][1] < spec[b][1] end)
+    local made = {}
+
+    local function Place(fs, extra)
+        local shift = 0
+        for _, name in ipairs(order) do
+            local grow = (spec[name][3] or 0) * extra
+            if name == fs.column then
+                fs:SetPoint("LEFT", fs:GetParent(), "LEFT", spec[name][1] + shift, 0)
+                fs:SetWidth(spec[name][2] + grow)
+                return
+            end
+            shift = shift + grow
+        end
+    end
+
+    ns.Events:On("AC_WINDOW_RESIZED", function(_, extra)
+        for _, fs in ipairs(made) do Place(fs, extra) end
+    end)
+
+    return function(parent, name, template, justify)
+        local fs = parent:CreateFontString(nil, "OVERLAY", template)
+        fs.column = name
+        fs:SetJustifyH(justify or "LEFT")
+        fs:SetWordWrap(false)
+        made[#made + 1] = fs
+        Place(fs, ns.MainWindow and ns.MainWindow:Extra() or 0)
+        return fs
+    end
+end
+
 local function PaintButton(button)
     local bg = button:IsEnabled() and BUTTON_BG or BUTTON_BG_DISABLED
     button.bg:SetColorTexture(bg[1], bg[2], bg[3], bg[4])

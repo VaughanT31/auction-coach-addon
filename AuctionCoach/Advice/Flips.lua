@@ -69,19 +69,26 @@ local function ResellPrice(price)
     return resell
 end
 
+-- Why a pair isn't a flip, in the order the checks run: the further an
+-- item got, the closer it was. The Other realms view counts these when it
+-- has nothing to show, so an empty list says why.
+Flips.REASONS = { "NOBUY", "OLD", "NORESELL", "GAIN", "PROFIT", "SLOW", "CROWDED" }
+local STAGE = {}
+for i, reason in ipairs(Flips.REASONS) do STAGE[reason] = i end
+
 -- One buy realm / sell realm pair for an item. Pure: buy and sell are
--- Prices:Get results. Returns a flip table or nil.
+-- Prices:Get results. Returns a flip table, or nil and the reason.
 function Flips.Evaluate(key, buy, sell, now, minProfit)
-    if not buy or not sell or not buy.min or buy.min <= 0 then return nil end
-    if now - (buy.minAt or buy.t or 0) > MAX_AGE then return nil end
+    if not buy or not sell or not buy.min or buy.min <= 0 then return nil, "NOBUY" end
+    if now - (buy.minAt or buy.t or 0) > MAX_AGE then return nil, "OLD" end
     local resell = ResellPrice(sell)
-    if not resell or resell <= 0 then return nil end
-    if resell < buy.min * (1 + MIN_GAIN) then return nil end
+    if not resell or resell <= 0 then return nil, "NORESELL" end
+    if resell < buy.min * (1 + MIN_GAIN) then return nil, "GAIN" end
     local profit = Util.AfterCut(resell) - buy.min
-    if profit < minProfit then return nil end
-    if not sell.salesPerDay or sell.salesPerDay < MIN_SALES_PER_DAY then return nil end
+    if profit < minProfit then return nil, "PROFIT" end
+    if not sell.salesPerDay or sell.salesPerDay < MIN_SALES_PER_DAY then return nil, "SLOW" end
     local chance = ns.Deals.ResellChance(sell.salesPerDay, sell.listed)
-    if chance < MIN_CHANCE then return nil end
+    if chance < MIN_CHANCE then return nil, "CROWDED" end
     return {
         key = key, price = buy.min, priceAt = buy.minAt or buy.t, resell = resell,
         profit = profit, salesPerDay = sell.salesPerDay, listed = sell.listed, chance = chance,
@@ -92,10 +99,14 @@ end
 --   items  { { key, price, priceAt, resell, profit, salesPerDay,
 --              buyRealm, sellRealm }, ... } best profit first
 --   realms how many of the player's realm groups were compared
+--   compared  items found on at least two of them
+--   why       { [reason] = items } for the items that aren't flips, each
+--             counted once at the furthest check it reached (Flips.REASONS)
+--   noPrices  names of the player's realms with no prices at all
 -- }
 function Flips:List()
     if cache then return cache end
-    local result = { items = {}, realms = 0 }
+    local result = { items = {}, realms = 0, compared = 0, why = {}, noPrices = {} }
     if not ns.db then return result end
     local realms = Flips.PlayerRealms()
     result.realms = #realms
@@ -108,7 +119,11 @@ function Flips:List()
     local now = Util.Now()
     local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
     local keysOn = {}
-    for i, r in ipairs(realms) do keysOn[i] = KeysOn(r, data) end
+    for i, r in ipairs(realms) do
+        keysOn[i] = KeysOn(r, data)
+        if next(keysOn[i]) == nil then result.noPrices[#result.noPrices + 1] = r.realm end
+    end
+    local closest, counted = {}, {}
 
     -- Best flip per item: the cheapest realm to buy on, the best to sell on.
     local best = {}
@@ -119,9 +134,14 @@ function Flips:List()
                 local buy
                 for j, sellRealm in ipairs(realms) do
                     if j ~= i and keysOn[j][key] then
+                        if not counted[key] then
+                            counted[key] = true
+                            result.compared = result.compared + 1
+                        end
                         buy = buy or ns.Prices:Get(key, buyRealm.group, buyRealm.realm)
                         local sell = ns.Prices:Get(key, sellRealm.group, sellRealm.realm)
-                        local flip = Flips.Evaluate(key, buy, sell, now, minProfit)
+                        local flip, why = Flips.Evaluate(key, buy, sell, now, minProfit)
+                        if why and (not closest[key] or STAGE[why] > STAGE[closest[key]]) then closest[key] = why end
                         if flip and (not best[key] or flip.profit > best[key].profit) then
                             flip.buyRealm, flip.sellRealm = buyRealm.realm, sellRealm.realm
                             best[key] = flip
@@ -133,6 +153,9 @@ function Flips:List()
     end
 
     for _, flip in pairs(best) do result.items[#result.items + 1] = flip end
+    for key, why in pairs(closest) do
+        if not best[key] then result.why[why] = (result.why[why] or 0) + 1 end
+    end
     table.sort(result.items, function(a, b)
         if a.profit ~= b.profit then return a.profit > b.profit end
         return a.key < b.key

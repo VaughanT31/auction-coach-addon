@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0
+
+- **A bigger window if you want one:** drag the bottom right corner of the main window to make it bigger. The columns get wider with it, so long names and the Other realms view fit. It never goes smaller than it started, and remembers its size and place.
+- **Never suggest an item:** right-click a step in Today's Plan and pick *Never suggest this item*, for the flasks and potions you keep for raid. The plan says how many you've hidden, and *Show them again* in the options brings them back.
+- **Leave a character out:** tick *Leave this character's items out* in the options on your main, and Today's Plan stops suggesting selling, vendoring, destroying or crafting with what's in its bags, bank or mail. Deals, the shopping list, reposting what it already listed and the warband bank still count.
+- **Other realms says why it's empty:** when there are no cross-realm flips it now shows how many items it compared on your realms and what stopped each one: not listed, a cheap price older than 3 hours (the desktop app isn't running), not enough cheaper, under your minimum profit, too slow or too crowded on the other realm, and any of your realms with no prices yet.
+- **Hide tabs you don't use:** untick any of the main window's tabs in the options. Their slash commands still open them.
+
 ## 0.16.1
 
 - **Today's Plan is gold for today:** every step that sells something now needs at least an even chance of a sale before you're back. Slow sellers move to their own list under the plan, *post these when you're done*, with the chance of a sale and how many sell a day, and aren't counted in the plan's gold. Click one at the Auction House to post it.

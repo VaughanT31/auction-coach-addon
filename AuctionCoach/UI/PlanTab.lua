@@ -10,11 +10,12 @@ local ROW_HEIGHT = 24
 local COIN_ICON = "Interface\\Icons\\INV_Misc_Coin_01"
 local MAIL_ICON = "Interface\\Icons\\INV_Letter_15"
 
--- Column layout: x offset and width, shared by header and rows.
+-- Column layout: x offset, width and share of extra window width, shared
+-- by header and rows.
 local COLUMNS = {
     tag = { 26, 52 },
-    name = { 102, 190 },
-    reason = { 298, 200 },
+    name = { 102, 190, 0.5 },
+    reason = { 298, 200, 0.5 },
     gold = { 500, 80 },
 }
 
@@ -32,14 +33,10 @@ local TAG_COLORS = {
     CRAFT = { 1, 0.65, 0.3 },
 }
 
-local function Column(parent, name, template, justify)
-    local fs = parent:CreateFontString(nil, "OVERLAY", template)
-    fs:SetPoint("LEFT", COLUMNS[name][1], 0)
-    fs:SetWidth(COLUMNS[name][2])
-    fs:SetJustifyH(justify or "LEFT")
-    fs:SetWordWrap(false)
-    return fs
-end
+local Column = ns.Skin.Columns(COLUMNS)
+
+-- Steps about one item, which right-click can hide from the plan for good.
+local HIDEABLE = { POST = true, REPOST = true, BUY = true, CRAFT = true, SLOW = true, SKIP = true, CANCEL = true }
 
 local function ShowRowTooltip(row)
     local step = row.step
@@ -58,6 +55,9 @@ local function ShowRowTooltip(row)
     end
     if step.kind ~= "SKIP" and step.kind ~= "SLOW" then
         GameTooltip:AddLine(L.PLAN_DONE_TIP, 0.6, 0.8, 1, true)
+    end
+    if step.key and HIDEABLE[step.kind] then
+        GameTooltip:AddLine(L.PLAN_HIDE_TIP, 0.6, 0.8, 1, true)
     end
     GameTooltip:Show()
 end
@@ -108,7 +108,21 @@ local function CreateRow(parent, index)
 
     row:SetScript("OnEnter", ShowRowTooltip)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    row:SetScript("OnClick", function(self)
+    row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    row:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then
+            local step = self.step
+            if not (step and step.key and HIDEABLE[step.kind] and MenuUtil and MenuUtil.CreateContextMenu) then return end
+            GameTooltip:Hide()
+            MenuUtil.CreateContextMenu(self, function(_, root)
+                root:CreateTitle(Util.NamedLink(step.key) or step.key)
+                root:CreateButton(L.PLAN_HIDE_ITEM, function()
+                    ns.Plan:Hide(step.key)
+                    ns.MainWindow:Refresh()
+                end)
+            end)
+            return
+        end
         if StartStep(self.step) then
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
         end
@@ -275,6 +289,8 @@ local function Refresh(panel, reason)
     local notes = {}
     if plan.left > 0 then notes[#notes + 1] = L.PLAN_LEFT:format(plan.left) end
     if plan.slowDeals > 0 then notes[#notes + 1] = L.PLAN_SLOW_DEALS:format(plan.slowDeals) end
+    if plan.leftOut then notes[#notes + 1] = L.PLAN_LEFT_OUT_NOTE end
+    if plan.hidden > 0 then notes[#notes + 1] = L.PLAN_HIDDEN_NOTE:format(plan.hidden) end
     if plan.unaffordable > 0 then
         notes[#notes + 1] = L.PLAN_NO_GOLD:format(plan.unaffordable, Util.FormatMoneyIcons(plan.money))
     end

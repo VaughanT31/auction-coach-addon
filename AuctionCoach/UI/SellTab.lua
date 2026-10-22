@@ -10,11 +10,11 @@ local MAX_ROWS = 150
 
 -- Column layout: x offset and width, shared by header and rows.
 local COLUMNS = {
-    name = { 26, 190 },
+    name = { 26, 190, 0.7 },
     each = { 222, 82 },
     total = { 308, 82 },
     speed = { 394, 52 },
-    advice = { 452, 92 },
+    advice = { 452, 92, 0.3 },
 }
 
 local ADVICE_COLORS = {
@@ -25,14 +25,7 @@ local ADVICE_COLORS = {
     NO_DATA = { 0.5, 0.5, 0.5 },
 }
 
-local function Column(parent, name, template, justify)
-    local fs = parent:CreateFontString(nil, "OVERLAY", template)
-    fs:SetPoint("LEFT", COLUMNS[name][1], 0)
-    fs:SetWidth(COLUMNS[name][2])
-    fs:SetJustifyH(justify or "LEFT")
-    fs:SetWordWrap(false)
-    return fs
-end
+local Column = ns.Skin.Columns(COLUMNS)
 
 local function ShowRowTooltip(row)
     local item = row.item

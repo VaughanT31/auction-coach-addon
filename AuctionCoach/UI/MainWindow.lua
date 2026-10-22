@@ -1,6 +1,10 @@
 -- Auction Coach - main window with a simple tab strip.
 -- Tabs register themselves with MainWindow:AddTab, in .toc order: Today,
--- My Stuff, Sell, Deals and Auctions.
+-- My Stuff, Sell, Deals and Auctions. Tabs can be hidden in the options
+-- (settings.hiddenTabs). The window can be dragged bigger from its
+-- bottom right corner, never smaller than WIDTH x HEIGHT; size and place
+-- are kept in settings.mainSize / mainPoint, and list columns grow with
+-- it (Skin.Columns, AC_WINDOW_RESIZED).
 
 local _, ns = ...
 local L = ns.L
@@ -9,6 +13,7 @@ local MainWindow = {}
 ns.MainWindow = MainWindow
 
 local WIDTH, HEIGHT = 640, 516
+local MAX_WIDTH, MAX_HEIGHT = 1400, 1000
 local TAB_WIDTH, TAB_HEIGHT = 92, 24
 -- Title row, then the tab row, then the open tab's panel.
 local TABS_Y = -44
@@ -37,6 +42,76 @@ function MainWindow:AddTab(def)
     table.insert(tabs, def)
 end
 
+-- Tab names in order, for the options page.
+function MainWindow:TabNames()
+    local names = {}
+    for i, tab in ipairs(tabs) do names[i] = tab.name end
+    return names
+end
+
+-- How much wider than its smallest size the window is.
+function MainWindow:Extra()
+    return frame and math.max(0, math.floor(frame:GetWidth() - WIDTH + 0.5)) or 0
+end
+
+local function Hidden(tab)
+    local hidden = ns.db.settings.hiddenTabs
+    return hidden ~= nil and hidden[tab.name] == true
+end
+
+-- Visible tab buttons left to right; a hidden tab's button goes away
+-- (its slash command still opens it). At least one always shows.
+local function LayoutTabs()
+    local shown = 0
+    for _, tab in ipairs(tabs) do
+        if not Hidden(tab) then shown = shown + 1 end
+    end
+    local x = 0
+    for i, tab in ipairs(tabs) do
+        local show = shown == 0 and i == 1 or not Hidden(tab)
+        tab.button:SetShown(show)
+        if show then
+            tab.button:SetPoint("TOPLEFT", 16 + x * (TAB_WIDTH + 4), TABS_Y)
+            x = x + 1
+        end
+    end
+end
+
+local function FirstShown()
+    for i, tab in ipairs(tabs) do
+        if tab.button:IsShown() then return i end
+    end
+    return 1
+end
+
+local function SavePlace()
+    local left, top = frame:GetLeft(), frame:GetTop()
+    if left and top then ns.db.settings.mainPoint = { left, top } end
+    ns.db.settings.mainSize = { math.floor(frame:GetWidth() + 0.5), math.floor(frame:GetHeight() + 0.5) }
+end
+
+-- Bottom right grip: drag to make the window bigger or smaller.
+local function SizeGrip()
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", -3, 3)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 10)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:SetScript("OnMouseDown", function() frame:StartSizing("BOTTOMRIGHT") end)
+    grip:SetScript("OnMouseUp", function()
+        frame:StopMovingOrSizing()
+        SavePlace()
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L.WINDOW_RESIZE_TIP)
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
 local function SelectTab(index)
     activeTab = index
     for i, tab in ipairs(tabs) do
@@ -48,8 +123,28 @@ end
 
 local function Create()
     frame = ns.Skin.Window("AuctionCoachMainWindow", WIDTH, HEIGHT)
-    frame:SetPoint("CENTER")
     frame.title:SetText(L.ADDON_TITLE)
+    local size, point = ns.db.settings.mainSize, ns.db.settings.mainPoint
+    if type(size) == "table" and size[1] then
+        frame:SetSize(math.max(WIDTH, math.min(MAX_WIDTH, size[1])), math.max(HEIGHT, math.min(MAX_HEIGHT, size[2])))
+    end
+    if type(point) == "table" and point[1] then
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", point[1], point[2])
+    else
+        frame:SetPoint("CENTER")
+    end
+    frame:SetResizable(true)
+    if frame.SetResizeBounds then
+        frame:SetResizeBounds(WIDTH, HEIGHT, MAX_WIDTH, MAX_HEIGHT)
+    end
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        SavePlace()
+    end)
+    frame:SetScript("OnSizeChanged", function()
+        ns.Events:Fire("AC_WINDOW_RESIZED", MainWindow:Extra())
+    end)
+    SizeGrip()
 
     for i, tab in ipairs(tabs) do
         local button = ns.Skin.Tab(frame, tab.name, TAB_WIDTH, TAB_HEIGHT)
@@ -97,7 +192,15 @@ local function Create()
         UpdateGphButton()
         MainWindow:Refresh()
     end)
-    SelectTab(1)
+    LayoutTabs()
+    SelectTab(FirstShown())
+end
+
+-- After the hidden tabs change in the options.
+function MainWindow:UpdateTabs()
+    if not frame then return end
+    LayoutTabs()
+    if not tabs[activeTab].button:IsShown() then SelectTab(FirstShown()) end
 end
 
 -- The gold per hour button's label: green while a session is running.

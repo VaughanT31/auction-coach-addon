@@ -21,12 +21,13 @@ local MODES = { "deals", "flips", "shopping", "craft" }
 local MODE_WIDTH, MODE_HEIGHT = 86, 20
 local ADD_BAR_HEIGHT = 30
 
--- Column layout: x offset and width, shared by header and rows.
+-- Column layout: x offset, width and share of extra window width, shared
+-- by header and rows.
 local COLUMNS = {
-    name = { 26, 212 },
-    price = { 244, 82 },
-    usual = { 330, 82 },
-    profit = { 416, 82 },
+    name = { 26, 212, 0.55 },
+    price = { 244, 82, 0.15 },
+    usual = { 330, 82, 0.15 },
+    profit = { 416, 82, 0.15 },
     speed = { 502, 52 },
 }
 
@@ -47,14 +48,7 @@ local STATUS_COLORS = {
 local panelRef
 local mode = "deals"
 
-local function Column(parent, name, template, justify)
-    local fs = parent:CreateFontString(nil, "OVERLAY", template)
-    fs:SetPoint("LEFT", COLUMNS[name][1], 0)
-    fs:SetWidth(COLUMNS[name][2])
-    fs:SetJustifyH(justify or "LEFT")
-    fs:SetWordWrap(false)
-    return fs
-end
+local Column = ns.Skin.Columns(COLUMNS)
 
 local function TooltipLines(row)
     if row.kind == "flips" then return Phrases.Flip(row.entry) end
@@ -334,7 +328,7 @@ local function ModeContent()
         if list.realms < 2 then
             empty = L.FLIPS_NEED_REALMS
         elseif #list.items == 0 then
-            empty = ns.Prices.ActiveData() and L.FLIPS_EMPTY or L.FLIPS_NEED_APP
+            empty = ns.Prices.ActiveData() and Phrases.FlipsWhy(list, minProfit) or L.FLIPS_NEED_APP
         end
         return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit), empty, list.items
     elseif mode == "craft" then
