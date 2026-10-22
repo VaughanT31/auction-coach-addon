@@ -106,6 +106,7 @@ local function Build()
     end)
     Checkbox("shoppingPanel", L.OPT_SHOP_PANEL, L.OPT_SHOP_PANEL_TIP, true)
     Checkbox("shoppingAlerts", L.OPT_SHOP_ALERTS, L.OPT_SHOP_ALERTS_TIP, true)
+    Checkbox("shopAltClick", L.OPT_SHOP_ALT, L.OPT_SHOP_ALT_TIP, true)
 
     Header(L.PLAN_TITLE_EMPTY)
     Slider("planMinutes", L.OPT_PLAN, L.OPT_PLAN_TIP, 15, 5, 60, 5,

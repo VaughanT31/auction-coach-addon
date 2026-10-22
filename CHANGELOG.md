@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0
+
+- **Shopping list without commands:** Alt-click any item in your bags, a chat link or an Auction House result to add it, with a max a little over its usual price already filled in (already on the list: change it instead). The shopping list at the Auction House also has an **Add** button. Turn Alt-click off in the options if it clashes with another addon.
+- **Change items instead of removing and re-adding them:** right-click an item on the shopping list (at the Auction House or in Deals > Shopping) for Search, Edit count and max, Remove, and Remove all from the same source.
+- **Grouped by where they came from:** the shopping list at the Auction House groups items under *Added by you*, *Patron Planner* and each craft, with a **Clear** button per group.
+- **Add a craft's materials:** the **+** on each Cheapest materials row puts that mix's materials on your shopping list, for as many crafts as you type, less what this character already has in bags and banks. Materials already on the list just get their count raised.
+- **A clearer shopping panel:** wider, with columns for Need, Lowest, Max and Status, and the mouse wheel scrolls a long list instead of sending you to the Deals tab.
+
 ## 0.15.4
 
 - Fixed: the **Gold per hour** window closed when you changed zones or took a portal. It now stays open until you close it with its X, the *Gold per hour* button or Shift-click, so Escape no longer closes it either. If it was open, it also comes back after a /reload or logging in while a session is running. Your session itself was never lost.

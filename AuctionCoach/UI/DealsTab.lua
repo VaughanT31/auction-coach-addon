@@ -79,7 +79,7 @@ local function ShowRowTooltip(row)
         GameTooltip:AddLine(line, 1, 1, 1, true)
     end
     if row.kind == "shopping" then
-        GameTooltip:AddLine(L.SHOP_REMOVE_TIP, 0.6, 0.8, 1, true)
+        GameTooltip:AddLine(L.SHOP_MENU_TIP, 0.6, 0.8, 1, true)
     end
     if Compat.IsAuctionHouseOpen() and row.kind ~= "flips" then
         GameTooltip:AddLine(L.DEALS_SUB_AH, 0.6, 0.8, 1, true)
@@ -115,8 +115,9 @@ local function CreateRow(parent, index)
         local entry = self.entry
         if not entry then return end
         if button == "RightButton" then
-            if self.kind == "shopping" and ns.Shopping:Remove(entry.key) then
+            if self.kind == "shopping" then
                 GameTooltip:Hide()
+                ns.ShoppingEditor:RowMenu(self, entry)
             end
             return
         end
@@ -141,7 +142,9 @@ local function SetRow(row, entry, kind)
     local name = Util.NamedLink(entry.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
 
     if kind == "shopping" then
-        row.name:SetText(entry.need and (name .. " |cff9d9d9dx" .. entry.need .. "|r") or name)
+        if entry.need then name = name .. " |cff9d9d9dx" .. entry.need .. "|r" end
+        if entry.note then name = name .. " |cff9d9d9d(" .. entry.note .. ")|r" end
+        row.name:SetText(name)
         row.price:SetText(entry.lowest and Util.FormatMoneyIcons(entry.lowest) or "|cff9d9d9d-|r")
         row.usual:SetText(Util.FormatMoneyIcons(entry.max))
         row.profit:SetText(STATUS_COLORS[entry.status] .. L["SHOP_STATUS_" .. entry.status] .. "|r")

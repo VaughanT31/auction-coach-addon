@@ -8,6 +8,8 @@
 -- there with cheaper materials.
 --   Hover a row   the materials, how many of each quality
 --   Use           puts that mix in the recipe's material slots
+--   +             puts that mix's materials on the shopping list, for as
+--                 many crafts as you want (UI/ShoppingEditor.lua)
 -- Turned off with the "Cheapest materials" option.
 
 local _, ns = ...
@@ -161,12 +163,29 @@ local function CreateRow(index)
     end
     row.quality = Cell(4, 90)
     row.cost = Cell(96, 76, "RIGHT")
-    row.profit = Cell(176, 76, "RIGHT")
+    row.profit = Cell(176, 62, "RIGHT")
     row.use = Skin.Button(row, L.MAT_USE, 44, 18)
     row.use:SetPoint("RIGHT", -2, 0)
     row.use:SetScript("OnClick", function()
         if row.entry and not Apply(row.entry) then Util.Print(L.MAT_USE_FAILED) end
     end)
+    row.list = Skin.Button(row, "+", 18, 18)
+    row.list:SetPoint("RIGHT", row.use, "LEFT", -4, 0)
+    row.list:SetScript("OnClick", function()
+        if not (row.entry and current) then return end
+        local items = {}
+        for _, m in ipairs(row.entry.mix) do items[#items + 1] = { itemID = m.itemID, n = m.n } end
+        for _, m in ipairs(current.plan.fixedItems or {}) do items[#items + 1] = { itemID = m.itemID, n = m.n } end
+        local info = C_TradeSkillUI.GetRecipeInfo(current.recipeID)
+        ns.ShoppingEditor:AddCraft(info and info.name or ("recipe " .. current.recipeID), items)
+    end)
+    row.list:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L.MAT_LIST)
+        GameTooltip:AddLine(L.MAT_LIST_TIP, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    row.list:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row:SetScript("OnEnter", ShowRowTooltip)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
     return row
@@ -181,7 +200,7 @@ local function Create()
     subText:SetJustifyH("LEFT")
     subText:SetWordWrap(true)
     headers = {}
-    local columns = { { 16, 90, L.MAT_COL_QUALITY }, { 108, 76, L.MAT_COL_COST, "RIGHT" }, { 188, 76, L.MAT_COL_PROFIT, "RIGHT" } }
+    local columns = { { 16, 90, L.MAT_COL_QUALITY }, { 108, 76, L.MAT_COL_COST, "RIGHT" }, { 188, 62, L.MAT_COL_PROFIT, "RIGHT" } }
     for _, h in ipairs(columns) do
         local fs = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         fs.x = h[1]

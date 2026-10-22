@@ -40,7 +40,7 @@ The **Deals** tab lists items listed well below their usual price that sell at l
 
 Two more views on the same tab:
 
-- **Shopping:** your shopping list. Add an item with the most you'll pay, and Auction Coach tells you (in the list, the tooltip and chat) when one is listed at or below that.
+- **Shopping:** your shopping list. Alt-click any item (bags, chat, the Auction House) to add it with the most you'll pay, and Auction Coach tells you (in the list, the tooltip and chat) when one is listed at or below that. Right-click an item to edit or remove it. At the Auction House the list opens beside it, grouped by who added each item (you, Patron Planner, a craft). The **+** on a Cheapest materials row adds that craft's materials, less what you already have.
 - **Other realms:** cross-realm flips. Items that are cheap on one of your realms and usually sell for more on another. Buy, move it through the warband bank, post.
 
 <img src="Docs/CurrentDeals.png" alt="Deals: items listed well below their usual price" width="600">

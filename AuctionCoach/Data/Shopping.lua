@@ -40,11 +40,80 @@ function Shopping:Add(key, maxPrice, link, need, note)
     return true
 end
 
+-- Adds count more of an item, for crafts: an item already on the list
+-- keeps its max and who added it, and its count goes up.
+function Shopping:AddMore(key, count, maxPrice, link, note)
+    local entry = key and List()[key]
+    count = math.floor(tonumber(count) or 0)
+    if not entry then return self:Add(key, maxPrice, link, count > 0 and count or nil, note) end
+    if count > 0 then entry.need = (entry.need or 0) + count end
+    alertedAt[key] = nil
+    ns.Events:Fire("AC_SHOPPING_CHANGED")
+    return true
+end
+
+-- Changes an item's count (nil or 0 for no count) and max.
+function Shopping:Update(key, need, maxPrice)
+    local entry = key and List()[key]
+    if not entry or not maxPrice or maxPrice <= 0 then return false end
+    need = math.floor(tonumber(need) or 0)
+    entry.need = need > 0 and need or nil
+    entry.max = math.floor(maxPrice)
+    alertedAt[key] = nil
+    ns.Events:Fire("AC_SHOPPING_CHANGED")
+    return true
+end
+
 function Shopping:Remove(key)
     if not key or not List()[key] then return false end
     List()[key] = nil
     ns.Events:Fire("AC_SHOPPING_CHANGED")
     return true
+end
+
+-- Takes off everything one source added (note, or nil for items added by
+-- hand). Returns how many.
+function Shopping:RemoveGroup(note)
+    local removed = 0
+    for key, entry in pairs(List()) do
+        if entry.note == note then
+            List()[key] = nil
+            removed = removed + 1
+        end
+    end
+    if removed > 0 then ns.Events:Fire("AC_SHOPPING_CHANGED") end
+    return removed
+end
+
+-- A max to suggest when adding an item: a little over its usual price, or
+-- over the lowest listing when there's no usual price. nil when unknown.
+local SUGGEST_OVER = 1.10
+function Shopping.SuggestedMax(key)
+    local price = ns.Prices and ns.Prices:Get(key)
+    local base = price and (price.value or price.min)
+    if not base or base <= 0 then return nil end
+    return math.floor(base * SUGGEST_OVER)
+end
+
+-- Items (from Items) grouped by who added them: { { note, items }, ... },
+-- items added by hand first, then by source name. Items keep their order.
+function Shopping.Groups(items)
+    local byNote, groups = {}, {}
+    for _, item in ipairs(items) do
+        local id = item.note or ""
+        local group = byNote[id]
+        if not group then
+            group = { note = item.note, items = {} }
+            byNote[id] = group
+            groups[#groups + 1] = group
+        end
+        group.items[#group.items + 1] = item
+    end
+    table.sort(groups, function(a, b)
+        if (a.note == nil) ~= (b.note == nil) then return a.note == nil end
+        return (a.note or "") < (b.note or "")
+    end)
+    return groups
 end
 
 function Shopping:Get(key)

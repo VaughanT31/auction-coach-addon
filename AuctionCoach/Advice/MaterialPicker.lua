@@ -23,7 +23,7 @@
 --
 -- Picker.Plan returns:
 --   { qualities = { { quality, cost, mix, concentration }, ... }, fixed,
---     baseQuality, maxQuality }
+--     fixedItems = { { itemID, n }, ... }, baseQuality, maxQuality }
 --   mix = { { slot, itemID, n }, ... } (slot is the schematic's slot index)
 -- or nil and a reason ("noquality", "noprice", "noinfo").
 
@@ -72,10 +72,11 @@ end
 
 -- The schematic's required slots: quality slots ({ index, d, n, tiers =
 -- { { itemID, price }, ... } } lowest quality first) and the fixed cost of
--- the rest. nil when a material has no price.
+-- the rest, and the rest as { { itemID, n }, ... } (for the shopping list).
+-- nil when a material has no price.
 function Picker.Slots(schematic)
     local basic = Enum and Enum.CraftingReagentType and Enum.CraftingReagentType.Basic
-    local slots, fixed = {}, 0
+    local slots, fixed, fixedItems = {}, 0, {}
     for index, slot in ipairs(schematic.reagentSlotSchematics or {}) do
         local required = slot.required
         if required == nil then required = basic ~= nil and slot.reagentType == basic end
@@ -89,6 +90,7 @@ function Picker.Slots(schematic)
             if #tiers == 1 then
                 if not tiers[1].price then return nil, "noprice" end
                 fixed = fixed + tiers[1].price * n
+                fixedItems[#fixedItems + 1] = { itemID = tiers[1].itemID, n = n }
             else
                 -- The lowest quality has to be priced; a higher one without a
                 -- price is just never picked.
@@ -97,7 +99,7 @@ function Picker.Slots(schematic)
             end
         end
     end
-    return slots, fixed
+    return slots, fixed, fixedItems
 end
 
 local function BaseMix(slots)
@@ -223,7 +225,7 @@ end
 -- Step 4.
 function Picker.Plan(recipeID, schematic)
     if type(schematic) ~= "table" then return nil, "noinfo" end
-    local slots, fixed = Picker.Slots(schematic)
+    local slots, fixed, fixedItems = Picker.Slots(schematic)
     if not slots then return nil, fixed end
     if #slots == 0 then return nil, "noquality" end
     local frontier = Picker.Frontier(recipeID, slots)
@@ -258,7 +260,7 @@ function Picker.Plan(recipeID, schematic)
     -- lowest quality.
     local base = fixed
     for _, slot in ipairs(slots) do base = base + slot.n * slot.tiers[1].price end
-    local plan = { qualities = {}, fixed = fixed }
+    local plan = { qualities = {}, fixed = fixed, fixedItems = fixedItems }
     plan.baseQuality = Quality(1, false)
     plan.maxQuality = Quality(#frontier, false)
     local focusedMax = Quality(#frontier, true)

@@ -35,6 +35,8 @@ local DEFAULTS = {
         shoppingAlerts = true,
         -- The shopping list beside the AH when it opens (UI/ShoppingPanel.lua).
         shoppingPanel = true,
+        -- Alt-click an item link to add it to the shopping list (UI/ShoppingEditor.lua).
+        shopAltClick = true,
         -- Tooltip line with what an item is worth destroyed (Data/Destroy.lua).
         destroyTooltip = true,
         -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).
