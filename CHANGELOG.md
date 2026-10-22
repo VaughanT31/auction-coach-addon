@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.1
+
+- **Today's Plan is gold for today:** every step that sells something now needs at least an even chance of a sale before you're back. Slow sellers move to their own list under the plan, *post these when you're done*, with the chance of a sale and how many sell a day, and aren't counted in the plan's gold. Click one at the Auction House to post it.
+- **No more slow flips or crafts:** deals that wouldn't resell before you're back are left out (the footer says how many), and crafts of items that won't sell today aren't suggested, so the materials get posted instead.
+- **Truer gold figures:** expected sales follow the item's sales rate, so a stack of 20 that sells 4 a day counts about 4, and a single item that sells once a week barely counts.
+- **No reposting slow sellers:** an undercut listing that's unlikely to sell anyway isn't worth a new deposit, so it's no longer a REPOST step.
+
 ## 0.16.0
 
 - **Shopping list without commands:** Alt-click any item in your bags, a chat link or an Auction House result to add it, with a max a little over its usual price already filled in (already on the list: change it instead). The shopping list at the Auction House also has an **Add** button. Turn Alt-click off in the options if it clashes with another addon.

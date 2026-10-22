@@ -340,6 +340,8 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_DESTROY:format(money(step.gain))
     elseif kind == "CRAFT" then
         return L.PLAN_SHORT_CRAFT:format(money(step.gain))
+    elseif kind == "SLOW" then
+        return L.PLAN_SHORT_SLOW:format(math.floor(step.first * 100 + 0.5), ns.Styles:WindowHours())
     elseif kind == "SKIP" then
         local s = step.suggestion
         if s.action == "HOLD" then
@@ -423,6 +425,10 @@ function Phrases.PlanDetails(step, money)
             lines[#lines + 1] = L.CRAFT_CONCENTRATION:format(step.craft.concentration.cost or "?",
                 money(step.craft.concentration.extra))
         end
+    elseif kind == "SLOW" then
+        lines[#lines + 1] = L.PLAN_WHY_SLOW:format(("%.1f"):format(step.suggestion.salesPerDay),
+            math.floor(step.first * 100 + 0.5), ns.Styles:WindowHours())
+        lines[#lines + 1] = L.PLAN_WHY_SLOW_POST:format(money(step.price), money(step.value))
     elseif kind == "SKIP" then
         for _, line in ipairs(Phrases.Sell(step.suggestion, money)) do lines[#lines + 1] = line end
     end

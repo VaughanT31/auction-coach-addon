@@ -24,6 +24,7 @@ local TAG_COLORS = {
     BUY = { 0.4, 0.7, 1 },
     VENDOR = { 0.75, 0.75, 0.75 },
     SKIP = { 0.55, 0.55, 0.55 },
+    SLOW = { 0.55, 0.7, 0.85 },
     MAIL = { 0.85, 0.75, 1 },
     CANCEL = { 1, 0.5, 0.35 },
     SHOP = { 0.4, 0.85, 1 },
@@ -55,7 +56,7 @@ local function ShowRowTooltip(row)
     for _, line in ipairs(Phrases.PlanDetails(step)) do
         GameTooltip:AddLine(line, 1, 1, 1, true)
     end
-    if step.kind ~= "SKIP" then
+    if step.kind ~= "SKIP" and step.kind ~= "SLOW" then
         GameTooltip:AddLine(L.PLAN_DONE_TIP, 0.6, 0.8, 1, true)
     end
     GameTooltip:Show()
@@ -63,7 +64,7 @@ end
 
 local function StartStep(step)
     if not step or not step.key then return false end
-    if step.kind == "POST" then
+    if step.kind == "POST" or step.kind == "SLOW" then
         return ns.Sell:PutInSellBox(step.key)
     elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" or step.kind == "SHOP" then
         return Compat.ShowAtAuctionHouse(step.key, Util.NamedLink(step.key), step.price)
@@ -167,7 +168,7 @@ local function SetStep(row, step)
     row.reason:SetText(Phrases.PlanShort(step, Util.FormatMoneyIcons))
     row.gold:SetText(step.gold and step.gold > 0 and ("|cff66ff66+" .. Util.FormatMoneyIcons(step.gold) .. "|r") or "")
 
-    if step.kind == "SKIP" then
+    if step.kind == "SKIP" or step.kind == "SLOW" then
         row.check:Hide()
         row:SetAlpha(0.8)
     else
@@ -269,10 +270,11 @@ local function Refresh(panel, reason)
         sub = L.PLAN_SUB_EMPTY:format(plan.budget)
     end
     panel.sub:SetText(sub .. (Compat.IsAuctionHouseOpen() and (" " .. L.PLAN_SUB_AH) or ""))
-    panel.empty:SetText((#plan.steps == 0 and #plan.skips == 0) and L.PLAN_EMPTY or "")
+    panel.empty:SetText((#plan.steps == 0 and #plan.skips == 0 and #plan.slow == 0) and L.PLAN_EMPTY or "")
 
     local notes = {}
     if plan.left > 0 then notes[#notes + 1] = L.PLAN_LEFT:format(plan.left) end
+    if plan.slowDeals > 0 then notes[#notes + 1] = L.PLAN_SLOW_DEALS:format(plan.slowDeals) end
     if plan.unaffordable > 0 then
         notes[#notes + 1] = L.PLAN_NO_GOLD:format(plan.unaffordable, Util.FormatMoneyIcons(plan.money))
     end
@@ -289,6 +291,10 @@ local function Refresh(panel, reason)
         return row
     end
     for _, step in ipairs(plan.steps) do SetStep(NextRow(), step) end
+    if #plan.slow > 0 then
+        SetHeading(NextRow(), L.PLAN_SLOW_HEADER)
+        for _, step in ipairs(plan.slow) do SetStep(NextRow(), step) end
+    end
     if #plan.skips > 0 then
         SetHeading(NextRow(), L.PLAN_SKIP_HEADER)
         for _, step in ipairs(plan.skips) do SetStep(NextRow(), step) end

@@ -28,9 +28,17 @@
 --           they use leave the POST steps.
 --   SKIP    items better left alone today (prices crashed, or undercut far
 --           faster than the player checks back). Shown, never counted.
+--   SLOW    items worth posting but unlikely to sell before the player is
+--           back (less than FAST_ENOUGH chance of even one sale). Shown
+--           after the plan as "post when you're done", never counted, so
+--           the plan is the gold that should actually come in today.
 --
 -- Each step gets an expected gold figure (what should actually come in,
--- not the best case) and a rough time cost. Steps are ranked by gold per
+-- not the best case) and a rough time cost. Sales arrive at the item's
+-- sales rate (a Poisson guess), so a stack of 20 that sells 4 a day counts
+-- about 4, and a single item that sells once a week barely counts at all.
+-- Selling steps, crafts and buys must have an even chance of a sale
+-- before the player is back (FAST_ENOUGH), or they aren't plan steps. Steps are ranked by gold per
 -- minute and taken until the time budget is used up. Getting to the AH or
 -- the bank costs time once, the first time a step needs it. Buys also
 -- need the gold to pay for them.
@@ -76,6 +84,11 @@ local BUY_FACTOR = 0.7
 local UNKNOWN_SPEED_FACTOR = 0.5
 local MAX_BUYS = 10
 local MAX_SKIPS = 3
+local MAX_SLOW = 5
+-- A step that sells something needs at least this chance of one sale
+-- before the player is back, or it's a slow seller, not part of today.
+local FAST_ENOUGH = 0.5
+Plan.FAST_ENOUGH = FAST_ENOUGH
 -- Destroying is suggested only when the materials beat selling by this
 -- much, and the materials still need posting, so count part of their value.
 local DESTROY_MARGIN = 1.1
@@ -141,18 +154,34 @@ end
 -- Candidates from the rest of the addon
 -- ---------------------------------------------------------------------
 
--- How many of count should sell before the player is back (seller style
--- window), or nil without a sales rate.
-local function ExpectedSold(count, salesPerDay)
+-- How many of count should sell in hours when sales arrive at
+-- salesPerDay, and the chance at least one does, or nil without a sales
+-- rate. Expected sales of a stack: the sum over k of the chance of at
+-- least k sales.
+function Plan.Odds(count, salesPerDay, hours)
     if not salesPerDay or salesPerDay <= 0 then return nil end
-    return math.min(count, salesPerDay * ns.Styles:WindowHours() / 24)
+    local lambda = salesPerDay * hours / 24
+    local first = 1 - math.exp(-lambda)
+    if count == math.huge or count > 2000 then return math.min(count, lambda), first end
+    local sold = 0
+    for k = 1, count do
+        local p = ns.SellChance.AtLeast(k, lambda)
+        if p < 0.0005 then break end
+        sold = sold + p
+    end
+    return sold, first
+end
+
+-- Plan.Odds for the time until the player is back (seller style window).
+local function ExpectedSold(count, salesPerDay)
+    return Plan.Odds(count, salesPerDay, ns.Styles:WindowHours())
 end
 
 -- item: { key, count, suggestion, value, from = nil | "bank" | "warband" }
 local function PostCandidate(item)
     local s = item.suggestion
     local unit = Util.AfterCut(s.price)
-    local sold = ExpectedSold(item.count, s.salesPerDay)
+    local sold, first = ExpectedSold(item.count, s.salesPerDay)
     local gold
     if sold then
         gold = unit * sold
@@ -164,9 +193,31 @@ local function PostCandidate(item)
     return {
         id = "POST:" .. (item.from and (item.from .. ":") or "") .. item.key,
         kind = "POST", key = item.key, count = item.count, from = item.from,
-        price = s.price, full = item.value, gold = gold, sold = sold,
+        price = s.price, full = item.value, gold = gold, sold = sold, first = first,
+        slow = first ~= nil and first < FAST_ENOUGH or nil,
         seconds = COST.POST + (fromBank and COST.WITHDRAW or 0),
         ah = true, bank = fromBank or nil, suggestion = s,
+    }
+end
+
+-- A posting candidate into the plan, or onto the slow list (one row per
+-- item, counts from bags, bank and mail added up).
+local function AddPost(result, candidates, item)
+    local c = PostCandidate(item)
+    if not c.slow then
+        candidates[#candidates + 1] = c
+        return
+    end
+    for _, slow in ipairs(result.slow) do
+        if slow.key == c.key then
+            slow.count = slow.count + c.count
+            slow.value = slow.value + Util.AfterCut(c.price) * c.count
+            return
+        end
+    end
+    result.slow[#result.slow + 1] = {
+        id = "SLOW:" .. c.key, kind = "SLOW", key = c.key, count = c.count, price = c.price,
+        value = Util.AfterCut(c.price) * c.count, first = c.first, suggestion = c.suggestion,
     }
 end
 
@@ -237,8 +288,10 @@ end
 local function AuctionCandidates(list)
     for _, entry in ipairs(ns.Auctions:List().items) do
         local s = entry.suggestion
-        if entry.action == "REPOST" then
-            local sold = ExpectedSold(entry.quantity, s.salesPerDay)
+        local sold, first = ExpectedSold(entry.quantity, s.salesPerDay)
+        if entry.action == "REPOST" and first and first < FAST_ENOUGH then
+            -- Slow: reposting costs a deposit for a sale that likely won't come.
+        elseif entry.action == "REPOST" then
             local unit = Util.AfterCut(entry.newPrice)
             local gold = sold and unit * sold or unit * entry.quantity * UNKNOWN_SPEED_FACTOR
             list[#list + 1] = {
@@ -269,8 +322,12 @@ local function BuyCandidates(list)
     local groups, order = {}, {}
     -- A deal whose resell price may be pushed up is never a plan step.
     local safe = {}
+    -- A flip has to resell soon to be gold today, not gold stuck in the AH.
+    local slow = 0
     for _, d in ipairs(ns.Deals:List().items) do
-        if not d.shaky then safe[#safe + 1] = d end
+        if not d.shaky then
+            if ResellChance(d) >= FAST_ENOUGH then safe[#safe + 1] = d else slow = slow + 1 end
+        end
     end
     for _, d in ipairs(safe) do
         local link = Util.NamedLink(d.key)
@@ -302,6 +359,7 @@ local function BuyCandidates(list)
             seconds = COST.BUY + COST.BUY_MORE * (#deals - 1), ah = true,
         }
     end
+    return slow
 end
 
 -- An item in the bags worth more destroyed than sold, or nil: returns the
@@ -351,8 +409,11 @@ function Plan.CraftCandidates(list)
         if e.profit >= math.max(CRAFT_MIN_PROFIT, e.cost * CRAFT_MARGIN) then
             local crafts = ns.Crafting.Possible(e.recipe, left)
             local made = e.recipe.q or 1
+            local wanted, first = ExpectedSold(math.huge, e.salesPerDay)
+            -- Crafting something that won't sell today only turns
+            -- materials that sell into an item that sits.
+            if first and first < FAST_ENOUGH then crafts = 0 end
             if crafts > 0 then
-                local wanted = ExpectedSold(math.huge, e.salesPerDay)
                 if wanted then
                     crafts = math.min(crafts, math.max(1, math.floor(wanted / made)))
                 else
@@ -417,6 +478,9 @@ end
 --   seconds      rough time they take
 --   budget       minutes asked for
 --   skips        up to MAX_SKIPS { kind = "SKIP", key, count, suggestion } to leave alone
+--   slow         up to MAX_SLOW { kind = "SLOW", key, count, price, value, first }:
+--                worth posting, unlikely to sell before the player is back
+--   slowDeals    deals left out because they wouldn't resell in time
 --   left         steps that did not fit in the time
 --   unaffordable buys left out because they cost more than the gold on hand
 --   money        gold on this character
@@ -425,7 +489,8 @@ end
 --   hasSpeed     true when sales rates (desktop app data) were available
 -- }
 function Plan:Build(minutes)
-    local result = { steps = {}, gold = 0, seconds = 0, skips = {}, left = 0, unaffordable = 0, elsewhere = {} }
+    local result = { steps = {}, gold = 0, seconds = 0, skips = {}, slow = {}, slowDeals = 0, left = 0,
+        unaffordable = 0, elsewhere = {} }
     if not ns.db or not ns.charKey then
         result.budget = minutes or 15
         return result
@@ -461,7 +526,7 @@ function Plan:Build(minutes)
                 }
             end
         elseif s.action == "POST" then
-            candidates[#candidates + 1] = PostCandidate(item)
+            AddPost(result, candidates, item)
         elseif s.action == "VENDOR" and s.vendor and s.vendor > 0 then
             vendorGold = vendorGold + s.vendor * item.count
             vendorItems = vendorItems + 1
@@ -475,7 +540,7 @@ function Plan:Build(minutes)
         local s = item and item.suggestion
         if s and s.salesPerDay then result.hasSpeed = true end
         if s and s.action == "POST" and s.contested ~= "HEAVY" then
-            candidates[#candidates + 1] = PostCandidate(item)
+            AddPost(result, candidates, item)
         end
     end
     -- Mail items worth posting. The pinned MAIL step collects them, so
@@ -486,7 +551,7 @@ function Plan:Build(minutes)
             local s = item.suggestion
             if s.salesPerDay then result.hasSpeed = true end
             if s.action == "POST" and s.contested ~= "HEAVY" then
-                candidates[#candidates + 1] = PostCandidate(item)
+                AddPost(result, candidates, item)
             end
         end
     end
@@ -496,7 +561,13 @@ function Plan:Build(minutes)
         }
     end
     AuctionCandidates(candidates)
-    BuyCandidates(candidates)
+    result.slowDeals = BuyCandidates(candidates)
+    -- Most valuable slow sellers first, a few of them.
+    table.sort(result.slow, function(a, b)
+        if a.value ~= b.value then return a.value > b.value end
+        return a.key < b.key
+    end)
+    for i = #result.slow, MAX_SLOW + 1, -1 do result.slow[i] = nil end
     DestroyCandidates(destroyGroups, candidates)
 
     -- Mailbox gold is spendable once collected, so deals can use it.
