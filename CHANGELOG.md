@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.0
+
+- **Cheapest or undercut, right on the Auction House:** Blizzard's Auctions tab gets a *Status* column after Time left. Each of your auctions says *Cheapest*, or *Undercut* with how much lower the cheapest listing is and, in brackets, how many cheaper auctions other sellers have (units, for reagents and other stackables). Hover it for the prices.
+- The cheaper count comes from your last search of that item, so click the auction to fill it in. The column uses the same check as Auction Coach's own Auctions tab, so the two always agree.
+- Turn it off with *Cheapest or undercut on Blizzard's Auctions tab* in the options.
+
 ## 0.18.0
 
 - **Is it worth crafting?** Under every recipe you know, cooking and feasts included, the profession window now shows *To craft* (what one craft's materials cost, each at its cheapest quality) and *Profit* (what it makes at the quality you make, after the AH cut, less the materials), with how many one craft makes and what each sells for. Hover it for the materials one by one.

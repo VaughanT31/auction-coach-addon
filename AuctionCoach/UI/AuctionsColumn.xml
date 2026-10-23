@@ -1,0 +1,15 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- Auction Coach - one cell of the Status column on Blizzard's Auctions tab (UI/AuctionsColumn.lua). -->
+    <Frame name="AuctionCoachAuctionStatusCellTemplate" mixin="AuctionCoachAuctionStatusCellMixin" virtual="true">
+        <Size x="0" y="16"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <FontString parentKey="Text" inherits="Number13FontGray" justifyH="LEFT" wordwrap="false" setAllPoints="true"/>
+            </Layer>
+        </Layers>
+        <Scripts>
+            <OnEnter method="OnEnter"/>
+            <OnLeave method="OnLeave"/>
+        </Scripts>
+    </Frame>
+</Ui>

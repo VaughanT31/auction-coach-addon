@@ -37,19 +37,33 @@ local function NewestPosts()
     return newest
 end
 
+Auctions.NewestPosts = NewestPosts
+
+-- Whether a listing at this unit price is still the cheapest: "CHEAPEST"
+-- (or tied, or the lower price was seen before it was posted) or
+-- "UNDERCUT", with the item's price info. nil when there's no price yet.
+-- posts is from Auctions.NewestPosts(). Also used by the column on
+-- Blizzard's Auctions tab (UI/AuctionsColumn.lua).
+function Auctions.Standing(key, unit, posts)
+    local price = ns.Prices:Get(key)
+    if not price or not price.min then return nil, price end
+    local post = posts[key]
+    local seenSincePost = not post or (price.minAt or 0) > post.p
+    if price.min >= unit or not seenSincePost then return "CHEAPEST", price end
+    return "UNDERCUT", price
+end
+
 local function Advise(entry, posts)
-    local price = ns.Prices:Get(entry.key)
+    local standing, price = Auctions.Standing(entry.key, entry.unit, posts)
     local s = ns.Rules:SuggestPrice(entry.key, ns.db.links[entry.key])
     entry.suggestion = s
-    if not price or not price.min then
+    if not standing then
         entry.action = "UNKNOWN"
         return
     end
     entry.lowest, entry.lowestAt = price.min, price.minAt
 
-    local post = posts[entry.key]
-    local seenSincePost = not post or (price.minAt or 0) > post.p
-    if price.min >= entry.unit or not seenSincePost then
+    if standing == "CHEAPEST" then
         entry.action = "KEEP"
     elseif s.action == "VENDOR" and s.vendor and s.vendor > 0 then
         entry.action = "CANCEL"

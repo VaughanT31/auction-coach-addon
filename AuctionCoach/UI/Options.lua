@@ -119,6 +119,9 @@ local function Build()
     Checkbox("recipeValue", L.OPT_RECIPE_VALUE, L.OPT_RECIPE_VALUE_TIP, true, function()
         if ns.RecipeValue then ns.RecipeValue:Refresh() end
     end)
+    Checkbox("auctionsColumn", L.OPT_AH_COLUMN, L.OPT_AH_COLUMN_TIP, true, function()
+        if ns.AuctionsColumn then ns.AuctionsColumn:Refresh() end
+    end)
     Checkbox("materialPicker", L.OPT_MAT_PICKER, L.OPT_MAT_PICKER_TIP, true, function(on)
         if not on and ns.MaterialPanel then ns.MaterialPanel:Hide() end
     end)

@@ -412,6 +412,19 @@ L.AUCTIONS_LOWEST_AGE = "Lowest price seen %s."
 L.AUCTIONS_TIME_LEFT = "Time left: %s"
 L.AUCTIONS_COUNT = "%d auctions at this price"
 
+-- Status column on Blizzard's Auctions tab (UI/AuctionsColumn.lua)
+L.AHCOL_HEAD = "Status"
+L.AHCOL_CHEAPEST = "Cheapest"
+L.AHCOL_UNDERCUT = "Undercut %s"
+L.AHCOL_UNDERCUT_COUNT = "Undercut %s (%s)"
+L.AHCOL_NO_PRICE = "No price yet"
+L.AHCOL_TIP_UNDERCUT = "Undercut by %s"
+L.AHCOL_TIP_PRICES = "The lowest is %s each, yours is %s."
+L.AHCOL_TIP_CHEAPER = "%s auctions from other sellers are cheaper than yours."
+L.AHCOL_TIP_CHEAPER_UNITS = "%s units from other sellers are listed cheaper than yours."
+L.AHCOL_TIP_SEARCH = "Click it to search the item, and the number of cheaper auctions shows here."
+L.AHCOL_TIP_ADVICE = "Auction Coach's Auctions tab says whether to repost, and at what price."
+
 -- My Stuff: gold overview (0.6.0)
 L.GOLD_HEADER = "Gold"
 L.GOLD_TOTAL = "Total"
@@ -598,6 +611,8 @@ L.RV_TIP_NOTE = "Each material at its cheapest quality, at what it sells for or 
 L.OPT_RECIPE_VALUE = "Cost and profit on the recipe"
 L.OPT_RECIPE_VALUE_TIP = "Under every recipe you know, cooking included: what one craft costs, the profit, and a button to put its materials on your shopping list."
 L.OPT_SHOP_PANEL = "Shopping list at the Auction House"
+L.OPT_AH_COLUMN = "Cheapest or undercut on Blizzard's Auctions tab"
+L.OPT_AH_COLUMN_TIP = "Adds a Status column to your auctions at the Auction House: Cheapest, or Undercut with how much lower the cheapest is and how many cheaper auctions there are."
 L.OPT_OPEN_WITH_AH = "Open Auction Coach when I open the Auction House"
 L.OPT_OPEN_WITH_AH_TIP = "Opens the Auction Coach window with the Auction House, and closes it again when you leave, unless you had it open already."
 L.OPT_SHOP_CLICK = "Add to the shopping list with"

@@ -48,6 +48,8 @@ local DEFAULTS = {
         -- Cost and profit under recipes without material qualities, like
         -- cooking (UI/RecipeValue.lua).
         recipeValue = true,
+        -- Cheapest or undercut column on Blizzard's Auctions tab (UI/AuctionsColumn.lua).
+        auctionsColumn = true,
         -- Today's Plan: items never suggested, characters whose own items
         -- are left out (Advice/Plan.lua).
         planHidden = {},
