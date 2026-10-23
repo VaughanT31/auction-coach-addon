@@ -418,11 +418,12 @@ L.AHCOL_CHEAPEST = "Cheapest"
 L.AHCOL_UNDERCUT = "Undercut %s"
 L.AHCOL_UNDERCUT_COUNT = "Undercut %s (%s)"
 L.AHCOL_NO_PRICE = "No price yet"
+L.AHCOL_CHECKING = "Checking..."
 L.AHCOL_TIP_UNDERCUT = "Undercut by %s"
 L.AHCOL_TIP_PRICES = "The lowest is %s each, yours is %s."
 L.AHCOL_TIP_CHEAPER = "%s auctions from other sellers are cheaper than yours."
 L.AHCOL_TIP_CHEAPER_UNITS = "%s units from other sellers are listed cheaper than yours."
-L.AHCOL_TIP_SEARCH = "Click it to search the item, and the number of cheaper auctions shows here."
+L.AHCOL_TIP_SEARCH = "Press refresh, or click the auction, to search it, and the number of cheaper auctions shows here."
 L.AHCOL_TIP_ADVICE = "Auction Coach's Auctions tab says whether to repost, and at what price."
 
 -- My Stuff: gold overview (0.6.0)

@@ -16,6 +16,15 @@ local function RecordSample(key, minPrice, sellers)
     end
 end
 
+-- Only the player's own listings came back: nobody else sells it, so the
+-- lowest price is the player's own. An older, lower price from someone
+-- whose listings have since sold or expired no longer counts.
+local function OnlyOwn(key, ownMin)
+    local now = Util.Now()
+    if ownMin then ns.Prices:RecordLivePrice(ns.realmGroup, key, ownMin, now) end
+    ns.Undercuts:Observe(ns.realmGroup, key, nil, now)
+end
+
 -- Commodities (reagents, consumables...): results are sorted cheapest first.
 -- Rows made up only of the player's own listings are skipped, so they
 -- never set the price. A row at the same price can mix the player's and
@@ -26,7 +35,7 @@ local function CheckCommodity(itemID)
     local num = C_AuctionHouse.GetNumCommoditySearchResults(itemID) or 0
     if num == 0 then return end
     -- Other sellers' listings (unit price, quantity), for the sell chance.
-    local rows, lowest = {}, nil
+    local rows, lowest, ownMin = {}, nil, nil
     for i = 1, num do
         local info = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, i)
         if info and info.unitPrice and info.unitPrice > 0 then
@@ -35,6 +44,8 @@ local function CheckCommodity(itemID)
             if others > 0 then
                 rows[#rows + 1] = { info.unitPrice, others }
                 lowest = lowest or info.unitPrice
+            elseif own then
+                ownMin = ownMin or info.unitPrice
             end
         end
     end
@@ -42,8 +53,7 @@ local function CheckCommodity(itemID)
     if lowest then
         RecordSample(key, lowest)
     else
-        -- Only the player's own listings: nobody else sells it right now.
-        ns.Undercuts:Observe(ns.realmGroup, key, nil, Util.Now())
+        OnlyOwn(key, ownMin)
     end
 end
 
@@ -53,14 +63,17 @@ local function CheckItem(itemKey)
     local num = C_AuctionHouse.GetNumItemSearchResults(itemKey)
     if not num or num == 0 then return end
 
-    local byKey = {}
+    local byKey, ownMin = {}, {}
     for i = 1, num do
         local info = C_AuctionHouse.GetItemSearchResultInfo(itemKey, i)
         local key = info and Util.ItemKeyFromLink(info.itemLink)
         -- containsOwnerItem / containsAccountItem: the player's own listings,
         -- left out so they never set the price.
         local own = info and (info.containsOwnerItem or info.containsAccountItem)
-        if key and not own and info.buyoutAmount and info.buyoutAmount > 0 then
+        if key and own and info.buyoutAmount and info.buyoutAmount > 0 then
+            local unitPrice = math.floor(info.buyoutAmount / math.max(1, info.quantity or 1))
+            if not ownMin[key] or unitPrice < ownMin[key] then ownMin[key] = unitPrice end
+        elseif key and not own and info.buyoutAmount and info.buyoutAmount > 0 then
             local unitPrice = math.floor(info.buyoutAmount / math.max(1, info.quantity or 1))
             local entry = byKey[key]
             if not entry then
@@ -81,6 +94,12 @@ local function CheckItem(itemKey)
         for _ in pairs(entry.owners) do sellers = sellers + 1 end
         ns.SellChance:SetLadder(key, entry.rows)
         RecordSample(key, entry.min, sellers > 0 and sellers or nil)
+    end
+    for key, price in pairs(ownMin) do
+        if not byKey[key] then
+            ns.SellChance:SetLadder(key, {})
+            OnlyOwn(key, price)
+        end
     end
 end
 

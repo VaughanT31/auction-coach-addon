@@ -11,6 +11,14 @@
 -- (Scan/ItemCheck.lua), so it shows once the item has been searched in
 -- the last 15 minutes: clicking the auction in the list does that.
 --
+-- Opening the tab or pressing Blizzard's refresh button only reloads the
+-- player's own auctions, so the column then searches each listed item once,
+-- one at a time at the pace the game allows, for its current lowest price.
+-- The rows update as the answers come in. Items searched in the last
+-- minute are skipped, and the check stops when the list is hidden (an
+-- auction clicked, another tab, the AH closed), so it never gets in the
+-- way of the player's own searches.
+--
 -- Blizzard builds the list's columns with a layout function; this wraps
 -- it and adds one column at the end. Turned off with the "Cheapest or
 -- undercut on Blizzard's Auctions tab" option.
@@ -29,6 +37,12 @@ local RED = "|cffff6666"
 local GREY = "|cff999999"
 
 local installed
+
+-- Price check after a refresh: item key -> { itemKey } still to search,
+-- in order, and the keys waiting for their answer.
+local queue, pending = {}, {}
+local RECHECK_AFTER = 60   -- seconds: searched this recently, not searched again
+local STEP = 1.5           -- seconds between searches, so each answer is read first
 
 local function Enabled()
     return ns.db and ns.db.settings.auctionsColumn ~= false
@@ -81,7 +95,7 @@ local function Describe(info)
     local key, unit = KeyAndUnit(info)
     if not key or not unit or unit <= 0 then return nil end
     local standing, price = ns.Auctions.Standing(key, unit, Posts())
-    local d = { standing = standing, unit = unit, commodity = info.itemLink == nil }
+    local d = { key = key, standing = standing, unit = unit, commodity = info.itemLink == nil }
     if price then d.lowest, d.lowestAt = price.min, price.minAt end
     if standing == "UNDERCUT" then
         d.by = unit - price.min
@@ -91,6 +105,7 @@ local function Describe(info)
 end
 
 local function CellText(d)
+    if pending[d.key] then return GREY .. L.AHCOL_CHECKING .. "|r" end
     if d.standing == "CHEAPEST" then return GREEN .. L.AHCOL_CHEAPEST .. "|r" end
     if d.standing == "UNDERCUT" then
         local by = Util.FormatMoney(d.by)
@@ -191,9 +206,87 @@ local function Redraw()
     end
 end
 
+-- ---------------------------------------------------------------------
+-- Price check
+-- ---------------------------------------------------------------------
+
+local stepping
+
+local function ListShown()
+    local list = List()
+    return list and list:IsVisible()
+end
+
+local function StopCheck()
+    wipe(queue)
+    wipe(pending)
+    stepping = nil
+end
+
+local function ThrottleReady()
+    return not C_AuctionHouse.IsThrottledMessageSystemReady or C_AuctionHouse.IsThrottledMessageSystemReady()
+end
+
+local function Step()
+    stepping = nil
+    if not ListShown() then
+        StopCheck()
+        Redraw()
+        return
+    end
+    local nextItem = queue[1]
+    if not nextItem then return end
+    if ThrottleReady() then
+        table.remove(queue, 1)
+        local sorts = { { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false } }
+        pcall(C_AuctionHouse.SendSearchQuery, nextItem.itemKey, sorts, false)
+        -- The answer is read a moment later by Scan/ItemCheck.lua.
+        C_Timer.After(STEP, function()
+            pending[nextItem.key] = nil
+            Redraw()
+        end)
+    end
+    stepping = true
+    C_Timer.After(ThrottleReady() and STEP or 0.5, Step)
+end
+
+-- Queues every item the player has listed, once each.
+local function StartCheck()
+    if not Enabled() or not ListShown() or not C_AuctionHouse.SendSearchQuery then return end
+    local now = Util.Now()
+    local seen = {}
+    for _, item in ipairs(queue) do seen[item.key] = true end
+    for i = 1, C_AuctionHouse.GetNumOwnedAuctions() do
+        local info = C_AuctionHouse.GetOwnedAuctionInfo(i)
+        if info and info.status == Enum.AuctionStatus.Active and info.itemKey then
+            local key = KeyAndUnit(info)
+            local price = key and ns.Prices:Get(key)
+            local fresh = price and price.minAt and now - price.minAt < RECHECK_AFTER
+            if key and not seen[key] and not fresh then
+                seen[key] = true
+                pending[key] = true
+                queue[#queue + 1] = { key = key, itemKey = info.itemKey }
+            end
+        end
+    end
+    Redraw()
+    if #queue > 0 and not stepping then
+        stepping = true
+        C_Timer.After(0.2, Step)
+    end
+end
+
 ns.Events:On("ADDON_LOADED", function(_, name)
     if name == "Blizzard_AuctionHouseUI" then Install() end
 end)
+
+-- Opening the tab and the refresh button both reload the player's auctions;
+-- once they arrive, check their prices.
+ns.Events:On("OWNED_AUCTIONS_UPDATED", function()
+    if installed then C_Timer.After(0.1, StartCheck) end
+end)
+
+ns.Events:On("AUCTION_HOUSE_CLOSED", StopCheck)
 
 ns.Events:On("AUCTION_HOUSE_SHOW", Install)
 
