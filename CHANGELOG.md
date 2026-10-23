@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.2
+
+- **Clearer empty Deals and Other realms:** both need each item's usual price and how many sell a day, which your own AH scans can't tell, so without them the lists stay empty however much you scan. The messages now say so, and that the free desktop app (Windows) is what fills them. The website's prices string only covers the items you own, so it helps My Stuff and Sell but not these. The old Other realms message wrongly said scanning each realm was enough.
+
 ## 0.19.1
 
 - **Refresh checks prices:** opening Blizzard's Auctions tab, or pressing its refresh button, now searches each item you have listed, one at a time at the pace the game allows, and the Status column updates as each answer comes in (*Checking...* until then). Before, refresh only reloaded your own auctions, so an undercut only showed after a full scan or after you searched the item yourself. Items searched in the last minute are skipped, and the check stops as soon as you click an auction or leave the tab, so it never gets in the way of your own searches.
