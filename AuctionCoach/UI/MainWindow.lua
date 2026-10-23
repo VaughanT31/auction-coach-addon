@@ -234,16 +234,58 @@ function MainWindow:Toggle()
     frame:SetShown(not frame:IsShown())
 end
 
+-- Event refreshes are gathered into one. Events come in bursts at the
+-- Auction House (every search is a live price, one per item level for
+-- gear) and each refresh rebuilds the open tab from scratch, so several in
+-- one frame stalled the game. One refresh runs SOON after the first event;
+-- live prices on their own redraw at most every LIVE_EVERY seconds, and any
+-- other event brings a waiting refresh forward.
+local SOON, LIVE_EVERY = 0.3, 5
+local pending, pendingReason, pendingLive = nil, nil, false
+local lastRefreshAt = 0
+
+local function CancelPending()
+    if pending then pending:Cancel() end
+    pending, pendingReason, pendingLive = nil, nil, false
+end
+
 -- reason is the event that triggered the refresh, or nil for a full one.
 function MainWindow:Refresh(reason)
     if not self:IsShown() or not activeTab then return end
+    if reason ~= "AC_SCAN_PROGRESS" then
+        CancelPending()
+        lastRefreshAt = GetTime()
+    end
     UpdatePriceStatus()
     local tab = tabs[activeTab]
     if tab.Refresh then tab.Refresh(tab.panel, reason) end
 end
 
+local function Schedule(delay)
+    pending = C_Timer.NewTimer(delay, function()
+        local reason = pendingReason or nil
+        pending, pendingReason, pendingLive = nil, nil, false
+        MainWindow:Refresh(reason)
+    end)
+end
+
 local function RefreshIfShown(event)
-    MainWindow:Refresh(event)
+    if not MainWindow:IsShown() then return end
+    -- Scan progress only updates the status line, which is cheap.
+    if event == "AC_SCAN_PROGRESS" then return MainWindow:Refresh(event) end
+    local live = event == "AC_LIVE_PRICE"
+    if pending then
+        -- false: more than one kind of event, so a full refresh.
+        if pendingReason ~= event then pendingReason = false end
+        if pendingLive and not live then
+            pending:Cancel()
+            pendingLive = false
+            Schedule(SOON)
+        end
+        return
+    end
+    pendingReason, pendingLive = event, live
+    Schedule(live and math.max(SOON, LIVE_EVERY - (GetTime() - lastRefreshAt)) or SOON)
 end
 
 local refreshEvents = {}

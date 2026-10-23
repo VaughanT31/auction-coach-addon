@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.3
+
+- Fixed: with the Auction Coach window open at the Auction House, searching could freeze the game for a moment. Every search (one per item level for gear) redrew the open tab from scratch, several times in the same frame. The window now redraws once for a burst of searches and at most every 5 seconds while you browse; posting, buying and scans still show straight away.
+
 ## 0.17.2
 
 - **Pick the click that adds to your shopping list:** if Alt-click already does something for you, like adding items to sell with another addon, choose Ctrl-Alt, Shift-Alt or Ctrl-Shift-click instead in the options (*Add to the shopping list with*), or turn it off. Alt-click is still the default, and the hints show whichever you pick.
