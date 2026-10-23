@@ -116,6 +116,9 @@ local function Build()
     end, true)
 
     Checkbox("destroyTooltip", L.OPT_DESTROY_TOOLTIP, L.OPT_DESTROY_TOOLTIP_TIP, true)
+    Checkbox("recipeValue", L.OPT_RECIPE_VALUE, L.OPT_RECIPE_VALUE_TIP, true, function()
+        if ns.RecipeValue then ns.RecipeValue:Refresh() end
+    end)
     Checkbox("materialPicker", L.OPT_MAT_PICKER, L.OPT_MAT_PICKER_TIP, true, function(on)
         if not on and ns.MaterialPanel then ns.MaterialPanel:Hide() end
     end)

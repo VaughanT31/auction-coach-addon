@@ -178,9 +178,11 @@ local function Open(newState)
     frame.save:SetText(state.isNew and L.SHOP_EDIT_ADD or L.SHOP_EDIT_SAVE)
 
     if craft then
-        frame.title:SetText(L.SHOP_CRAFT_TITLE)
-        frame.countLabel:SetText(L.SHOP_CRAFT_COUNT)
-        frame.countBox:SetText("1")
+        -- Asked as how many of the item to make (the recipe page), or how
+        -- many crafts (Cheapest materials).
+        frame.title:SetText(state.made and state.name or L.SHOP_CRAFT_TITLE)
+        frame.countLabel:SetText(state.made and L.SHOP_MAKE_COUNT or L.SHOP_CRAFT_COUNT)
+        frame.countBox:SetText(tostring(state.made and state.made.perCraft or 1))
         Editor:ShowMaterials()
     else
         frame.title:SetText(state.isNew and L.SHOP_EDIT_TITLE_ADD or L.SHOP_EDIT_TITLE)
@@ -203,9 +205,17 @@ end
 -- The craft's materials for the count typed in, and what goes on the list.
 function Editor:ShowMaterials()
     if not (state and state.mode == "craft") then return end
-    local crafts = math.max(0, tonumber(frame.countBox:GetText()) or 0)
+    local count = math.max(0, tonumber(frame.countBox:GetText()) or 0)
+    local crafts = count
+    local header = L.SHOP_CRAFT_FOR:format(state.name)
+    if state.made then
+        -- Enough crafts for at least that many, at the fewest a craft makes.
+        crafts = math.ceil(count / math.max(1, state.made.perCraft))
+        header = L.SHOP_MAKE_FOR:format(count, state.made.name, crafts)
+    end
+    state.crafts, state.count = crafts, count
     local onlyMissing = frame.missing:GetChecked()
-    local lines, cost = { L.SHOP_CRAFT_FOR:format(state.name) }, 0
+    local lines, cost, vendorCost = { header }, 0, 0
     state.adds = {}
     for _, m in ipairs(state.items) do
         local want = m.n * crafts
@@ -216,16 +226,23 @@ function Editor:ShowMaterials()
         local name = Util.NamedLink(key) or ns.Compat.GetItemInfo(m.itemID) or ("item " .. m.itemID)
         local text = ("%dx %s"):format(want, name)
         if have > 0 then text = text .. " |cff999999" .. L.SHOP_CRAFT_HAVE:format(have) .. "|r" end
+        -- Cheaper from a vendor: said here, not put on the AH list.
+        local ah = ns.Prices:Get(key)
+        local price, fromVendor = ns.VendorPrices.Cheapest(m.itemID, ah and ah.value or nil)
+        if fromVendor then text = text .. " |cffffd100" .. L.SHOP_CRAFT_VENDOR:format(Util.FormatMoney(price)) .. "|r" end
         if add == 0 then text = "|cff999999" .. text .. "|r" end
         lines[#lines + 1] = text
-        if add > 0 then
+        if add > 0 and fromVendor then
+            vendorCost = vendorCost + price * add
+        elseif add > 0 then
             state.adds[#state.adds + 1] = { key = key, itemID = m.itemID, n = add, max = each }
-            cost = cost + (ns.MaterialPicker.PriceOf(m.itemID) or 0) * add
+            cost = cost + (price or 0) * add
         end
     end
     lines[#lines + 1] = " "
     lines[#lines + 1] = #state.adds > 0 and L.SHOP_CRAFT_TOTAL:format(#state.adds, Util.FormatMoney(cost))
-        or L.SHOP_CRAFT_NOTHING
+        or (vendorCost > 0 and L.SHOP_CRAFT_ONLY_VENDOR or L.SHOP_CRAFT_NOTHING)
+    if vendorCost > 0 then lines[#lines + 1] = L.SHOP_CRAFT_VENDOR_TOTAL:format(Util.FormatMoney(vendorCost)) end
     frame.list:SetText(table.concat(lines, "\n"))
     Rows(-40 - math.ceil(frame.list:GetStringHeight()) - 10, false)
 end
@@ -237,8 +254,10 @@ function Editor:Save()
         for _, a in ipairs(state.adds or {}) do
             if a.max and ns.Shopping:AddMore(a.key, a.n, a.max, ItemLink(a.itemID), state.note) then added = added + 1 end
         end
-        if added > 0 then
-            Util.Print(L.SHOP_CRAFT_ADDED:format(added, tonumber(frame.countBox:GetText()) or 0, state.name))
+        if added > 0 and state.made then
+            Util.Print(L.SHOP_MAKE_ADDED:format(added, state.count or 0, state.made.name))
+        elseif added > 0 then
+            Util.Print(L.SHOP_CRAFT_ADDED:format(added, state.crafts or 0, state.name))
         end
         frame:Hide()
         return
@@ -283,8 +302,9 @@ function Editor:Edit(key)
     Open({ mode = "item", key = key, need = entry.need, max = entry.max })
 end
 
--- items = { { itemID, n }, ... } for one craft.
-function Editor:AddCraft(recipeName, items)
+-- items = { { itemID, n }, ... } for one craft. made = { name, perCraft }
+-- asks how many of the item to make instead of how many crafts.
+function Editor:AddCraft(recipeName, items, made)
     local merged, order = {}, {}
     for _, m in ipairs(items) do
         if merged[m.itemID] then
@@ -294,7 +314,7 @@ function Editor:AddCraft(recipeName, items)
             order[#order + 1] = merged[m.itemID]
         end
     end
-    Open({ mode = "craft", name = recipeName, items = order, note = L.SHOP_GROUP_CRAFT:format(recipeName) })
+    Open({ mode = "craft", name = recipeName, items = order, made = made, note = L.SHOP_GROUP_CRAFT:format(recipeName) })
 end
 
 -- Right-click menu for a shopping list row. Without the menu API (older

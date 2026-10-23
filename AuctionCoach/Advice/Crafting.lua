@@ -3,7 +3,8 @@
 -- Data/Recipes.lua and current prices.
 --
 -- Materials are valued at what they sell for, even ones you already own:
--- crafting with them means not selling them. Each slot uses its cheapest
+-- crafting with them means not selling them, or at what a vendor charges
+-- when that's cheaper (Data/VendorPrices.lua). Each slot uses its cheapest
 -- quality. The crafted item is valued at what it would sell for after the
 -- AH cut, for the quantity one craft makes on average: its market value,
 -- or the lowest listing when that's lower, since a new post has to undercut
@@ -27,10 +28,12 @@ local MAX_ITEMS = 100
 
 local cache
 
+-- What a material costs: its AH value, or the vendor's price when cheaper.
 local function PriceOf(itemID)
     local price = ns.Prices:Get(tostring(itemID))
-    return price and price.value or nil, price
+    return (ns.VendorPrices.Cheapest(itemID, price and price.value or nil))
 end
+Crafting.PriceOf = PriceOf
 
 -- What a crafted item sells for: its market value, or the lowest listing
 -- when that's lower.
@@ -65,7 +68,7 @@ function Crafting.OutputOf(recipe)
 end
 
 -- One recipe priced: { key, recipeID, profession, char, cost, value,
--- profit, salesPerDay, quality, concentration = { quality, cost, extra } }
+-- profit, each, salesPerDay, quality, concentration = { quality, cost, extra } }
 -- or nil when anything is missing a price.
 function Crafting.Evaluate(recipeID, recipe, charKey)
     local outputID, quality = Crafting.OutputOf(recipe)
@@ -93,6 +96,7 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
         cost = math.floor(cost),
         value = value,
         profit = value - math.floor(cost),
+        each = each,
         salesPerDay = price and price.salesPerDay,
         quality = quality,
     }

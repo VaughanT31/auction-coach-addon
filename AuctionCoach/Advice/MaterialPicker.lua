@@ -35,9 +35,10 @@ ns.MaterialPicker = Picker
 local SCALE = 10                    -- skill is kept in tenths
 local MAX_COMBOS = 4000             -- mixes tried per slot, so a huge slot can't stall the game
 
+-- A material's AH value, or the vendor's price when that's cheaper.
 local function PriceOf(itemID)
     local price = ns.Prices and ns.Prices:Get(tostring(itemID))
-    return price and price.value or nil
+    return (ns.VendorPrices.Cheapest(itemID, price and price.value or nil))
 end
 Picker.PriceOf = PriceOf
 

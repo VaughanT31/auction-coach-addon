@@ -45,6 +45,9 @@ local DEFAULTS = {
         destroyTooltip = true,
         -- Cheapest materials panel beside the profession window (UI/MaterialPanel.lua).
         materialPicker = true,
+        -- Cost and profit under recipes without material qualities, like
+        -- cooking (UI/RecipeValue.lua).
+        recipeValue = true,
         -- Today's Plan: items never suggested, characters whose own items
         -- are left out (Advice/Plan.lua).
         planHidden = {},

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.0
+
+- **Is it worth crafting?** Under every recipe you know, cooking and feasts included, the profession window now shows *To craft* (what one craft's materials cost, each at its cheapest quality) and *Profit* (what it makes at the quality you make, after the AH cut, less the materials), with how many one craft makes and what each sells for. Hover it for the materials one by one.
+- **Add to shopping list from the recipe:** the button under it asks how many you want to make, works out the crafts, and puts the materials on your shopping list, less what you already have.
+- **Vendor materials count:** Auction Coach now remembers what vendors charge whenever you open one, so recipes with butter, spirits, flux and other vendor materials can be costed. Craft or sell, Today's Plan and Cheapest materials use the vendor's price when it's cheaper than the AH, and the shopping list says to buy those from a vendor instead of adding them. Open the vendor that sells a material once if a recipe says it has no price.
+- Turn the recipe lines off with *Cost and profit on the recipe* in the options.
+
 ## 0.17.3
 
 - Fixed: with the Auction Coach window open at the Auction House, searching could freeze the game for a moment. Every search (one per item level for gear) redrew the open tab from scratch, several times in the same frame. The window now redraws once for a burst of searches and at most every 5 seconds while you browse; posting, buying and scans still show straight away.
