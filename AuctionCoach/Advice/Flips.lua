@@ -23,7 +23,6 @@ ns.Flips = Flips
 local MAX_AGE = 3 * 3600
 -- Gear sells slower than reagents, so flips keep a lower bar than deals,
 -- but the item still has to sell daily and not be buried in listings.
-local MIN_SALES_PER_DAY = 1
 local MIN_CHANCE = 0.5
 local MIN_GAIN = 0.25 -- the other realm must pay at least 25% more
 local MAX_FLIPS = 100
@@ -77,8 +76,9 @@ local STAGE = {}
 for i, reason in ipairs(Flips.REASONS) do STAGE[reason] = i end
 
 -- One buy realm / sell realm pair for an item. Pure: buy and sell are
--- Prices:Get results. Returns a flip table, or nil and the reason.
-function Flips.Evaluate(key, buy, sell, now, minProfit)
+-- Prices:Get results; minSales is the fewest sales a day on the sell realm
+-- (Options, default 1). Returns a flip table, or nil and the reason.
+function Flips.Evaluate(key, buy, sell, now, minProfit, minSales)
     if not buy or not sell or not buy.min or buy.min <= 0 then return nil, "NOBUY" end
     if now - (buy.minAt or buy.t or 0) > MAX_AGE then return nil, "OLD" end
     local resell = ResellPrice(sell)
@@ -86,7 +86,7 @@ function Flips.Evaluate(key, buy, sell, now, minProfit)
     if resell < buy.min * (1 + MIN_GAIN) then return nil, "GAIN" end
     local profit = Util.AfterCut(resell) - buy.min
     if profit < minProfit then return nil, "PROFIT" end
-    if not sell.salesPerDay or sell.salesPerDay < MIN_SALES_PER_DAY then return nil, "SLOW" end
+    if not sell.salesPerDay or sell.salesPerDay < (minSales or 1) then return nil, "SLOW" end
     local chance = ns.Deals.ResellChance(sell.salesPerDay, sell.listed)
     if chance < MIN_CHANCE then return nil, "CROWDED" end
     return {
@@ -118,6 +118,7 @@ function Flips:List()
     local data = ns.Prices.ActiveData()
     local now = Util.Now()
     local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
+    local minSales = ns.db.settings.flipMinSales or 1
     local keysOn = {}
     for i, r in ipairs(realms) do
         keysOn[i] = KeysOn(r, data)
@@ -140,7 +141,7 @@ function Flips:List()
                         end
                         buy = buy or ns.Prices:Get(key, buyRealm.group, buyRealm.realm)
                         local sell = ns.Prices:Get(key, sellRealm.group, sellRealm.realm)
-                        local flip, why = Flips.Evaluate(key, buy, sell, now, minProfit)
+                        local flip, why = Flips.Evaluate(key, buy, sell, now, minProfit, minSales)
                         if why and (not closest[key] or STAGE[why] > STAGE[closest[key]]) then closest[key] = why end
                         if flip and (not best[key] or flip.profit > best[key].profit) then
                             flip.buyRealm, flip.sellRealm = buyRealm.realm, sellRealm.realm

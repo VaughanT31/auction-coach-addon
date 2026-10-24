@@ -129,8 +129,24 @@ local function Speed(salesPerDay)
     return BreakUpLargeNumbers(math.floor(salesPerDay + 0.5))
 end
 
+-- A route heading over a group of flips: only its text, no tooltip or click.
+local function SetHeading(row, text)
+    row.entry, row.kind = nil, nil
+    row.icon:Hide()
+    row.name:SetFontObject("GameFontNormal")
+    row.name:SetText(text)
+    row.price:SetText("")
+    row.usual:SetText("")
+    row.profit:SetText("")
+    row.speed:SetText("")
+    row:Show()
+end
+
 local function SetRow(row, entry, kind)
+    if entry.heading then return SetHeading(row, entry.heading) end
     row.entry, row.kind = entry, kind
+    row.icon:Show()
+    row.name:SetFontObject("GameFontHighlight")
     local itemID = Util.ItemIDFromKey(entry.key) or Util.PET_CAGE_ITEM_ID
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
     local name = Util.NamedLink(entry.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
@@ -151,9 +167,6 @@ local function SetRow(row, entry, kind)
             .. Phrases.SignedMoney(entry.profit, Util.FormatMoneyIcons) .. "|r")
         row.speed:SetText(Speed(entry.salesPerDay))
     else
-        if kind == "flips" then
-            name = name .. " |cff9d9d9d" .. L.FLIPS_ROUTE:format(entry.buyRealm, entry.sellRealm) .. "|r"
-        end
         row.name:SetText(name)
         row.price:SetText(Util.FormatMoneyIcons(entry.price))
         row.usual:SetText(Util.FormatMoneyIcons(entry.resell))
@@ -318,6 +331,26 @@ local function DealsEmptyText(list)
     return L.DEALS_EMPTY
 end
 
+-- Flips grouped by route, each group under a heading naming the realm to
+-- buy on and the one to sell on. Groups keep the best profit first, by
+-- their best flip, and so do the flips in each.
+local function ByRoute(items)
+    local groups, order = {}, {}
+    for _, flip in ipairs(items) do
+        local route = flip.buyRealm .. " " .. flip.sellRealm
+        if not groups[route] then
+            groups[route] = { { heading = L.FLIPS_GROUP:format(flip.buyRealm, flip.sellRealm) } }
+            order[#order + 1] = route
+        end
+        table.insert(groups[route], flip)
+    end
+    local entries = {}
+    for _, route in ipairs(order) do
+        for _, entry in ipairs(groups[route]) do entries[#entries + 1] = entry end
+    end
+    return entries
+end
+
 -- title, sub, empty text, entries for the current mode.
 local function ModeContent()
     local s = ns.db.settings
@@ -330,7 +363,7 @@ local function ModeContent()
         elseif #list.items == 0 then
             empty = ns.Prices.ActiveData() and Phrases.FlipsWhy(list, minProfit) or L.FLIPS_NEED_APP
         end
-        return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit), empty, list.items
+        return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit, BreakUpLargeNumbers(s.flipMinSales or 1)), empty, ByRoute(list.items)
     elseif mode == "craft" then
         local list = ns.Crafting:List()
         local worth = 0

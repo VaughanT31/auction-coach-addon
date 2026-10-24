@@ -315,7 +315,9 @@ function Phrases.FlipsWhy(list, minProfit)
         local n = list.why[reason]
         if n and n > 0 then
             local text = L["FLIPS_WHY_" .. reason]
-            lines[#lines + 1] = "- " .. (reason == "PROFIT" and text:format(BreakUpLargeNumbers(n), minProfit)
+            local extra = reason == "PROFIT" and minProfit
+                or reason == "SLOW" and BreakUpLargeNumbers(ns.db.settings.flipMinSales or 1) or nil
+            lines[#lines + 1] = "- " .. (extra and text:format(BreakUpLargeNumbers(n), extra)
                 or text:format(BreakUpLargeNumbers(n)))
         end
     end

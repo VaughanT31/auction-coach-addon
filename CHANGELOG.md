@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.3
+
+- **Choose how fast flips must sell:** a new *Flips sell at least* option sets how many a day an item must sell on the realm you'd sell it on before Other realms shows it. It was fixed at 1 a day, which let through items that sell once or twice a day. The default is still 1, so nothing changes until you raise it. The line under the Other realms title shows the current setting.
+
+- **Other realms grouped by route:** cross-realm flips now sit under a heading for each route, such as *Buy on Draenor, sell on Quel'Thalas*, so you can see which realm the Buy for and Sells for prices are on. Before, the route was squeezed in after each item's name.
+
 ## 0.19.2
 
 - **Clearer empty Deals and Other realms:** both need each item's usual price and how many sell a day, which your own AH scans can't tell, so without them the lists stay empty however much you scan. The messages now say so, and that the free desktop app (Windows) is what fills them. The website's prices string only covers the items you own, so it helps My Stuff and Sell but not these. The old Other realms message wrongly said scanning each realm was enough.

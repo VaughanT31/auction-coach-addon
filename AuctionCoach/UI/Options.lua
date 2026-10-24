@@ -13,6 +13,7 @@ local category
 
 local function Changed()
     if ns.Deals then ns.Deals:Invalidate() end
+    if ns.Flips then ns.Flips:Invalidate() end
     if ns.MainWindow then ns.MainWindow:Refresh() end
 end
 
@@ -186,6 +187,10 @@ local function Build()
         function(gold) return L.OPT_GOLD:format(gold) end)
     Slider("dealMinSales", L.OPT_DEAL_SALES, L.OPT_DEAL_SALES_TIP, 10, 1, 100, 1,
         function(count) return count or 10 end,
+        function(count) return count end,
+        function(count) return L.OPT_PER_DAY:format(count) end)
+    Slider("flipMinSales", L.OPT_FLIP_SALES, L.OPT_FLIP_SALES_TIP, 1, 1, 100, 1,
+        function(count) return count or 1 end,
         function(count) return count end,
         function(count) return L.OPT_PER_DAY:format(count) end)
 
