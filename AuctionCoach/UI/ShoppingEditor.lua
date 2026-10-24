@@ -378,11 +378,35 @@ local function ClickHeld()
         and IsShiftKeyDown() == (keys.shift == true)
 end
 
+-- The key bound to "Add the item under the mouse to the shopping list"
+-- (Bindings.xml): whatever item tooltip is showing, so it works anywhere
+-- an item shows one, the AH's rows included, whatever the click option.
+function AuctionCoach_AddHoveredToShopping()
+    if not ns.db then return end
+    local link
+    if TooltipUtil and TooltipUtil.GetDisplayedItem then
+        link = select(2, TooltipUtil.GetDisplayedItem(GameTooltip))
+    elseif GameTooltip.GetItem then
+        link = select(2, GameTooltip:GetItem())
+    end
+    if not GameTooltip:IsShown() or type(link) ~= "string" or not link:find("|Hitem:") then
+        return Util.Print(L.SHOP_KEY_NOTHING)
+    end
+    Editor:AddItem(link)
+end
+
 -- The picked click on any item link (bags, chat, the AH) adds it.
 if HandleModifiedItemClick then
     hooksecurefunc("HandleModifiedItemClick", function(link)
         if not ns.db or not ClickHeld() then return end
         if type(link) ~= "string" or not (link:find("|Hitem:") or link:find("|Hbattlepet:")) then return end
         Editor:AddItem(link)
+        -- Shift on a stack in the bags also opens Blizzard's split box right
+        -- after this, which can't be stopped from here: close it once open.
+        if IsShiftKeyDown() then
+            C_Timer.After(0, function()
+                if StackSplitFrame and StackSplitFrame:IsShown() then StackSplitFrame:Hide() end
+            end)
+        end
     end)
 end

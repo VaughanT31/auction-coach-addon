@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.6
+
+- **Worth more on another realm?** Items you have now say so in their tooltip when another of your realms pays clearly more for them: *Sells for about 1,200g more on Kazzak... Move it through the warband bank and post it there.* The Other realms view also lists them at the top, under *Yours: sell on Kazzak, not Draenor*, with what you'd gain for all of them: your bags, bank, reagent bank and the warband bank. Same rules as flips: at least 25% more, your smallest profit more after the AH cut, and it sells often enough there. Reagents and other commodities cost the same on every realm, so they're never listed. Needs the desktop app's prices for your realms.
+
+## 0.20.5
+
+- **A key for the shopping list:** set one in Options > Keybindings > AddOns (*Add the item under the mouse to the shopping list*), point at any item and press it. It works wherever an item shows its tooltip: bags, the Auction House's results, chat links, vendors, loot. Handy if a modifier click is already taken or doesn't reach an Auction House row. The click option still works as before.
+- Fixed: with a click option that includes Shift (Shift-Alt or Ctrl-Shift), clicking a stack in your bags also opened Blizzard's split stack box. It's closed again straight away now.
+
 ## 0.20.4
 
 - Fixed: big lag spikes with the Other realms list open, worst with several realms. It looked up every item on every realm against every other realm in full, and rebuilt itself after every AH search (other addons' searches too) and every bag change. It now rules out the items that can't be a flip with a quick check first (same results, a fraction of the work), skips bag changes, and rebuilds for a new AH price at most every 15 seconds.

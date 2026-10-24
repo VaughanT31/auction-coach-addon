@@ -1,0 +1,7 @@
+<!-- Auction Coach key bindings (Options > Keybindings > AddOns). WoW reads this
+     file on its own, it isn't listed in the .toc. The names are in Locales. -->
+<Bindings>
+    <Binding name="AUCTIONCOACH_SHOP_ADD" header="AUCTIONCOACH" category="ADDONS">
+        AuctionCoach_AddHoveredToShopping()
+    </Binding>
+</Bindings>

@@ -55,6 +55,11 @@ local function FlipID(flip)
     return flip.key .. " > " .. flip.buyRealm
 end
 
+-- Your own items (Flips:YourItems) have nothing to buy, so no tick box.
+local function Tickable(entry)
+    return not entry.heading and not entry.own
+end
+
 local Column = ns.Skin.Columns(COLUMNS)
 
 local function TooltipLines(row)
@@ -163,7 +168,7 @@ end
 local function SetRow(row, entry, kind)
     if entry.heading then return SetHeading(row, entry.heading) end
     row.entry, row.kind = entry, kind
-    row.flipID = kind == "flips" and FlipID(entry) or nil
+    row.flipID = kind == "flips" and Tickable(entry) and FlipID(entry) or nil
     row.icon:SetShown(not row.flipID)
     row.check:SetShown(row.flipID ~= nil)
     if row.flipID then row.check:SetChecked(checked[row.flipID] == true) end
@@ -414,9 +419,11 @@ end
 local function ByRoute(items)
     local groups, order = {}, {}
     for _, flip in ipairs(items) do
-        local route = flip.buyRealm .. " > " .. flip.sellRealm
+        local route = (flip.own and "own > " or "") .. flip.buyRealm .. " > " .. flip.sellRealm
         if not groups[route] then
-            groups[route] = { { heading = L.FLIPS_GROUP:format(flip.buyRealm, flip.sellRealm) } }
+            local heading = flip.own and L.OWN_GROUP:format(flip.sellRealm, flip.buyRealm)
+                or L.FLIPS_GROUP:format(flip.buyRealm, flip.sellRealm)
+            groups[route] = { { heading = heading } }
             order[#order + 1] = route
         end
         table.insert(groups[route], flip)
@@ -428,6 +435,14 @@ local function ByRoute(items)
     return entries
 end
 
+-- Your items worth moving to another realm first, then the flips.
+local function OwnThenFlips(flips)
+    local all = {}
+    for _, item in ipairs(ns.Flips:YourItems()) do all[#all + 1] = item end
+    for _, flip in ipairs(flips) do all[#all + 1] = flip end
+    return all
+end
+
 -- title, sub, empty text, entries for the current mode.
 local function ModeContent()
     local s = ns.db.settings
@@ -437,10 +452,10 @@ local function ModeContent()
         local empty = ""
         if list.realms < 2 then
             empty = L.FLIPS_NEED_REALMS
-        elseif #list.items == 0 then
+        elseif #list.items == 0 and #ns.Flips:YourItems() == 0 then
             empty = ns.Prices.ActiveData() and Phrases.FlipsWhy(list, minProfit) or L.FLIPS_NEED_APP
         end
-        return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit, BreakUpLargeNumbers(s.flipMinSales or 1)), empty, ByRoute(list.items)
+        return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit, BreakUpLargeNumbers(s.flipMinSales or 1)), empty, ByRoute(OwnThenFlips(list.items))
     elseif mode == "craft" then
         local list = ns.Crafting:List()
         local worth = 0
@@ -482,7 +497,7 @@ local function Refresh(panel, reason)
     if mode == "flips" then
         local shown = {}
         for _, entry in ipairs(entries) do
-            if not entry.heading then shown[FlipID(entry)] = true end
+            if Tickable(entry) then shown[FlipID(entry)] = true end
         end
         for id in pairs(checked) do
             if not shown[id] then checked[id] = nil end

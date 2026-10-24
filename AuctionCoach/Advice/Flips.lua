@@ -28,6 +28,7 @@ local MIN_GAIN = 0.25 -- the other realm must pay at least 25% more
 local MAX_FLIPS = 100
 
 local cache, cacheAt
+local ownCache, ownAt
 -- A live AH price only rebuilds the list when the last build is older than
 -- this: searching item after item (Auctionator's searches count too) used to
 -- rebuild it on every search.
@@ -216,6 +217,81 @@ end
 
 function Flips:Invalidate()
     cache = nil
+    ownCache = nil
+end
+
+-- ---------------------------------------------------------------------
+-- Your own items on a better realm (0.20.6)
+-- ---------------------------------------------------------------------
+
+-- Where an item you have would sell for clearly more than on the realm it's
+-- on: another of your realms, where it resells for at least 25% more, your
+-- smallest profit more after the AH cut, and sells often enough (the flip
+-- rules). Commodities cost the same everywhere, so they never are.
+-- Returns { realm, here, there, gain, salesPerDay } (here and there after
+-- the AH cut, each), or nil.
+function Flips.BetterRealm(key, group, realmName)
+    if not ns.db or not key then return nil end
+    group = group or ns.realmGroup
+    realmName = realmName or GetNormalizedRealmName()
+    local data = ns.Prices.ActiveData()
+    if data and data.commodities and data.commodities[key] then return nil end
+    local herePrice = ns.Prices:Get(key, group, realmName)
+    local hereResell = herePrice and ResellPrice(herePrice)
+    if not hereResell or hereResell <= 0 then return nil end
+    local here = Util.AfterCut(hereResell)
+    local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
+    local minSales = ns.db.settings.flipMinSales or 1
+    local best
+    for _, r in ipairs(Flips.PlayerRealms()) do
+        if r.group ~= group then
+            local price = ns.Prices:Get(key, r.group, r.realm)
+            local resell = price and ResellPrice(price)
+            if resell and resell >= hereResell * (1 + MIN_GAIN) and (price.salesPerDay or 0) >= minSales
+                and ns.Deals.ResellChance(price.salesPerDay, price.listed) >= MIN_CHANCE then
+                local there = Util.AfterCut(resell)
+                local gain = there - here
+                if gain >= minProfit and (not best or gain > best.gain) then
+                    best = { realm = r.realm, here = here, there = there, gain = gain, salesPerDay = price.salesPerDay }
+                end
+            end
+        end
+    end
+    return best
+end
+
+-- Your items (this character's bags, bank and reagent bank, and the warband
+-- bank) that sell for clearly more on another of your realms, as rows for
+-- the Other realms view: { key, count, price = here each, resell = there
+-- each, profit = gain for all of them, salesPerDay, buyRealm = this realm,
+-- sellRealm, own = true }, most gained first.
+function Flips:YourItems()
+    if ownCache and Util.Now() - ownAt < 60 then return ownCache end
+    local items = {}
+    if ns.db and ns.charKey and #Flips.PlayerRealms() >= 2 then
+        local here = GetNormalizedRealmName()
+        for key, entry in pairs(ns.Inventory:GetTotals()) do
+            local mine = entry.where[ns.charKey]
+            local count = (entry.where.warband and entry.where.warband.bank or 0)
+            if mine then count = count + (mine.bags or 0) + (mine.bank or 0) + (mine.reagentBank or 0) end
+            if count > 0 and not ns.Rules:IsJunk(key) then
+                local better = Flips.BetterRealm(key)
+                if better then
+                    items[#items + 1] = {
+                        key = key, count = count, price = better.here, resell = better.there,
+                        profit = better.gain * count, salesPerDay = better.salesPerDay,
+                        buyRealm = here, sellRealm = better.realm, own = true,
+                    }
+                end
+            end
+        end
+        table.sort(items, function(a, b)
+            if a.profit ~= b.profit then return a.profit > b.profit end
+            return a.key < b.key
+        end)
+    end
+    ownCache, ownAt = items, Util.Now()
+    return items
 end
 
 function Flips:IsStale()
@@ -227,6 +303,8 @@ end
 for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_DATA_CHANGED" }) do
     ns.Events:On(event, function() Flips:Invalidate() end)
 end
+-- Your items do depend on your bags.
+ns.Events:On("AC_INVENTORY_CHANGED", function() ownCache = nil end)
 ns.Events:On("AC_LIVE_PRICE", function()
     if cache and Util.Now() - cacheAt > LIVE_REBUILD_AFTER then cache = nil end
 end)

@@ -236,6 +236,9 @@ function Rules:ForLink(link)
         Add(Phrases.YouHave(count, afterCut * count))
     end
 
+    local better = ns.Flips and ns.Flips.BetterRealm(key)
+    if better then Add(Phrases.BetterRealm(better), "good") end
+
     local vendor = Compat.GetVendorPrice(link)
     if vendor > 0 and afterCut <= vendor then
         Add(Phrases.VendorBetter(vendor), "warn")

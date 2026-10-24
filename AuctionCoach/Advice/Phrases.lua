@@ -521,9 +521,26 @@ function Phrases.Shop(item, money)
     return lines
 end
 
--- Why a cross-realm flip is worth it, from Flips:List.
+-- An item you have that sells for clearly more on another of your realms
+-- (Flips.BetterRealm), for its tooltip.
+function Phrases.BetterRealm(b, money)
+    money = money or Util.FormatMoney
+    local speed = b.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(b.salesPerDay + 0.5))
+    return L.BETTER_REALM:format(money(b.gain), b.realm, money(b.there), speed)
+end
+
+-- Why a cross-realm flip is worth it, from Flips:List. Your own items
+-- (Flips:YourItems) have nothing to buy.
 function Phrases.Flip(f, money)
     money = money or Util.FormatMoney
+    if f.own then
+        return {
+            L.OWN_HERE:format(f.buyRealm, money(f.price)),
+            L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.resell - f.price)),
+            L.SELL_SPEED:format(f.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(f.salesPerDay + 0.5))),
+            L.OWN_HOW:format(f.count, money(f.profit)),
+        }
+    end
     return {
         L.FLIP_BUY:format(f.buyRealm, money(f.price), Util.FormatAge(f.priceAt)),
         L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.profit)),
