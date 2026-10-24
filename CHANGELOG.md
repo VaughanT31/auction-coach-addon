@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.0
+
+- **Mini gold per hour window:** the gold per hour window has a minimise button beside its X. Minimised, it shows only the gold per hour, time, what you've made, gold looted and items looted, so it takes far less of the screen while you farm. Click it again for the full window with the best items, history and buttons. It remembers which size you left it at.
+
 ## 0.19.3
 
 - **Choose how fast flips must sell:** a new *Flips sell at least* option sets how many a day an item must sell on the realm you'd sell it on before Other realms shows it. It was fixed at 1 a day, which let through items that sell once or twice a day. The default is still 1, so nothing changes until you raise it. The line under the Other realms title shows the current setting.

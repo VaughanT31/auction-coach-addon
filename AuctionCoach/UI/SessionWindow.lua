@@ -3,6 +3,7 @@
 --   Start / Pause / Resume / Stop   by hand only (Data/Session.lua)
 --   Now       time, gold per hour, gold looted, items' value, the best items
 --   History   your last sessions: when, where, how long, gold per hour
+--   Minimise  the button beside the X shrinks it to the numbers only (0.20)
 -- Updates every second while it's open and a session is running.
 
 local _, ns = ...
@@ -12,6 +13,8 @@ local Window = {}
 ns.SessionWindow = Window
 
 local WIDTH, HEIGHT = 340, 400
+-- Minimised: the title, gold per hour and the four lines under it.
+local MINI_HEIGHT = 156
 local PAD = 14
 local LIST_ROWS = 10
 local ROW_HEIGHT = 18
@@ -19,6 +22,7 @@ local ROW_HEIGHT = 18
 local GREY = "|cff999999"
 
 local frame, big, lines, rows, startButton, pauseButton, stopButton, historyButton, emptyText
+local buttons
 local showHistory = false
 local ticker
 
@@ -66,6 +70,40 @@ local function Line(y)
     return fs
 end
 
+-- Big or small (ns.db.gphMini). The top edge stays put, so the window
+-- shrinks up towards its title instead of towards its middle.
+local function ApplySize()
+    local mini = ns.db.gphMini and true or false
+    local left, top = frame:GetLeft(), frame:GetTop()
+    if left and top then
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    end
+    frame:SetHeight(mini and MINI_HEIGHT or HEIGHT)
+    frame.listTitle:SetShown(not mini)
+    emptyText:SetShown(not mini)
+    for _, button in ipairs(buttons) do button:SetShown(not mini) end
+    if mini then
+        for _, row in ipairs(rows) do row:Hide() end
+    end
+end
+
+local function SetMini(mini)
+    ns.db.gphMini = mini or nil
+    ApplySize()
+    Window:Refresh()
+end
+
+-- Blizzard's own minimise / maximise button (the world map's), beside the X.
+local function MinimiseButton()
+    local ok, button = pcall(CreateFrame, "Frame", nil, frame, "MaximizeMinimizeButtonFrameTemplate")
+    if not ok or not button.SetOnMinimizedCallback then return end
+    button:SetPoint("RIGHT", frame.closeButton, "LEFT", 6, 0)
+    button:SetOnMinimizedCallback(function() SetMini(true) end)
+    button:SetOnMaximizedCallback(function() SetMini(false) end)
+    if ns.db.gphMini then button:Minimize(true) end
+end
+
 local function Create()
     -- Not closed by Escape or a loading screen: it stays up while farming
     -- until closed with its X (or the button / Shift-click that opened it).
@@ -109,6 +147,10 @@ local function Create()
         showHistory = not showHistory
         Window:Refresh()
     end)
+    buttons = { startButton, pauseButton, stopButton, historyButton }
+
+    MinimiseButton()
+    ApplySize()
 
     frame:HookScript("OnShow", function()
         if not ticker then ticker = C_Timer.NewTicker(1, function() Window:Refresh() end) end
@@ -121,7 +163,7 @@ end
 local function ShowRows(list)
     for i, row in ipairs(rows) do
         local item = list[i]
-        row:SetShown(item ~= nil)
+        row:SetShown(item ~= nil and not ns.db.gphMini)
         if item then
             row.left:SetText(item.left)
             row.right:SetText(item.right)
