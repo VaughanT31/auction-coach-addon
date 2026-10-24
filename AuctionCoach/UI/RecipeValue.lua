@@ -6,11 +6,14 @@
 --   Makes 2, 310g each on the AH
 --   [Add to shopping list]
 --
--- Priced like Craft or sell (Advice/Crafting.lua): materials at what they
--- sell for, or a vendor's price when that's cheaper (Data/VendorPrices.lua),
--- each at its cheapest quality, and what one craft makes on average after
--- the AH cut, at the quality you make. For the cheapest mix of qualities
--- that reaches each quality, there's the Cheapest materials panel. The button asks how
+-- Priced from what the recipe shows (0.20.2): the materials chosen in its
+-- slots at what they sell for, or a vendor's price when that's cheaper
+-- (Data/VendorPrices.lua), and the item made at the quality those materials
+-- reach (Blizzard's Crafting Details), after the AH cut. An empty slot is
+-- priced at its cheapest quality. Before 0.20.2 the quality was the one the
+-- cheapest materials make, so a 2-star craft was valued as 1-star. For the
+-- cheapest mix of qualities that reaches each quality, there's the Cheapest
+-- materials panel. The button asks how
 -- many to make and puts the materials on the shopping list
 -- (UI/ShoppingEditor.lua). Turned off with the "Cost and profit on the
 -- recipe" option.
@@ -66,22 +69,98 @@ local function Cheapest(slot)
     return bestID or slot.ids[1], best, bestVendor
 end
 
+-- What the recipe form has chosen: { [itemID] = quantity } of the materials
+-- in its slots, and the quality they make (what Crafting Details shows),
+-- or nil when the form can't say.
+local function Chosen(form, recipeID)
+    local transaction = form.transaction or (form.GetTransaction and form:GetTransaction())
+    if not transaction or not transaction.CreateCraftingReagentInfoTbl then return nil end
+    local ok, reagents = pcall(transaction.CreateCraftingReagentInfoTbl, transaction)
+    if not ok or type(reagents) ~= "table" then return nil end
+    local counts = {}
+    for _, r in ipairs(reagents) do
+        local itemID = r.itemID or (type(r.reagent) == "table" and r.reagent.itemID)
+        if itemID and r.quantity and r.quantity > 0 then counts[itemID] = (counts[itemID] or 0) + r.quantity end
+    end
+    local op
+    if form.GetRecipeOperationInfo then
+        local okOp, info = pcall(form.GetRecipeOperationInfo, form)
+        if okOp then op = info end
+    end
+    if type(op) ~= "table" then
+        local guid = transaction.GetAllocationItemGUID and transaction:GetAllocationItemGUID() or nil
+        local focus = transaction.IsApplyingConcentration and transaction:IsApplyingConcentration() or false
+        local okOp, info = pcall(C_TradeSkillUI.GetCraftingOperationInfo, recipeID, reagents, guid, focus)
+        if okOp then op = info end
+    end
+    return counts, type(op) == "table" and tonumber(op.craftingQuality) or nil
+end
+
+local function MaterialName(itemID, fromVendor)
+    local name = ItemName(itemID)
+    local quality = C_TradeSkillUI.GetItemReagentQualityByItemInfo and C_TradeSkillUI.GetItemReagentQualityByItemInfo(itemID)
+    if quality then name = L.RV_TIP_QUALITY:format(name, quality) end
+    return fromVendor and L.RV_TIP_VENDOR:format(name) or name
+end
+
 -- One craft's materials: total cost, the lines for the tooltip, and the
--- names of any material without a price.
-local function Materials(recipe)
+-- names of any material without a price. chosen (from Chosen) prices the
+-- materials in the slots; whatever a slot is short of, and every slot
+-- without chosen, at its cheapest quality. Chosen optional reagents count
+-- when they have a price.
+local function Materials(recipe, chosen)
     local cost, lines, missing = 0, {}, {}
-    for _, slot in ipairs(recipe.r) do
-        local itemID, each, fromVendor = Cheapest(slot)
-        local name = ItemName(itemID)
+    local left = {}
+    for itemID, n in pairs(chosen or {}) do left[itemID] = n end
+    local function Add(itemID, n, each, fromVendor)
         if each then
-            cost = cost + each * slot.n
-            lines[#lines + 1] = { slot.n .. "x " .. (fromVendor and L.RV_TIP_VENDOR:format(name) or name), Util.FormatMoney(each * slot.n) }
+            cost = cost + each * n
+            lines[#lines + 1] = { n .. "x " .. MaterialName(itemID, fromVendor), Util.FormatMoney(each * n) }
         else
-            missing[#missing + 1] = name
-            lines[#lines + 1] = { slot.n .. "x " .. name, GREY .. "?|r" }
+            missing[#missing + 1] = ItemName(itemID)
+            lines[#lines + 1] = { n .. "x " .. MaterialName(itemID), GREY .. "?|r" }
         end
     end
+    for _, slot in ipairs(recipe.r) do
+        local need = slot.n
+        for _, itemID in ipairs(slot.ids) do
+            local n = math.min(left[itemID] or 0, need)
+            if n > 0 then
+                local price = ns.Prices:Get(tostring(itemID))
+                local each, fromVendor = ns.VendorPrices.Cheapest(itemID, price and price.value or nil)
+                Add(itemID, n, each, fromVendor)
+                need = need - n
+                left[itemID] = nil
+            end
+        end
+        if need > 0 then
+            local itemID, each, fromVendor = Cheapest(slot)
+            Add(itemID, need, each, fromVendor)
+        end
+    end
+    for itemID, n in pairs(left) do
+        local price = ns.Prices:Get(tostring(itemID))
+        local each, fromVendor = ns.VendorPrices.Cheapest(itemID, price and price.value or nil)
+        if each then Add(itemID, n, each, fromVendor) end
+    end
     return math.floor(cost), lines, missing
+end
+
+-- What one craft makes at the quality the chosen materials reach: { each,
+-- value, quality }, or nil without an AH price. Falls back to the quality
+-- the cheapest materials make, then to the recipe's plain output.
+local function Made(recipe, quality)
+    local candidates = {}
+    if quality and recipe.qo and recipe.qo[quality] then candidates[#candidates + 1] = { recipe.qo[quality], quality } end
+    local id, q = ns.Crafting.OutputOf(recipe)
+    candidates[#candidates + 1] = { id, q }
+    candidates[#candidates + 1] = { recipe.o, nil }
+    for _, c in ipairs(candidates) do
+        local each = ns.Crafting.SellPriceOf(c[1])
+        if each then
+            return { each = each, value = math.floor(Util.AfterCut(each) * (recipe.q or 1)), quality = c[2] }
+        end
+    end
 end
 
 local function Amount(n)
@@ -141,6 +220,32 @@ local function Create(form)
         GameTooltip:Show()
     end)
     frame.add:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- Changing a material's quality, Use Best Quality Reagents or
+    -- concentration changes the cost and the quality made.
+    local event = ProfessionsRecipeSchematicFormMixin and ProfessionsRecipeSchematicFormMixin.Event
+    if form.RegisterCallback and event then
+        for _, name in ipairs({ "AllocationsModified", "UseBestQualityModified" }) do
+            if event[name] then
+                form:RegisterCallback(event[name], function()
+                    Util.Debounce("recipeValue", 0.2, function() Block:Refresh() end)
+                end, frame)
+            end
+        end
+    end
+end
+
+local function AddOnLoaded(name)
+    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
+    return loaded and loaded(name) and true or false
+end
+
+-- Auctionator puts its own cost and profit lines straight under the
+-- materials, where this block goes, so with it loaded this block sits
+-- at the bottom instead, just above Use Best Quality Reagents.
+local function BottomAnchor(form)
+    local box = form.AllocateBestQualityCheckbox or form.AllocateBestQualityCheckBox
+    if box and box:IsShown() then return box end
 end
 
 -- Under the materials: the optional reagents when the recipe has them,
@@ -151,7 +256,17 @@ local function Place(form)
     local below = (optional and optional:IsShown() and optional:GetHeight() > 10 and optional)
         or (form.Reagents and form.Reagents:IsShown() and form.Reagents:GetHeight() > 10 and form.Reagents)
     frame:ClearAllPoints()
-    if below then
+    local bottom = AddOnLoaded("Auctionator") and BottomAnchor(form)
+    if bottom then
+        frame:SetPoint("BOTTOMLEFT", bottom, "TOPLEFT", 0, 10)
+        -- A long list of materials leaves no room down there: then under
+        -- Auctionator's lines (about 60 high) instead.
+        local top, under = bottom:GetTop(), below and below:GetBottom()
+        if top and under and top + 10 + frame:GetHeight() > under - 64 then
+            frame:ClearAllPoints()
+            frame:SetPoint("TOPLEFT", below, "BOTTOMLEFT", 0, -76)
+        end
+    elseif below then
         frame:SetPoint("TOPLEFT", below, "BOTTOMLEFT", 0, -16)
     else
         frame:SetPoint("BOTTOMLEFT", form, "BOTTOMLEFT", 24, 40)
@@ -169,8 +284,9 @@ function Block:Show(recipeID)
     if not recipe then return self:Hide() end
     if not frame then Create(form) end
 
-    local cost, lines, missing = Materials(recipe)
-    local e = #missing == 0 and ns.Crafting.Evaluate(recipeID, recipe) or nil
+    local chosen, quality = Chosen(form, recipeID)
+    local cost, lines, missing = Materials(recipe, chosen)
+    local e = #missing == 0 and Made(recipe, quality) or nil
     frame.current = { recipeID = recipeID, recipe = recipe, e = e, lines = lines }
 
     local y = -40
@@ -189,7 +305,9 @@ function Block:Show(recipeID)
         frame.cost:SetText(L.RV_COST:format(Util.FormatMoney(cost)))
         frame.profit:SetText(L.RV_PROFIT:format((profit >= 0 and GREEN or RED) .. Util.FormatMoney(math.abs(profit))
             .. (profit < 0 and (" " .. L.RV_LOSS) or "") .. "|r"))
-        frame.note:SetText(GREY .. L.RV_MAKES:format(Amount(recipe.q or 1), Util.FormatMoney(e.each)) .. "|r")
+        local makes = e.quality and L.RV_MAKES_QUALITY:format(Amount(recipe.q or 1), e.quality, Util.FormatMoney(e.each))
+            or L.RV_MAKES:format(Amount(recipe.q or 1), Util.FormatMoney(e.each))
+        frame.note:SetText(GREY .. makes .. "|r")
         y = -38 - math.ceil(frame.note:GetStringHeight())
     end
     frame.add:ClearAllPoints()

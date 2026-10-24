@@ -44,6 +44,7 @@ local function SellPriceOf(itemID)
     if price.min and price.min > 0 and price.min < each then each = price.min end
     return each, price
 end
+Crafting.SellPriceOf = SellPriceOf
 
 -- Cost of one craft's materials, or nil when a material has no price.
 local function MaterialCost(recipe)
