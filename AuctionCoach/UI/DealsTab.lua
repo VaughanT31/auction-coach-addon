@@ -47,6 +47,13 @@ local STATUS_COLORS = {
 
 local panelRef
 local mode = "deals"
+-- Ticked flips, by FlipID, for "Add checked to shopping list".
+local checked = {}
+local UpdateFlipBar
+
+local function FlipID(flip)
+    return flip.key .. " > " .. flip.buyRealm
+end
 
 local Column = ns.Skin.Columns(COLUMNS)
 
@@ -93,6 +100,16 @@ local function CreateRow(parent, index)
     row.icon:SetSize(18, 18)
     row.icon:SetPoint("LEFT", 2, 0)
 
+    -- Flips only: a tick box where the icon goes.
+    row.check = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+    row.check:SetSize(22, 22)
+    row.check:SetPoint("LEFT", 0, 0)
+    row.check:Hide()
+    row.check:SetScript("OnClick", function(self)
+        if row.flipID then checked[row.flipID] = self:GetChecked() or nil end
+        UpdateFlipBar()
+    end)
+
     row.name = Column(row, "name", "GameFontHighlight")
     row.price = Column(row, "price", "GameFontHighlight", "RIGHT")
     row.usual = Column(row, "usual", "GameFontHighlight", "RIGHT")
@@ -131,8 +148,9 @@ end
 
 -- A route heading over a group of flips: only its text, no tooltip or click.
 local function SetHeading(row, text)
-    row.entry, row.kind = nil, nil
+    row.entry, row.kind, row.flipID = nil, nil, nil
     row.icon:Hide()
+    row.check:Hide()
     row.name:SetFontObject("GameFontNormal")
     row.name:SetText(text)
     row.price:SetText("")
@@ -145,7 +163,10 @@ end
 local function SetRow(row, entry, kind)
     if entry.heading then return SetHeading(row, entry.heading) end
     row.entry, row.kind = entry, kind
-    row.icon:Show()
+    row.flipID = kind == "flips" and FlipID(entry) or nil
+    row.icon:SetShown(not row.flipID)
+    row.check:SetShown(row.flipID ~= nil)
+    if row.flipID then row.check:SetChecked(checked[row.flipID] == true) end
     row.name:SetFontObject("GameFontHighlight")
     local itemID = Util.ItemIDFromKey(entry.key) or Util.PET_CAGE_ITEM_ID
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
@@ -247,6 +268,59 @@ local function BuildAddBar(panel)
     panel.addBar = bar
 end
 
+-- Adds the ticked flips to the shopping list, each at the most the player
+-- can pay and still make their smallest profit (never below today's price),
+-- noted with the realm to buy on so the list groups them.
+local function AddChecked()
+    local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
+    local added = 0
+    for _, flip in ipairs(ns.Flips:List().items) do
+        if checked[FlipID(flip)] then
+            local max = math.max(flip.price, Util.AfterCut(flip.resell) - minProfit)
+            if ns.Shopping:Add(flip.key, max, Util.NamedLink(flip.key), nil, L.FLIPS_SHOP_NOTE:format(flip.buyRealm)) then
+                added = added + 1
+            end
+        end
+    end
+    wipe(checked)
+    if added > 0 then Util.Print(L.FLIPS_ADDED:format(added)) end
+    if panelRef then ns.MainWindow:Refresh() end
+end
+
+local function BuildFlipBar(panel)
+    local bar = CreateFrame("Frame", nil, panel)
+    bar:SetHeight(ADD_BAR_HEIGHT - 6)
+    bar:SetPoint("BOTTOMLEFT", 0, 0)
+    bar:SetPoint("BOTTOMRIGHT", 0, 0)
+
+    bar.add = ns.Skin.Button(bar, L.FLIPS_ADD_CHECKED, 200, 20)
+    bar.add:SetPoint("LEFT", 4, 0)
+    bar.add:SetScript("OnClick", AddChecked)
+    bar.clear = ns.Skin.Button(bar, L.FLIPS_CLEAR, 60, 20)
+    bar.clear:SetPoint("LEFT", bar.add, "RIGHT", 6, 0)
+    bar.clear:SetScript("OnClick", function()
+        wipe(checked)
+        ns.MainWindow:Refresh()
+    end)
+
+    bar.hint = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    bar.hint:SetPoint("LEFT", bar.clear, "RIGHT", 8, 0)
+    bar.hint:SetPoint("RIGHT", -4, 0)
+    bar.hint:SetJustifyH("LEFT")
+    bar.hint:SetWordWrap(false)
+    panel.flipBar = bar
+end
+
+function UpdateFlipBar()
+    local bar = panelRef and panelRef.flipBar
+    if not bar then return end
+    local count = 0
+    for _ in pairs(checked) do count = count + 1 end
+    bar.add:SetEnabled(count > 0)
+    bar.clear:SetEnabled(count > 0)
+    bar.hint:SetText(count > 0 and L.FLIPS_CHECKED:format(count) or L.FLIPS_CHECK_HINT)
+end
+
 -- ---------------------------------------------------------------------
 -- Panel
 -- ---------------------------------------------------------------------
@@ -259,7 +333,9 @@ local function SetMode(panel, newMode)
         label:SetText(key and L[key] or "")
     end
     panel.addBar:SetShown(mode == "shopping")
-    panel.scroll:SetPoint("BOTTOMRIGHT", -26, mode == "shopping" and ADD_BAR_HEIGHT or 4)
+    panel.flipBar:SetShown(mode == "flips")
+    local bar = mode == "shopping" or mode == "flips"
+    panel.scroll:SetPoint("BOTTOMRIGHT", -26, bar and ADD_BAR_HEIGHT or 4)
     if panel.content then panel.scroll:SetVerticalScroll(0) end
 end
 
@@ -318,6 +394,7 @@ local function Build(panel)
     panel.empty:SetJustifyH("LEFT")
 
     BuildAddBar(panel)
+    BuildFlipBar(panel)
     SetMode(panel, mode)
 end
 
@@ -337,7 +414,7 @@ end
 local function ByRoute(items)
     local groups, order = {}, {}
     for _, flip in ipairs(items) do
-        local route = flip.buyRealm .. " " .. flip.sellRealm
+        local route = flip.buyRealm .. " > " .. flip.sellRealm
         if not groups[route] then
             groups[route] = { { heading = L.FLIPS_GROUP:format(flip.buyRealm, flip.sellRealm) } }
             order[#order + 1] = route
@@ -400,6 +477,18 @@ local function Refresh(panel, reason)
     panel.title:SetText(title)
     panel.sub:SetText(sub)
     panel.empty:SetText(empty)
+
+    -- Forget ticks on flips that have left the list.
+    if mode == "flips" then
+        local shown = {}
+        for _, entry in ipairs(entries) do
+            if not entry.heading then shown[FlipID(entry)] = true end
+        end
+        for id in pairs(checked) do
+            if not shown[id] then checked[id] = nil end
+        end
+        UpdateFlipBar()
+    end
 
     for i, entry in ipairs(entries) do
         local row = panel.rows[i] or CreateRow(panel.content, i)

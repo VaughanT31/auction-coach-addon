@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.1
+
+- **Flips to your shopping list:** every flip in Other realms has a tick box. Tick the ones you want and press *Add checked to shopping list*. Each goes on at the most you can pay and still make your smallest profit (Options), grouped under *Flip, buy on* the realm to buy it on, so the shopping list tells you when one is cheap enough while you're there.
+
 ## 0.20.0
 
 - **Mini gold per hour window:** the gold per hour window has a minimise button beside its X. Minimised, it shows only the gold per hour, time, what you've made, gold looted and items looted, so it takes far less of the screen while you farm. Click it again for the full window with the best items, history and buttons. It remembers which size you left it at.
