@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.3
+
+- Fixed: items listed in a stack (several of a recipe, say) read far too cheap after you searched them or listed them yourself: a stack of 4 at 1,404g each counted as 351g. That showed as fake cross-realm flips and could put your own stacks wrongly as cheapest or undercut. Search an affected item again, or wait for the next prices, to replace the wrong price.
+
 ## 0.20.2
 
 - **Is it worth crafting? now uses the quality you'll make:** the cost and profit under a recipe now price the materials you've actually chosen in the recipe's slots, and value what you make at the quality those materials reach, the same quality Blizzard's Crafting Details shows. Before, it always assumed the cheapest materials, so a craft that makes 2 stars was valued as 1 star (for example 97g instead of 444g). It updates when you change a material's quality, tick Use Best Quality Reagents or use concentration, and the line under the profit says which quality it priced.

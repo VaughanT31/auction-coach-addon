@@ -72,8 +72,8 @@ local function KeyAndUnit(info)
     elseif info.itemKey and info.itemKey.itemID then
         key = Util.SimpleItemKey(info.itemKey.itemID)
     end
+    -- Already the price of one item (see Data/Inventory.lua).
     local unit = info.buyoutAmount
-    if unit and info.itemLink then unit = math.floor(unit / math.max(1, info.quantity or 1)) end
     return key, unit
 end
 

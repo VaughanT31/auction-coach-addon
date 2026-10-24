@@ -68,13 +68,16 @@ local function CheckItem(itemKey)
         local info = C_AuctionHouse.GetItemSearchResultInfo(itemKey, i)
         local key = info and Util.ItemKeyFromLink(info.itemLink)
         -- containsOwnerItem / containsAccountItem: the player's own listings,
-        -- left out so they never set the price.
+        -- left out so they never set the price. buyoutAmount is already the
+        -- price of one item, as the AH shows it (unlike a full scan's
+        -- buyout, which covers the whole auction): dividing it by the
+        -- quantity, as before 0.20.3, made a stack of 4 at 1,404g read 351g.
         local own = info and (info.containsOwnerItem or info.containsAccountItem)
         if key and own and info.buyoutAmount and info.buyoutAmount > 0 then
-            local unitPrice = math.floor(info.buyoutAmount / math.max(1, info.quantity or 1))
+            local unitPrice = info.buyoutAmount
             if not ownMin[key] or unitPrice < ownMin[key] then ownMin[key] = unitPrice end
         elseif key and not own and info.buyoutAmount and info.buyoutAmount > 0 then
-            local unitPrice = math.floor(info.buyoutAmount / math.max(1, info.quantity or 1))
+            local unitPrice = info.buyoutAmount
             local entry = byKey[key]
             if not entry then
                 entry = { min = unitPrice, owners = {}, rows = {} }

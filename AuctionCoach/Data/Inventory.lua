@@ -138,12 +138,11 @@ function Inventory:ScanAuctions()
                 key = Util.SimpleItemKey(info.itemKey.itemID)
                 if key then auctions[key] = (auctions[key] or 0) + (info.quantity or 1) end
             end
-            -- buyoutAmount is per item for commodities. For other items it
-            -- is treated as the price of the whole auction (quantity is
-            -- almost always 1 there anyway).
+            -- buyoutAmount is the price of one item, for commodities and
+            -- other items alike, as the AH shows it. Before 0.20.3 other
+            -- items' was divided by the quantity, so a stack read too cheap.
             local quantity = math.max(1, info.quantity or 1)
             local unit = info.buyoutAmount
-            if unit and info.itemLink then unit = math.floor(unit / quantity) end
             if key and unit and unit > 0 then
                 list[#list + 1] = { id = info.auctionID, k = key, v = unit, q = quantity, left = info.timeLeftSeconds }
             end
