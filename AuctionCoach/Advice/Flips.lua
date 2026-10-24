@@ -28,6 +28,10 @@ local MIN_GAIN = 0.25 -- the other realm must pay at least 25% more
 local MAX_FLIPS = 100
 
 local cache, cacheAt
+-- A live AH price only rebuilds the list when the last build is older than
+-- this: searching item after item (Auctionator's searches count too) used to
+-- rebuild it on every search.
+local LIVE_REBUILD_AFTER = 15
 
 -- The player's realm groups: { { group, realm = a realm name in it } },
 -- from every character seen. Needs a realm name to look up Data.lua.
@@ -125,24 +129,68 @@ function Flips:List()
         if next(keysOn[i]) == nil then result.noPrices[#result.noPrices + 1] = r.realm end
     end
     local closest, counted = {}, {}
+    local function Closest(key, why)
+        if not closest[key] or STAGE[why] > STAGE[closest[key]] then closest[key] = why end
+    end
+
+    -- Each realm's raw rows, read directly: four realms hold some 160,000
+    -- items, and running the full price lookup (Prices:Get, a few tables per
+    -- call) on every item against every other realm lagged the game. The
+    -- raw rows rule out almost all of them first, generously (the lowest of
+    -- either source, the highest resale), so no real flip is missed.
+    local raw = {}
+    for i, r in ipairs(realms) do
+        local realmID = data and data.realmIndex and data.realmIndex[r.realm]
+        local realm = ns.db.realms[r.group]
+        raw[i] = { data = (realmID and data.realms and data.realms[realmID]) or {}, scans = realm and realm.scans or {} }
+    end
+    local function RawLow(i, key)
+        local d, s = raw[i].data[key], raw[i].scans[key]
+        local low = d and d.n
+        if s and s.min and s.min > 0 and (not low or s.min < low) then low = s.min end
+        return low
+    end
+    local function RawHigh(j, key)
+        local d, s = raw[j].data[key], raw[j].scans[key]
+        local high = d and math.max(d.l or 0, d.m or 0) or 0
+        if s and s.mkt and s.mkt > high then high = s.mkt end
+        return high > 0 and high or nil
+    end
+    -- Sales a day only come from Data.lua, so this one is exact.
+    local function RawSales(j, key)
+        local d = raw[j].data[key]
+        return d and d.s
+    end
 
     -- Best flip per item: the cheapest realm to buy on, the best to sell on.
     local best = {}
     for i, buyRealm in ipairs(realms) do
         for key in pairs(keysOn[i]) do
-            -- Grey items never resell.
-            if not ns.Rules:IsJunk(key) then
-                local buy
-                for j, sellRealm in ipairs(realms) do
-                    if j ~= i and keysOn[j][key] then
-                        if not counted[key] then
-                            counted[key] = true
-                            result.compared = result.compared + 1
-                        end
+            local low = RawLow(i, key)
+            local buy
+            for j, sellRealm in ipairs(realms) do
+                if j ~= i and keysOn[j][key] then
+                    if not counted[key] then
+                        counted[key] = true
+                        result.compared = result.compared + 1
+                    end
+                    local high = RawHigh(j, key)
+                    if not low then
+                        Closest(key, "NOBUY")
+                    elseif not high then
+                        Closest(key, "NORESELL")
+                    elseif high < low * (1 + MIN_GAIN) then
+                        Closest(key, "GAIN")
+                    elseif Util.AfterCut(high) - low < minProfit then
+                        Closest(key, "PROFIT")
+                    elseif (RawSales(j, key) or 0) < minSales then
+                        Closest(key, "SLOW")
+                    -- Grey items never resell (checked late: it asks the item cache).
+                    elseif not ns.Rules:IsJunk(key) then
                         buy = buy or ns.Prices:Get(key, buyRealm.group, buyRealm.realm)
                         local sell = ns.Prices:Get(key, sellRealm.group, sellRealm.realm)
                         local flip, why = Flips.Evaluate(key, buy, sell, now, minProfit, minSales)
-                        if why and (not closest[key] or STAGE[why] > STAGE[closest[key]]) then closest[key] = why end
+                        if why then Closest(key, why) end
                         if flip and (not best[key] or flip.profit > best[key].profit) then
                             flip.buyRealm, flip.sellRealm = buyRealm.realm, sellRealm.realm
                             best[key] = flip
@@ -174,6 +222,11 @@ function Flips:IsStale()
     return cache ~= nil and Util.Now() - cacheAt > 60
 end
 
-for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_LIVE_PRICE", "AC_INVENTORY_CHANGED", "AC_DATA_CHANGED" }) do
+-- Bags and listings don't change flips, so inventory changes no longer
+-- rebuild the list.
+for _, event in ipairs({ "AC_SCAN_COMPLETE", "AC_DATA_CHANGED" }) do
     ns.Events:On(event, function() Flips:Invalidate() end)
 end
+ns.Events:On("AC_LIVE_PRICE", function()
+    if cache and Util.Now() - cacheAt > LIVE_REBUILD_AFTER then cache = nil end
+end)

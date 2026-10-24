@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.4
+
+- Fixed: big lag spikes with the Other realms list open, worst with several realms. It looked up every item on every realm against every other realm in full, and rebuilt itself after every AH search (other addons' searches too) and every bag change. It now rules out the items that can't be a flip with a quick check first (same results, a fraction of the work), skips bag changes, and rebuilds for a new AH price at most every 15 seconds.
+
 ## 0.20.3
 
 - Fixed: items listed in a stack (several of a recipe, say) read far too cheap after you searched them or listed them yourself: a stack of 4 at 1,404g each counted as 351g. That showed as fake cross-realm flips and could put your own stacks wrongly as cheapest or undercut. Search an affected item again, or wait for the next prices, to replace the wrong price.
