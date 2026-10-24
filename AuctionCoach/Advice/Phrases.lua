@@ -529,6 +529,25 @@ function Phrases.BetterRealm(b, money)
     return L.BETTER_REALM:format(money(b.gain), b.realm, money(b.there), speed)
 end
 
+-- Why an item has no "sells for more on" line (Flips.BetterRealm's second
+-- result), for Shift on its tooltip. nil when there's nothing to explain.
+function Phrases.BetterRealmWhy(w, money)
+    money = money or Util.FormatMoney
+    local r = w.reason
+    -- Reagents: nothing worth a line on every Shift-hover.
+    if r == "COMMODITY" then return nil end
+    if r == "NOREALMS" then return L.BR_WHY_NOREALMS end
+    if r == "NOHERE" then return L.BR_WHY_NOHERE end
+    if r == "NOTHERE" then return L.BR_WHY_NOTHERE:format(w.realm) end
+    if r == "GAIN" then return L.BR_WHY_GAIN:format(w.realm, math.max(0, w.percent)) end
+    if r == "PROFIT" then return L.BR_WHY_PROFIT:format(w.realm, money(math.max(0, w.gain)), money(w.need)) end
+    if r == "SLOW" then
+        local sales = w.sales < 1 and "<1" or BreakUpLargeNumbers(math.floor(w.sales + 0.5))
+        return L.BR_WHY_SLOW:format(sales, w.realm, w.need)
+    end
+    if r == "CROWDED" then return L.BR_WHY_CROWDED:format(w.realm, w.listed) end
+end
+
 -- Why a cross-realm flip is worth it, from Flips:List. Your own items
 -- (Flips:YourItems) have nothing to buy.
 function Phrases.Flip(f, money)

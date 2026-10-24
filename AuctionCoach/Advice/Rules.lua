@@ -236,8 +236,15 @@ function Rules:ForLink(link)
         Add(Phrases.YouHave(count, afterCut * count))
     end
 
-    local better = ns.Flips and ns.Flips.BetterRealm(key)
-    if better then Add(Phrases.BetterRealm(better), "good") end
+    local better, whyNot = nil, nil
+    if ns.Flips then better, whyNot = ns.Flips.BetterRealm(key) end
+    if better then
+        Add(Phrases.BetterRealm(better), "good")
+    elseif whyNot and IsShiftKeyDown() then
+        -- Shift explains a missing "sells for more on" line.
+        local text = Phrases.BetterRealmWhy(whyNot)
+        if text then Add(text, "muted") end
+    end
 
     local vendor = Compat.GetVendorPrice(link)
     if vendor > 0 and afterCut <= vendor then

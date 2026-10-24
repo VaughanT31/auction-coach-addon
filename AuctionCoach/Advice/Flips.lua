@@ -229,35 +229,53 @@ end
 -- smallest profit more after the AH cut, and sells often enough (the flip
 -- rules). Commodities cost the same everywhere, so they never are.
 -- Returns { realm, here, there, gain, salesPerDay } (here and there after
--- the AH cut, each), or nil.
+-- the AH cut, each), or nil and why not: { reason, realm, ... } for the
+-- realm that came closest (reasons in WHY_ORDER), which the tooltip shows
+-- with Shift held, so a missing line can be explained.
+local WHY_ORDER = { COMMODITY = 0, NOREALMS = 0, NOHERE = 0, NOTHERE = 1, GAIN = 2, PROFIT = 3, SLOW = 4, CROWDED = 5 }
+Flips.WHY_ORDER = WHY_ORDER
+
 function Flips.BetterRealm(key, group, realmName)
     if not ns.db or not key then return nil end
     group = group or ns.realmGroup
     realmName = realmName or GetNormalizedRealmName()
     local data = ns.Prices.ActiveData()
-    if data and data.commodities and data.commodities[key] then return nil end
+    if data and data.commodities and data.commodities[key] then return nil, { reason = "COMMODITY" } end
     local herePrice = ns.Prices:Get(key, group, realmName)
     local hereResell = herePrice and ResellPrice(herePrice)
-    if not hereResell or hereResell <= 0 then return nil end
+    if not hereResell or hereResell <= 0 then return nil, { reason = "NOHERE" } end
     local here = Util.AfterCut(hereResell)
     local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
     local minSales = ns.db.settings.flipMinSales or 1
-    local best
+    local best, why
+    local function Why(w)
+        if not why or WHY_ORDER[w.reason] > WHY_ORDER[why.reason] then why = w end
+    end
     for _, r in ipairs(Flips.PlayerRealms()) do
         if r.group ~= group then
             local price = ns.Prices:Get(key, r.group, r.realm)
             local resell = price and ResellPrice(price)
-            if resell and resell >= hereResell * (1 + MIN_GAIN) and (price.salesPerDay or 0) >= minSales
-                and ns.Deals.ResellChance(price.salesPerDay, price.listed) >= MIN_CHANCE then
+            if not resell or resell <= 0 then
+                Why({ reason = "NOTHERE", realm = r.realm })
+            elseif resell < hereResell * (1 + MIN_GAIN) then
+                Why({ reason = "GAIN", realm = r.realm, percent = math.floor((resell / hereResell - 1) * 100) })
+            elseif Util.AfterCut(resell) - here < minProfit then
+                Why({ reason = "PROFIT", realm = r.realm, gain = Util.AfterCut(resell) - here, need = minProfit })
+            elseif (price.salesPerDay or 0) < minSales then
+                Why({ reason = "SLOW", realm = r.realm, sales = price.salesPerDay or 0, need = minSales })
+            elseif ns.Deals.ResellChance(price.salesPerDay, price.listed) < MIN_CHANCE then
+                Why({ reason = "CROWDED", realm = r.realm, listed = price.listed or 0 })
+            else
                 local there = Util.AfterCut(resell)
                 local gain = there - here
-                if gain >= minProfit and (not best or gain > best.gain) then
+                if not best or gain > best.gain then
                     best = { realm = r.realm, here = here, there = there, gain = gain, salesPerDay = price.salesPerDay }
                 end
             end
         end
     end
-    return best
+    if best then return best end
+    return nil, why or { reason = "NOREALMS" }
 end
 
 -- Your items (this character's bags, bank and reagent bank, and the warband

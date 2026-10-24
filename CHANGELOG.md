@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.7
+
+- **Why no "sells for more on" line?** Hold Shift while you hover an item you can trade, and when it has no line about another realm, the tooltip says why: no price there yet, the other realm pays only 12% more (it needs 25%), less than your smallest profit, fewer sales a day there than your *Flips sell at least* setting, or too many listed there. The line is only shown when another realm passes every one of those checks, and sales and listings change with each hourly price download, so an item near a limit can come and go.
+
 ## 0.20.6
 
 - **Worth more on another realm?** Items you have now say so in their tooltip when another of your realms pays clearly more for them: *Sells for about 1,200g more on Kazzak... Move it through the warband bank and post it there.* The Other realms view also lists them at the top, under *Yours: sell on Kazzak, not Draenor*, with what you'd gain for all of them: your bags, bank, reagent bank and the warband bank. Same rules as flips: at least 25% more, your smallest profit more after the AH cut, and it sells often enough there. Reagents and other commodities cost the same on every realm, so they're never listed. Needs the desktop app's prices for your realms.
