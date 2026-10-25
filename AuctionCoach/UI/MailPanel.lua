@@ -444,9 +444,12 @@ local function Build()
     frame:SetPoint("TOPLEFT", MailFrame, "TOPLEFT", 0, 0)
     frame:SetPoint("BOTTOMLEFT", MailFrame, "BOTTOMLEFT", 0, 0)
     frame:SetWidth(math.max(WIDTH, MailFrame:GetWidth()))
-    frame:SetFrameLevel(MailFrame:GetFrameLevel() + 30)
+    -- Well above everything in the mail window (skins add their own layers),
+    -- and solid, so nothing of Blizzard's inbox shows through.
+    frame:SetFrameLevel(math.min(MailFrame:GetFrameLevel() + 500, 9000))
     frame:EnableMouse(true)
-    ns.Skin.Backdrop(frame)
+    local bg = ns.Skin.BG
+    ns.Skin.Backdrop(frame, { bg[1], bg[2], bg[3], 1 })
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.title:SetPoint("TOPLEFT", 12, -10)
@@ -591,11 +594,22 @@ local function PlaceOpenMail(ours)
     end
 end
 
+-- Blizzard's title and close button, faded out while ours is in front
+-- (ours has its own). Faded rather than hidden, so nothing else that shows
+-- them fights over it.
+local function BlizzardTitle(visible)
+    for _, region in ipairs({ MailFrame.TitleContainer, _G.MailFrameTitleText, MailFrame.CloseButton,
+                              _G.MailFrameCloseButton }) do
+        if region and region.SetAlpha then region:SetAlpha(visible and 1 or 0) end
+    end
+end
+
 -- Ours shows while Blizzard's inbox page is up (not Send Mail) and ours is picked.
 local function Update()
     if not frame then return end
     local show = (Enabled() and useOurs and InboxFrame:IsShown()) and true or false
     frame:SetShown(show)
+    BlizzardTitle(not show)
     tab:SetShown(Enabled() and true or false)
     tab:SetActive(show)
     PlaceOpenMail(show)
