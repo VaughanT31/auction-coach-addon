@@ -60,8 +60,9 @@ end
 
 -- Saves the results of a full scan. results[itemKey] = { min, market, qty, auctions }.
 -- Items missing from this scan keep their old row, so their age shows how
--- long ago they were last listed.
-function Prices:RecordFullScan(groupKey, results, timestamp)
+-- long ago they were last listed. A partial scan (the AH closed part way)
+-- saves the items it read but doesn't count as the last full scan.
+function Prices:RecordFullScan(groupKey, results, timestamp, partial)
     local realm = ns:GetRealmData(groupKey)
     local scans = realm.scans
     local count = 0
@@ -69,7 +70,7 @@ function Prices:RecordFullScan(groupKey, results, timestamp)
         scans[key] = { t = timestamp, min = r.min, mkt = r.market, qty = r.qty, n = r.auctions }
         count = count + 1
     end
-    realm.lastFullScan = timestamp
+    if not partial then realm.lastFullScan = timestamp end
     return count
 end
 

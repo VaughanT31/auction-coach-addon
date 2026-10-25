@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.1
+
+- **Closing the Auction House mid-scan no longer loses the scan:** the prices already read are saved, and the chat says how far it got and when the next full scan is allowed. Items it didn't reach keep their old prices, and none of your listings is marked as the cheapest just because the scan didn't get to it.
+- **Faster full scans:** out of combat the scan reads more auctions at a time, so it finishes sooner.
+- **Scan progress on every tab:** while a scan runs, the line at the bottom of the Auction Coach window shows how far it is and asks you to keep the Auction House open.
+
 ## 0.21.0
 
 - **Gold goal on the website:** set a gold goal and a deadline on auctioncoach.ctrlshiftzed.com (the new *Gold goal* page) and see each day how far you've come, the gold a day it needs, your own pace and when you'll get there, with milestones along the way. Share the link with friends or your guild: it shows a name you pick, and gold amounts only if you allow it (otherwise percentages). `/ac export` now carries your account's gold total for each day to paste there, one number a day, never character names. With the desktop app (0.10), turn on *Gold goal on the website* in its settings and it keeps the goal up to date after every logout or `/reload`.

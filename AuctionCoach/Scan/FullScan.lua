@@ -13,7 +13,9 @@ local FullScan = {}
 ns.FullScan = FullScan
 
 local THROTTLE = 15 * 60
-local CHUNK_SIZE = 1000
+-- Auctions read per frame: more out of combat, so the scan is done sooner
+-- and the AH is less likely to be closed part way.
+local CHUNK_SIZE, COMBAT_CHUNK_SIZE = 2500, 1000
 local MAX_RETRIES = 3
 local RETRY_DELAY = 2
 
@@ -79,6 +81,8 @@ end
 local listings      -- [itemKey] = { { unitPrice, qty }, ... }
 local pending       -- indexes whose item data was not loaded yet
 local ownNames      -- seller names of the player's own characters
+local found         -- entries in the current chunk that had an item
+local closed        -- the AH closed while this scan was processing
 
 -- The player's own listings are left out of prices, so an item is never
 -- valued at whatever the player happened to ask for it.
@@ -97,6 +101,7 @@ end
 
 local function Collect(index)
     local count, buyout, itemID, hasAllInfo, owner = Compat.GetReplicateItem(index)
+    if itemID then found = found + 1 end
     if not itemID or not buyout or buyout <= 0 or not count or count <= 0 then
         return true -- bid-only or empty entry, nothing to record
     end
@@ -127,7 +132,11 @@ local function Collect(index)
     return true
 end
 
-local function Finish()
+-- stoppedAt: the fraction read when the AH closed and took the scan data
+-- with it, or nil for a whole scan. A partial scan saves the items it read,
+-- but an item it didn't see may simply not have been reached yet.
+local function Finish(stoppedAt)
+    local partial = stoppedAt ~= nil
     local results = {}
     for key, list in pairs(listings) do
         local minPrice, qty = math.huge, 0
@@ -142,10 +151,10 @@ local function Finish()
             auctions = #list,
         }
     end
-    listings, pending = nil, nil
+    listings, pending, closed = nil, nil, nil
 
     local now = Util.Now()
-    local count = ns.Prices:RecordFullScan(ns.realmGroup, results, now)
+    local count = ns.Prices:RecordFullScan(ns.realmGroup, results, now, partial)
 
     -- Competition samples only for items the player owns.
     local owned = ns.Inventory:GetTotals()
@@ -156,14 +165,20 @@ local function Finish()
         end
     end
     -- Own listings are left out of results, so a missing item means nobody
-    -- else has it listed: the player's listing is still the cheapest.
+    -- else has it listed: the player's listing is still the cheapest. Not
+    -- after a partial scan, which may just not have reached it.
     for key in pairs(ns.Undercuts:Watched(ns.realmGroup)) do
-        ns.Undercuts:Observe(ns.realmGroup, key, results[key] and results[key].min, now)
+        if results[key] or not partial then
+            ns.Undercuts:Observe(ns.realmGroup, key, results[key] and results[key].min, now)
+        end
     end
 
     FullScan.state = "idle"
     FullScan.progress = 1
-    if count == 0 then
+    if partial then
+        Util.Print(L.SCAN_PARTIAL:format(math.floor(stoppedAt * 100), BreakUpLargeNumbers(count),
+            Util.FormatDuration(math.max(60, FullScan:SecondsUntilAllowed()))))
+    elseif count == 0 then
         Util.Print(L.SCAN_FAILED)
     else
         Util.Print(L.SCAN_DONE:format(BreakUpLargeNumbers(count)))
@@ -187,13 +202,27 @@ local function ProcessPending(attempt)
     end
 end
 
+-- After the AH closes the client may drop the scan data: the list shrinks,
+-- or its entries read empty. Whatever is still there is read as normal.
+local function DataGone(total)
+    return (C_AuctionHouse.GetNumReplicateItems() or 0) < total
+end
+
 -- Replicate indexes run from 0 to total - 1.
 local function ProcessChunk(startIndex, total)
-    local last = math.min(startIndex + CHUNK_SIZE, total) - 1
+    if closed and DataGone(total) then
+        return Finish(startIndex / total)
+    end
+    local size = InCombatLockdown() and COMBAT_CHUNK_SIZE or CHUNK_SIZE
+    local last = math.min(startIndex + size, total) - 1
+    found = 0
     for index = startIndex, last do
         if not Collect(index) then
             pending[#pending + 1] = index
         end
+    end
+    if closed and found == 0 then
+        return Finish(startIndex / total)
     end
 
     FullScan.progress = (last + 1) / total
@@ -213,7 +242,7 @@ end
 function FullScan:Abort(message)
     self:StopPolling()
     self.state = "idle"
-    listings, pending = nil, nil
+    listings, pending, closed = nil, nil, nil
     if message then Util.Print(message) end
 end
 
@@ -324,9 +353,12 @@ end)
 ns.Events:On("AUCTION_HOUSE_CLOSED", function()
     CancelAutoScan()
     -- A scan that never received data is dropped. One that is already
-    -- processing keeps going: the data is already on the client.
+    -- processing keeps going while the client still has the data, and
+    -- saves what it read if the data goes (ProcessChunk).
     if FullScan.state == "waiting" then
         FullScan:Abort()
+    elseif FullScan.state == "processing" then
+        closed = true
     end
 end)
 

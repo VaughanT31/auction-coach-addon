@@ -28,6 +28,12 @@ local UpdateGphButton
 -- (the desktop app has probably stopped).
 local function UpdatePriceStatus()
     if not priceStatus then return end
+    local scan = ns.FullScan
+    if scan.state == "processing" then
+        priceStatus:SetText(L.SCAN_KEEP_OPEN:format(math.floor(scan.progress * 100)))
+        priceStatus:SetTextColor(1, 0.82, 0)
+        return
+    end
     local text, old = ns.Freshness:StatusText()
     priceStatus:SetText(text)
     if old then
