@@ -129,6 +129,9 @@ local function Build()
     Checkbox("openWithAH", L.OPT_OPEN_WITH_AH, L.OPT_OPEN_WITH_AH_TIP, false)
     Checkbox("shoppingPanel", L.OPT_SHOP_PANEL, L.OPT_SHOP_PANEL_TIP, true)
     Checkbox("shoppingAlerts", L.OPT_SHOP_ALERTS, L.OPT_SHOP_ALERTS_TIP, true)
+    Checkbox("mailPanel", L.OPT_MAIL_PANEL, L.OPT_MAIL_PANEL_TIP, true, function(on)
+        if not on and ns.MailPanel then ns.MailPanel:Hide() end
+    end)
     if ns.ShoppingEditor then ns.ShoppingEditor.ClickMode() end -- an old Alt-click checkbox left off becomes Off
     local clicks = {}
     for _, mode in ipairs(ns.ShoppingEditor and ns.ShoppingEditor.CLICK_ORDER or { "alt" }) do

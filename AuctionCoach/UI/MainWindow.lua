@@ -305,7 +305,7 @@ end
 
 for _, event in ipairs({
     "AC_SCAN_COMPLETE", "AC_SCAN_PROGRESS", "AC_INVENTORY_CHANGED", "AC_DATA_CHANGED",
-    "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED",
+    "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED", "AC_MAIL_DUE_CHANGED",
 }) do
     MainWindow:RefreshOn(event)
 end

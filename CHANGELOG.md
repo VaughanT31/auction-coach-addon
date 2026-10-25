@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0
+
+- **Collect buttons at the mailbox:** beside the inbox, buttons collect your Sold, Cancelled, Expired or Bought Auction House mail, or all of it, each showing how many are waiting (and the gold for sales). Mail is taken one at a time so the server keeps up. Mail from other players and anything with cash on delivery is never touched. When your bags fill up it still collects the gold and leaves the items in the mail. Turn the buttons off in the options if you use another mail addon.
+- **Gold on the way:** the gold from a sale arrives by mail an hour later, long after Blizzard's own "Sold" line has gone. My Stuff now shows it under your gold: how many sales and how much gold is on the way, when the next mail arrives, and what's waiting in your mailbox. Hover the gold box to see which character each mail goes to. It clears as you collect the mail.
+
 ## 0.21.1
 
 - **Closing the Auction House mid-scan no longer loses the scan:** the prices already read are saved, and the chat says how far it got and when the next full scan is allowed. Items it didn't reach keep their old prices, and none of your listings is marked as the cheapest just because the scan didn't get to it.

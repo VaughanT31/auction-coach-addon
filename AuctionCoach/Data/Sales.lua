@@ -13,6 +13,14 @@
 --                         p = posted, s = first sale, n = sale messages,
 --                         name = item name when posted,
 --                         id = auction ID, when Blizzard reported it }, ... }
+--
+-- Gold on the way: each sale message also starts an hour's wait for the
+-- "Auction successful" mail, so My Stuff can show the gold still coming
+-- after Blizzard's own "Sold" rows are gone. Sales made while logged out
+-- send no message, so they aren't counted.
+--   db.mailDue = { { c = character, t = sale time, name = item name,
+--                    g = gold after the cut (a stack sale: at least one
+--                    item's worth), stack = true for a stack }, ... }
 
 local _, ns = ...
 local L, Util = ns.L, ns.Util
@@ -22,6 +30,12 @@ ns.Sales = Sales
 
 local KEEP = 48 * 3600
 local MAX_POSTS = 200
+
+-- In restricted content (instances, combat) the game can hand addons secret
+-- strings that error when read; those are skipped.
+local function Readable(value)
+    return type(value) == "string" and not (issecretvalue and issecretvalue(value))
+end
 
 local function Posts(groupKey, create)
     local posts = ns.db.posts[groupKey]
@@ -110,9 +124,100 @@ function Sales:OnSold(itemName, now, auctionID)
         post.s = now
         ns.Undercuts:SoldPost(post.k, post.p, now)
     end
+    self:MailDue(post, now)
     if ns.db.settings.saleMessages then
         Util.Print(self:Message(post))
     end
+end
+
+-- ---------------------------------------------------------------------
+-- Gold on the way
+-- ---------------------------------------------------------------------
+
+local MAIL_DELAY = 3600
+-- A due sale with no mail in a fully listed inbox this long after the hour
+-- was collected some way the hooks missed, so it goes.
+local MAIL_GRACE = 300
+-- AH mail is kept 30 days.
+local MAIL_KEEP = 31 * 86400
+
+function Sales:MailDue(post, now)
+    local due = ns.db.mailDue
+    due[#due + 1] = { c = ns.charKey, t = now, name = post.name, g = Util.AfterCut(post.v),
+                      stack = post.q > 1 or nil }
+    while due[1] and now - due[1].t > MAIL_KEEP do table.remove(due, 1) end
+    ns.Events:Fire("AC_MAIL_DUE_CHANGED")
+end
+
+-- A sale mail was collected on this character: the oldest sale of that
+-- item is no longer on the way.
+function Sales:MailCollected(itemName)
+    local name = Sales.PlainName(itemName)
+    local due = ns.db and ns.db.mailDue
+    if not due or not name then return end
+    for i, entry in ipairs(due) do
+        if entry.c == ns.charKey and entry.name == name then
+            table.remove(due, i)
+            ns.Events:Fire("AC_MAIL_DUE_CHANGED")
+            return
+        end
+    end
+end
+
+-- With every mail listed (the inbox shows at most 50), a sale that should
+-- have arrived but has no mail was collected already: drop it.
+function Sales:CheckMailDue(now)
+    local due = ns.db and ns.db.mailDue
+    if not due or #due == 0 or not GetInboxNumItems then return end
+    local shown, total = GetInboxNumItems()
+    if (total or shown) > shown then return end
+    local mails = {}
+    for i = 1, shown do
+        local invoiceType, itemName = GetInboxInvoiceInfo(i)
+        if invoiceType == "seller" and Readable(itemName) then
+            local name = Sales.PlainName(itemName)
+            mails[name] = (mails[name] or 0) + 1
+        end
+    end
+    local changed = false
+    for i = #due, 1, -1 do
+        local entry = due[i]
+        if entry.c == ns.charKey and now - entry.t > MAIL_DELAY + MAIL_GRACE then
+            if (mails[entry.name] or 0) > 0 then
+                mails[entry.name] = mails[entry.name] - 1
+            else
+                table.remove(due, i)
+                changed = true
+            end
+        end
+    end
+    if changed then ns.Events:Fire("AC_MAIL_DUE_CHANGED") end
+end
+
+-- What's on the way, all characters: { coming = { n, gold, more, next },
+-- waiting = { n, gold, more }, chars = { [charKey] = { coming, waiting } } }.
+-- more: a stack sale is in there, so the gold is at least this much.
+function Sales:OnTheWay(now)
+    now = now or Util.Now()
+    local function Bucket() return { n = 0, gold = 0 } end
+    local result = { coming = Bucket(), waiting = Bucket(), chars = {} }
+    for _, entry in ipairs(ns.db.mailDue or {}) do
+        if now - entry.t <= MAIL_KEEP then
+            local arrives = entry.t + MAIL_DELAY
+            local kind = arrives > now and "coming" or "waiting"
+            local char = result.chars[entry.c]
+            if not char then
+                char = { coming = Bucket(), waiting = Bucket() }
+                result.chars[entry.c] = char
+            end
+            for _, b in ipairs({ result[kind], char[kind] }) do
+                b.n, b.gold = b.n + 1, b.gold + (entry.g or 0)
+                if entry.stack then b.more = true end
+                if kind == "coming" and (not b.next or arrives < b.next) then b.next = arrives end
+            end
+        end
+    end
+    return result
 end
 
 -- ---------------------------------------------------------------------
@@ -124,11 +229,6 @@ end
 -- remembered by item, count, gold and when it expires (now + days left,
 -- in 15 minute steps, with a step either side for rounding) until it
 -- expires: reported once however often the mailbox is opened.
--- In restricted content (instances, combat) the game can hand addons secret
--- strings that error when read; those are skipped.
-local function Readable(value)
-    return type(value) == "string" and not (issecretvalue and issecretvalue(value))
-end
 
 local MAIL_STEP = 900
 
@@ -216,8 +316,10 @@ end)
 -- The mailbox: print what the sale mails say, once each. A short wait
 -- lets the inbox finish loading (it fires this several times).
 ns.Events:On("MAIL_INBOX_UPDATE", function()
-    if not ns.db or not ns.db.settings.saleMessages then return end
+    if not ns.db then return end
     Util.Debounce("mailSales", 1, function()
+        Sales:CheckMailDue(Util.Now())
+        if not ns.db.settings.saleMessages then return end
         for _, line in ipairs(Sales:ScanMail(Util.Now())) do
             Util.Print(line)
         end

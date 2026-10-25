@@ -135,6 +135,42 @@ end
 -- warband bank, beside the hidden treasure.
 -- ---------------------------------------------------------------------
 
+-- "4 sales, 543g" (with a + when a stack sale means at least that much).
+local function SalesGold(bucket)
+    local gold = Util.FormatMoneyIcons(bucket.gold) .. (bucket.more and "+" or "")
+    return (bucket.n == 1 and L.WAY_SALE_ONE or L.WAY_SALES):format(bucket.n, gold)
+end
+
+local function OnTheWayText()
+    local way = ns.Sales:OnTheWay()
+    local lines = {}
+    if way.coming.n > 0 then
+        lines[#lines + 1] = "|cffffd100" .. L.WAY_COMING .. "|r"
+        lines[#lines + 1] = SalesGold(way.coming)
+        lines[#lines + 1] = "|cff9d9d9d" .. L.WAY_NEXT:format(date("%H:%M", way.coming.next)) .. "|r"
+    end
+    if way.waiting.n > 0 then
+        lines[#lines + 1] = "|cffffd100" .. L.WAY_WAITING .. "|r"
+        lines[#lines + 1] = SalesGold(way.waiting)
+    end
+    return table.concat(lines, "\n")
+end
+
+-- Which character each sale's mail goes to, in the gold box tooltip.
+local function AddOnTheWayLines()
+    local way = ns.Sales:OnTheWay()
+    if way.coming.n + way.waiting.n == 0 then return end
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(L.WAY_TIP_HEADER, 1, 0.82, 0)
+    GameTooltip:AddLine(L.WAY_TIP, 1, 1, 1, true)
+    for charKey, char in pairs(way.chars) do
+        local parts = {}
+        if char.coming.n > 0 then parts[#parts + 1] = L.WAY_TIP_COMING:format(SalesGold(char.coming)) end
+        if char.waiting.n > 0 then parts[#parts + 1] = L.WAY_TIP_WAITING:format(SalesGold(char.waiting)) end
+        GameTooltip:AddDoubleLine(OwnerName(charKey), table.concat(parts, ", "), 1, 1, 1, 1, 1, 1)
+    end
+end
+
 local function BuildGold(panel)
     local box = CreateFrame("Frame", nil, panel, "BackdropTemplate")
     box:SetWidth(GOLD_WIDTH)
@@ -145,6 +181,7 @@ local function BuildGold(panel)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetText(L.GOLD_HEADER, 1, 0.82, 0)
         GameTooltip:AddLine(L.GOLD_TIP, 1, 1, 1, true)
+        AddOnTheWayLines()
         GameTooltip:Show()
     end)
     box:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -184,6 +221,13 @@ local function BuildGold(panel)
     box.history:SetPoint("BOTTOM", 0, 8)
     box.history:SetScript("OnClick", function() ns.GoldHistoryWindow:Toggle() end)
 
+    -- Gold on the way by mail (Data/Sales.lua), above the History button.
+    box.way = box:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    box.way:SetPoint("BOTTOMLEFT", box.history, "TOPLEFT", 0, 8)
+    box.way:SetPoint("RIGHT", -8, 0)
+    box.way:SetJustifyH("LEFT")
+    box.way:SetSpacing(3)
+
     panel.gold = box
 end
 
@@ -222,6 +266,7 @@ local function RefreshGold(panel)
     box.total:SetText(Util.FormatMoneyIcons(total))
     box.names:SetText(table.concat(names, "\n"))
     box.amounts:SetText(table.concat(amounts, "\n"))
+    box.way:SetText(OnTheWayText())
 end
 
 local function Build(panel)

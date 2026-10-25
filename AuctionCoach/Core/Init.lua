@@ -50,6 +50,8 @@ local DEFAULTS = {
         -- Cost and profit under recipes without material qualities, like
         -- cooking (UI/RecipeValue.lua).
         recipeValue = true,
+        -- Collect buttons beside the mailbox (UI/MailPanel.lua).
+        mailPanel = true,
         -- Cheapest or undercut column on Blizzard's Auctions tab (UI/AuctionsColumn.lua).
         auctionsColumn = true,
         -- Today's Plan: items never suggested, characters whose own items
@@ -68,6 +70,8 @@ local DEFAULTS = {
     undercuts = {},
     -- The player's posts of the last 48 hours, per realm group (Data/Sales.lua).
     posts = {},
+    -- Sales whose gold is still coming by mail, across characters (Data/Sales.lua).
+    mailDue = {},
     -- Per connected-realm group: scans, competition samples, scan times.
     realms = {},
     -- One example link per item key, for names, icons and tooltips.

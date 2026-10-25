@@ -126,6 +126,7 @@ function GoldHistory:Collect(index)
     if not invoice or invoice.counted then return end
     invoice.counted = true
     self:Record(invoice)
+    if invoice.kind == "sale" then ns.Sales:MailCollected(invoice.item) end
 end
 
 -- ---------------------------------------------------------------------
