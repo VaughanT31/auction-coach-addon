@@ -59,6 +59,23 @@ local function CreatePanel()
     end)
     panel.use:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
+    -- The repost list (UI/RepostPanel.lua).
+    panel.repost = ns.Skin.Button(panel, nil, WIDTH - 24, 20)
+    panel.repost:SetPoint("TOPLEFT", panel.use, "BOTTOMLEFT", 0, -6)
+    panel.repost:SetScript("OnClick", function()
+        if current and ns.Repost:Add(current.key, current.link) then
+            ns.RepostPanel:Open()
+            PostHelper:Refresh()
+        end
+    end)
+    panel.repost:SetMotionScriptsWhileDisabled(true)
+    panel.repost:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(L.REPOST_HELPER_TIP, 1, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    panel.repost:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     panel:Hide()
 end
 
@@ -67,6 +84,7 @@ local function Layout()
     local height = 12 + panel.title:GetStringHeight() + 6 + panel.item:GetStringHeight() + 8
         + panel.price:GetStringHeight() + 8 + panel.text:GetStringHeight() + 12
     if panel.use:IsShown() then height = height + 10 + panel.use:GetHeight() end
+    height = height + 6 + panel.repost:GetHeight()
     panel:SetHeight(height)
 end
 
@@ -93,6 +111,15 @@ function PostHelper:Refresh()
     end
     panel.text:SetText(text)
     panel.use:SetShown(s.price ~= nil)
+    panel.repost:ClearAllPoints()
+    if s.price then
+        panel.repost:SetPoint("TOPLEFT", panel.use, "BOTTOMLEFT", 0, -6)
+    else
+        panel.repost:SetPoint("TOPLEFT", panel.text, "BOTTOMLEFT", 0, -10)
+    end
+    local listed = ns.Repost:Has(current.key)
+    panel.repost:SetText(listed and L.REPOST_HELPER_ON or L.REPOST_HELPER_ADD)
+    panel.repost:SetEnabled(not listed)
     panel:Show()
     Layout()
     if ns.ShoppingPanel then ns.ShoppingPanel:Place() end

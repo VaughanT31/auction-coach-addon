@@ -52,6 +52,10 @@ local DEFAULTS = {
         recipeValue = true,
         -- Collect buttons beside the mailbox (UI/MailPanel.lua).
         mailPanel = true,
+        -- The repost list beside the AH, and how long its posts run
+        -- (1 = 12, 2 = 24, 3 = 48 hours) (UI/RepostPanel.lua).
+        repostPanel = true,
+        repostDuration = "2",
         -- Cheapest or undercut column on Blizzard's Auctions tab (UI/AuctionsColumn.lua).
         auctionsColumn = true,
         -- Today's Plan: items never suggested, characters whose own items
@@ -72,6 +76,8 @@ local DEFAULTS = {
     posts = {},
     -- Sales whose gold is still coming by mail, across characters (Data/Sales.lua).
     mailDue = {},
+    -- Items posted again and again, in order (Data/Repost.lua).
+    repost = {},
     -- Per connected-realm group: scans, competition samples, scan times.
     realms = {},
     -- One example link per item key, for names, icons and tooltips.

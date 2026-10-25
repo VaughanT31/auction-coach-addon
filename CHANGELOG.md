@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.23.0
+
+- **Repost list:** keep the items you post again and again on a list beside the Auction House, and post them with one click each. *Post next* posts the next item at Auction Coach's price, never under the floor you set for it, then moves on (Blizzard allows one post per click). When a price is more than 5 minutes old, the first click checks it on the AH and the next click posts. Each item shows whether it's ready, under its floor, worth holding or not in your bags. Add items with *Add to my repost list* in the post helper, by dragging them onto the list, or with one click for everything you posted lately. Right-click an item to set its floor, the most to post at once, or its place in the list, and Skip passes on one for this visit. It stacks under the post helper and the shopping list, so the panels never overlap. Pick 12, 24 or 48 hour auctions in the options, or open it any time with `/ac repost`.
+
 ## 0.22.0
 
 - **A new inbox at the mailbox:** every mail in one list with its item, type (sold, bought, cancelled, expired, outbid or other), days left and gold, a search box, and the total mails, items and gold underneath. *Collect all AH mail* takes every Auction House mail, a row of buttons collects just the sold, bought, cancelled, expired, outbid or other mail, and clicking a single mail collects just that one. Mail is taken one at a time so the server keeps up, and when your bags fill up it still collects the gold and leaves the items in the mail. Mail from other players opens as normal when clicked, and anything with cash on delivery is never collected. The *Blizzard inbox* button swaps to the usual inbox, and the *Auction Coach* tab next to Send Mail brings it back. Turn it off in the options if you use another mail addon.
