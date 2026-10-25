@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0
+
+- **Gold goal on the website:** set a gold goal and a deadline on auctioncoach.ctrlshiftzed.com (the new *Gold goal* page) and see each day how far you've come, the gold a day it needs, your own pace and when you'll get there, with milestones along the way. Share the link with friends or your guild: it shows a name you pick, and gold amounts only if you allow it (otherwise percentages). `/ac export` now carries your account's gold total for each day to paste there, one number a day, never character names. With the desktop app (0.10), turn on *Gold goal on the website* in its settings and it keeps the goal up to date after every logout or `/reload`.
+
 ## 0.20.7
 
 - **Why no "sells for more on" line?** Hold Shift while you hover an item you can trade, and when it has no line about another realm, the tooltip says why: no price there yet, the other realm pays only 12% more (it needs 25%), less than your smallest profit, fewer sales a day there than your *Flips sell at least* setting, or too many listed there. The line is only shown when another realm passes every one of those checks, and sales and listings change with each hourly price download, so an item near a limit can come and go.

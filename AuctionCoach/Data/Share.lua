@@ -87,6 +87,15 @@ function Share:BuildExport()
     table.sort(chars, function(a, b) return a.name < b.name end)
 
     local warband = next(ns.db.warbank) and ns.db.warbank or nil
+    -- Each day's account gold total, for the website's gold goal. Totals
+    -- only: no per-character amounts.
+    local goldDays
+    for day, info in pairs(ns.db.goldDays or {}) do
+        if (info.total or 0) > 0 then
+            goldDays = goldDays or {}
+            goldDays[day] = info.total
+        end
+    end
     return {
         kind = "inventory",
         v = 1,
@@ -95,6 +104,7 @@ function Share:BuildExport()
         at = Util.Now(),
         chars = chars,
         warband = warband,
+        goldDays = goldDays,
     }
 end
 
