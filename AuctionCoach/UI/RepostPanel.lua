@@ -347,14 +347,17 @@ local function Create()
     panel.hint:SetPoint("BOTTOMLEFT", 10, 8)
     panel.hint:SetPoint("RIGHT", -10, 0)
     panel.hint:SetJustifyH("LEFT")
+    panel.hint:SetSpacing(2)
     panel.hint:SetText(L.REPOST_HINT)
 
-    panel.skip = ns.Skin.Button(panel, L.REPOST_SKIP, 70, 24)
-    panel.skip:SetPoint("BOTTOMRIGHT", -8, 24)
-    panel.skip:SetScript("OnClick", function() RepostPanel:Skip() end)
-
+    -- The buttons sit above the hint, however many lines it wraps to.
     panel.post = ns.Skin.Button(panel, L.REPOST_POST, WIDTH - 16 - 74, 24)
-    panel.post:SetPoint("BOTTOMLEFT", 8, 24)
+    panel.post:SetPoint("BOTTOMLEFT", panel.hint, "TOPLEFT", -2, 8)
+
+    panel.skip = ns.Skin.Button(panel, L.REPOST_SKIP, 70, 24)
+    panel.skip:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 0)
+    panel.skip:SetPoint("BOTTOM", panel.post, "BOTTOM")
+    panel.skip:SetScript("OnClick", function() RepostPanel:Skip() end)
     panel.post:SetScript("OnClick", function() RepostPanel:PostNext() end)
     panel.post:SetMotionScriptsWhileDisabled(true)
     panel.post:SetScript("OnEnter", function(self)
@@ -441,9 +444,10 @@ function RepostPanel:Refresh()
     panel.title:SetText(L.REPOST_TITLE:format(#items, ready))
     offset = math.min(offset, math.max(0, #items - LINES))
     self:Draw()
-    local shownRows = math.max(1, math.min(#items, LINES))
+    -- From the real text heights, so wrapped lines never overlap.
+    local list = #items > 0 and math.min(#items, LINES) * ROW or (panel.empty:GetStringHeight() + 8)
     local extra = panel.suggest:IsShown() and 26 or 0
-    panel:SetHeight(-TOP + shownRows * ROW + 8 + 18 + extra + 24 + 24 + 6)
+    panel:SetHeight(-TOP + list + 6 + extra + 20 + 24 + 8 + panel.hint:GetStringHeight() + 10)
     self:Place()
     panel:Show()
 end
