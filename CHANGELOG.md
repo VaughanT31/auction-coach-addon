@@ -2,7 +2,7 @@
 
 ## 0.22.0
 
-- **Collect buttons at the mailbox:** beside the inbox, buttons collect your Sold, Cancelled, Expired or Bought Auction House mail, or all of it, each showing how many are waiting (and the gold for sales). Mail is taken one at a time so the server keeps up. Mail from other players and anything with cash on delivery is never touched. When your bags fill up it still collects the gold and leaves the items in the mail. Turn the buttons off in the options if you use another mail addon.
+- **A new inbox at the mailbox:** every mail in one list with its item, type (sold, bought, cancelled, expired, outbid or other), days left and gold, a search box, and the total mails, items and gold underneath. *Collect all AH mail* takes every Auction House mail, a row of buttons collects just the sold, bought, cancelled, expired, outbid or other mail, and clicking a single mail collects just that one. Mail is taken one at a time so the server keeps up, and when your bags fill up it still collects the gold and leaves the items in the mail. Mail from other players opens as normal when clicked, and anything with cash on delivery is never collected. The *Blizzard inbox* button swaps to the usual inbox, and the *Auction Coach* tab next to Send Mail brings it back. Turn it off in the options if you use another mail addon.
 - **Gold on the way:** the gold from a sale arrives by mail an hour later, long after Blizzard's own "Sold" line has gone. My Stuff now shows it under your gold: how many sales and how much gold is on the way, when the next mail arrives, and what's waiting in your mailbox. Hover the gold box to see which character each mail goes to. It clears as you collect the mail.
 
 ## 0.21.1
