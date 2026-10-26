@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.27.0
+
+- **Repost list groups:** keep items in groups you name, like Herbs or Transmog, beside your regulars. **Groups...** switches a group on or off for a posting run, makes new ones and deletes them. Right-click an item to move it to another group.
+- **Sell once:** items you only want to sell one time come off the list by themselves once they've sold (none left in your bags, on the AH or in the mail), and their batch goes when it's empty. Right-click any item to make it sell once, or to keep it after all.
+- **Add items...** at the bottom of the repost list:
+  - **Back from the AH by mail:** items an expired or cancelled auction sent back, collected from the mailbox, as one batch to sell once. The button shows how many are waiting, and the mailbox says so when you close it.
+  - **From your bags:** a checklist of what's worth posting from your bags (the Sell tab's Post items), all ticked, as a batch to sell once. Untick what you'd rather keep.
+  - **Posted lately:** items you posted in the last two days, as regulars.
+- With more than one group, the list shows each group under its own heading.
+
 ## 0.26.1
 
 - **Sparks aren't a crafting cost:** a recipe's season Spark is no longer counted in what it costs to craft, on the recipe's cost and profit lines, the cheapest materials panel and the crafting list. Its price used to be added in, and with no price yet it left the profit blank. The recipe now says the Spark isn't counted.

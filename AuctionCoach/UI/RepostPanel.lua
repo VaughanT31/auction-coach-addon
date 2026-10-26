@@ -6,8 +6,15 @@
 --  |  [i] Mithril Ore            -        -         None here  |
 --  |  Next: Sunfire Silk x20 at 9g 80s each                    |
 --  |  [          Post next          ]  [ Skip ]                |
+--  |  [ Add items ]                [ Groups ]                 |
 --  |  Drag an item here to add it. Right-click an item for more.|
 --  +-----------------------------------------------------------+
+--
+-- With more than one group (0.27), each starts with a header row. Add
+-- items offers what came back from the AH by mail, a checklist of what's
+-- worth posting in the bags (both as a batch to sell once), and items
+-- posted lately (as regulars). Groups switches groups on and off for a
+-- posting run, makes new ones and deletes them (Data/Repost.lua).
 --
 -- Blizzard allows one post per click, so Post next posts the next ready
 -- item in list order at Auction Coach's suggested price (never under the
@@ -72,7 +79,7 @@ end
 
 local function NextItem()
     for _, item in ipairs(items) do
-        if item.status == "READY" and not skipped[item.key] then return item end
+        if not item.header and item.status == "READY" and not skipped[item.key] then return item end
     end
     return nil
 end
@@ -204,6 +211,83 @@ local function PlainMoney(copper)
     return ("%ds"):format(silver)
 end
 
+local function AskGroupName(andThen)
+    Ask("AUCTIONCOACH_REPOST_GROUP", L.REPOST_ASK_GROUP, "", function(text)
+        local id = ns.Repost:AddGroup(text)
+        if id and andThen then andThen(id) end
+    end)
+end
+
+-- Add items: back from the AH, a checklist of the bags, posted lately.
+local function AddMenu(owner)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then return ns.Repost:AddSuggestions() end
+    local returned, bag, recent = ns.Repost:ReturnedItems(), ns.Repost:BagItems(), ns.Repost:Suggestions()
+    local picks = {}
+    for _, item in ipairs(bag) do picks[item.key] = true end
+    MenuUtil.CreateContextMenu(owner, function(_, root)
+        root:CreateTitle(L.REPOST_ADD_TITLE)
+        local back = root:CreateButton(L.REPOST_ADD_RETURNED:format(#returned), function() ns.Repost:AddReturned() end)
+        if #returned == 0 then back:SetEnabled(false) end
+
+        local fromBags = root:CreateButton(L.REPOST_ADD_BAGS:format(#bag))
+        if #bag == 0 then
+            fromBags:SetEnabled(false)
+        else
+            if fromBags.SetScrollMode then fromBags:SetScrollMode(360) end
+            fromBags:CreateButton("|cff66ff66" .. L.REPOST_ADD_TICKED .. "|r", function()
+                local chosen = {}
+                for _, item in ipairs(bag) do
+                    if picks[item.key] then chosen[#chosen + 1] = item end
+                end
+                ns.Repost:AddBatch(L.REPOST_BATCH_BAGS:format(date("%d %b")), chosen)
+            end)
+            fromBags:CreateDivider()
+            for _, item in ipairs(bag) do
+                local label = ("%s x%d  %s"):format(Util.NamedLink(item.key) or item.link or item.key, item.count,
+                    Util.FormatMoneyIcons(item.price))
+                fromBags:CreateCheckbox(label, function() return picks[item.key] end, function()
+                    picks[item.key] = not picks[item.key]
+                    return MenuResponse and MenuResponse.Refresh
+                end)
+            end
+        end
+
+        local lately = root:CreateButton(L.REPOST_ADD_RECENT:format(#recent), function() ns.Repost:AddSuggestions() end)
+        if #recent == 0 then lately:SetEnabled(false) end
+        root:CreateDivider()
+        root:CreateTitle(L.REPOST_ADD_DRAG)
+    end)
+end
+
+-- Groups: on or off for this run, new, delete.
+local function GroupsMenu(owner)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+    MenuUtil.CreateContextMenu(owner, function(_, root)
+        root:CreateTitle(L.REPOST_GROUPS_TITLE)
+        for _, group in ipairs(ns.Repost:GroupList()) do
+            local label = L.REPOST_GROUP_ROW:format(group.name, group.count)
+                .. (group.batch and (" |cff99ccff" .. L.REPOST_ONCE_TAG .. "|r") or "")
+            root:CreateCheckbox(label, function() return not group.off end, function()
+                ns.Repost:ToggleGroup(group.id)
+                group.off = not group.off
+                return MenuResponse and MenuResponse.Refresh
+            end)
+        end
+        root:CreateDivider()
+        root:CreateButton(L.REPOST_MENU_NEW_GROUP, function() AskGroupName() end)
+        local delete = root:CreateButton(L.REPOST_GROUP_DELETE)
+        local any = false
+        for _, group in ipairs(ns.Repost:GroupList()) do
+            if group.id then
+                any = true
+                delete:CreateButton(L.REPOST_GROUP_ROW:format(group.name, group.count), function() ns.Repost:RemoveGroup(group.id) end)
+            end
+        end
+        if not any then delete:SetEnabled(false) end
+        root:CreateTitle(L.REPOST_GROUPS_NOTE)
+    end)
+end
+
 local function RowMenu(owner, item)
     if not (MenuUtil and MenuUtil.CreateContextMenu) then
         ns.Repost:Remove(item.key)
@@ -227,6 +311,20 @@ local function RowMenu(owner, item)
             Ask("AUCTIONCOACH_REPOST_MAX", L.REPOST_ASK_MAX, tostring(item.max), function(text)
                 ns.Repost:Set(item.key, "max", tonumber(text) or 0)
             end)
+        end)
+        local groups = root:CreateButton(L.REPOST_MENU_GROUP:format(ns.Repost:GroupName(item.g)))
+        for _, group in ipairs(ns.Repost:GroupList()) do
+            if not group.batch or group.id == item.g then
+                groups:CreateButton((group.id == item.g and "|cffffd100" or "") .. group.name, function()
+                    ns.Repost:SetGroup(item.key, group.id)
+                end)
+            end
+        end
+        groups:CreateButton(L.REPOST_MENU_NEW_GROUP, function()
+            AskGroupName(function(id) ns.Repost:SetGroup(item.key, id) end)
+        end)
+        root:CreateButton(item.u and L.REPOST_MENU_KEEP_AFTER or L.REPOST_MENU_UNTIL_SOLD, function()
+            ns.Repost:SetUntilSold(item.key, not item.u)
         end)
         root:CreateButton(L.REPOST_MENU_UP, function() ns.Repost:Move(item.key, -1) end)
         root:CreateButton(L.REPOST_MENU_DOWN, function() ns.Repost:Move(item.key, 1) end)
@@ -288,6 +386,7 @@ local function CreateRow(index)
     row:SetScript("OnClick", function(self, mouse)
         if not self.item then return end
         if GetCursorInfo() then return TakeCursorItem() end
+        if self.item.header then return GroupsMenu(self) end
         if mouse == "RightButton" then
             GameTooltip:Hide()
             RowMenu(self, self.item)
@@ -300,6 +399,12 @@ local function CreateRow(index)
     row:SetScript("OnEnter", function(self)
         local item = self.item
         if not item then return end
+        if item.header then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(item.name)
+            GameTooltip:AddLine(item.batch and L.REPOST_BATCH_TIP or L.REPOST_GROUP_TIP, 1, 1, 1, true)
+            return GameTooltip:Show()
+        end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local link = Util.NamedLink(item.key)
         if link and link:find("item:") then GameTooltip:SetHyperlink(link) else GameTooltip:SetText(Name(item)) end
@@ -307,6 +412,7 @@ local function CreateRow(index)
         GameTooltip:AddLine(L.ADDON_TITLE, 1, 0.82, 0)
         GameTooltip:AddLine(L["REPOST_WHY_" .. item.status]:format(Util.FormatMoneyIcons(item.floor)), 1, 1, 1, true)
         GameTooltip:AddLine(L.REPOST_FLOOR_LINE:format(Util.FormatMoneyIcons(item.floor)), 0.8, 0.8, 0.8)
+        if item.u then GameTooltip:AddLine(L.REPOST_UNTIL_SOLD_LINE, 0.6, 0.8, 1, true) end
         if item.max > 0 then GameTooltip:AddLine(L.REPOST_MAX_LINE:format(item.max), 0.8, 0.8, 0.8) end
         GameTooltip:AddLine(L.REPOST_ROW_TIP, 0.6, 0.8, 1, true)
         GameTooltip:Show()
@@ -373,9 +479,12 @@ local function Create()
     end)
     panel.post:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    panel.suggest = ns.Skin.Button(panel, "", WIDTH - 16, 20)
-    panel.suggest:SetPoint("BOTTOMLEFT", panel.post, "TOPLEFT", 0, 20)
-    panel.suggest:SetScript("OnClick", function() ns.Repost:AddSuggestions() end)
+    panel.add = ns.Skin.Button(panel, L.REPOST_ADD, (WIDTH - 22) / 2, 20)
+    panel.add:SetPoint("BOTTOMLEFT", panel.post, "TOPLEFT", 0, 20)
+    panel.add:SetScript("OnClick", function(self) AddMenu(self) end)
+    panel.groups = ns.Skin.Button(panel, L.REPOST_GROUPS, (WIDTH - 22) / 2, 20)
+    panel.groups:SetPoint("LEFT", panel.add, "RIGHT", 6, 0)
+    panel.groups:SetScript("OnClick", function(self) GroupsMenu(self) end)
 
     panel.status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     panel.status:SetPoint("BOTTOMLEFT", panel.post, "TOPLEFT", 2, 5)
@@ -387,11 +496,20 @@ local function Create()
 end
 
 local function SetRow(row, item)
+    if item.header then
+        row.icon:SetTexture(nil)
+        row.name:SetText("|cffffd100" .. item.name .. "|r" .. (item.batch and (" |cff99ccff" .. L.REPOST_ONCE_TAG .. "|r") or ""))
+        row.count:SetText("")
+        row.price:SetText("")
+        row.status:SetText("")
+        return
+    end
     local itemID = Util.ItemIDFromKey(item.key) or Util.PET_CAGE_ITEM_ID
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
     local name = Name(item)
     if skipped[item.key] then name = "|cff9d9d9d" .. ns.Sales.PlainName(name) .. "|r" end
     if item.sellList then name = name .. " |cff99ccff" .. L.REPOST_SELL_TAG .. "|r" end
+    if item.u then name = name .. " |cff99ccff" .. L.REPOST_ONCE_TAG .. "|r" end
     row.name:SetText(name)
     row.count:SetText(item.count > 0 and ("x" .. BreakUpLargeNumbers(item.count)) or "|cff9d9d9d-|r")
     row.price:SetText(item.price and Util.FormatMoneyIcons(item.price) or "|cff9d9d9d-|r")
@@ -424,9 +542,8 @@ function RepostPanel:Draw()
     end
     panel.skip:SetEnabled(nextItem ~= nil)
 
-    local suggestions = #ns.Repost:Suggestions()
-    panel.suggest:SetShown(suggestions > 0)
-    panel.suggest:SetText(L.REPOST_SUGGEST:format(suggestions))
+    local returned = #ns.Repost:ReturnedItems()
+    panel.add:SetText(returned > 0 and L.REPOST_ADD_WITH:format(returned) or L.REPOST_ADD)
 end
 
 function RepostPanel:Refresh()
@@ -437,23 +554,24 @@ function RepostPanel:Refresh()
     items = ns.Repost:Items()
     -- Opens by itself only when something on the list is in the bags;
     -- /ac repost or adding an item opens it anyway.
-    local any = false
-    for _, item in ipairs(items) do if item.count > 0 then any = true end end
+    local any = #ns.Repost:ReturnedItems() > 0
+    for _, item in ipairs(items) do if (item.count or 0) > 0 then any = true end end
     if not any and not self.forced then
         if panel then panel:Hide() end
         return
     end
     if not panel then Create() end
-    local ready = 0
+    local ready, count = 0, 0
     for _, item in ipairs(items) do
+        if not item.header then count = count + 1 end
         if item.status == "READY" and not skipped[item.key] then ready = ready + 1 end
     end
-    panel.title:SetText(L.REPOST_TITLE:format(#items, ready))
+    panel.title:SetText(L.REPOST_TITLE:format(count, ready))
     offset = math.min(offset, math.max(0, #items - LINES))
     self:Draw()
     -- From the real text heights, so wrapped lines never overlap.
     local list = #items > 0 and math.min(#items, LINES) * ROW or (panel.empty:GetStringHeight() + 8)
-    local extra = panel.suggest:IsShown() and 26 or 0
+    local extra = 26
     panel:SetHeight(-TOP + list + 6 + extra + 20 + 24 + 8 + panel.hint:GetStringHeight() + 10)
     self:Place()
     panel:Show()

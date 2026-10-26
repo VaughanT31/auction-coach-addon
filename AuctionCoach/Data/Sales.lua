@@ -59,6 +59,7 @@ function Sales:Posted(key, unitPrice, quantity, now, name)
     end
     ns.Undercuts:Posted(key, unitPrice, quantity, now)
     ns.SellLists:Posted(key, quantity)
+    ns.Repost:Posted(key)
 end
 
 -- Item name without colour codes, links or crafting quality icons.
