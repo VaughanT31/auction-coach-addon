@@ -45,6 +45,14 @@ Two more views on the same tab:
 
 <img src="Docs/CurrentDeals.png" alt="Deals: items listed well below their usual price" width="600">
 
+### Mailbox, reposting and accounting
+
+- **A new inbox:** every mail in one searchable list, with one click to collect all Auction House mail or just one kind. My Stuff shows the gold from your sales still on its way by mail.
+- **Repost list:** the items you post again and again beside the Auction House, posted one click each at Auction Coach's price, never under your floor. Groups you switch on and off, and batches to sell once that leave the list when sold.
+- **Sell lists:** plan a sale on one realm, move it through the warband bank, post it on another.
+- **Why isn't it selling?** Hover a listing on the Auctions tab for a plain answer.
+- **Accounting:** the Accounting tab shows where your gold comes from and goes, by category, per character, realm or account.
+
 ### And also
 
 - **Sale messages:** when an auction sells, a chat line says so. The game doesn't say how many of a stack sold, so the mailbox gives the exact amount: open it and one line per item says how many sold and the gold after the AH cut. Partly sold stacks show *112 sold* on the Auctions tab.
@@ -86,6 +94,9 @@ From then on the app starts with Windows and keeps prices fresh. WoW loads new p
 | `/ac plan` | Open Today's Plan |
 | `/ac auctions` | See which of your auctions are undercut |
 | `/ac gold` | Your gold and AH sales over time |
+| `/ac accounting` | Where your gold comes from and goes |
+| `/ac repost` | Open the repost list at the Auction House |
+| `/ac export` | A string for your report on the website |
 | `/ac destroy` | What Auction Coach has learned about milling, prospecting and disenchanting |
 | `/ac shop add [item] 12.5` | Add an item to your shopping list (shift-click it in), with the most you'll pay |
 | `/ac scan` | Scan the Auction House now (it must be open) |
@@ -111,7 +122,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added (0.14.0 and desktop app 0.9)**
+**Just added: 1.0.0, the full release**
+- The mailbox inbox and gold on the way, the repost list with groups and sell-once batches, sell lists for your other realms, *Why isn't it selling?*, the Accounting tab, fast sellers in Today's Plan, safer full scans, and a gold goal and fuller report on the website. The [changelog](CHANGELOG.md) has the details.
+
+**Added in 0.14.0 and desktop app 0.9**
 - **Exact sold amounts:** at the mailbox, on the Auctions tab, and as a Discord message or Windows notification when something sells while the game is closed.
 
 **Added in desktop app 0.7**

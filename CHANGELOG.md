@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0
+
+**Auction Coach 1.0: the full release.** Everything since 0.20.7 in one update:
+
+- **A new inbox at the mailbox:** every mail in one searchable list, one click to collect all Auction House mail or just the sold, bought, cancelled, expired or outbid ones, and gold still collected when your bags are full.
+- **Gold on the way:** My Stuff shows the gold from your sales that's still coming by mail, and when the next one lands.
+- **Repost list:** the items you post again and again beside the Auction House, posted one click each at Auction Coach's price and never under your floor. Keep them in groups you switch on and off, and add batches to sell once, from your bags or from expired and cancelled auctions, that leave the list once sold.
+- **Sell lists for your other realms:** plan a sale on one realm, move the items through the warband bank in a click, and post them on the other.
+- **Why isn't it selling?** A plain answer for each of your listings, from undercut to a long queue of cheaper listings ahead of you.
+- **Accounting:** where your gold comes from and goes, by category, for today, this week, this month or all time, per character, realm or account.
+- **Today's Plan favours fast sellers,** and lists what sells fast on your realm, worth farming or crafting.
+- **Safer full scans:** closing the Auction House mid-scan keeps what it read, and scans run faster.
+- **On the website:** a gold goal with your pace and milestones, and your report now explains why listings aren't selling and where your gold went.
+- **Fixes:** a season's Spark is no longer counted as a crafting cost, and collected mail no longer leaves the new mail icon lit.
+
+The details of each are in the sections below.
+
 ## 0.28.0
 
 - **Today's Plan favours fast sellers:** items that sell 20 or more a day on your realm (100 or more for materials) are marked **Fast:** on post, repost and craft steps, and win a near tie in the ranking, since their sale is the surer one.
