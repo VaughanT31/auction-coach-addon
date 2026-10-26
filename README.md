@@ -32,7 +32,7 @@ The **Sell** tab lists everything in your bags with one suggested price, how fas
 
 When you put an item in the sell box, the **post helper** suggests a price and shows the chance your stack sells in time. "Use this price" fills it in, and you still click Post.
 
-<img src="Docs/AuctionHouseMessage.png" alt="Post helper next to the Auction House sell box" width="700">
+<img src="Docs/PerItemMessagesAuctionHouse.png" alt="Post helper next to the Auction House sell box" width="260">
 
 ### Deals
 
@@ -42,8 +42,15 @@ Two more views on the same tab:
 
 - **Shopping:** your shopping list. Alt-click any item (bags, chat, the Auction House) to add it with the most you'll pay, and Auction Coach tells you (in the list, the tooltip and chat) when one is listed at or below that. Right-click an item to edit or remove it. At the Auction House the list opens beside it, grouped by who added each item (you, Patron Planner, a craft). The **+** on a Cheapest materials row adds that craft's materials, less what you already have.
 - **Other realms:** cross-realm flips. Items that are cheap on one of your realms and usually sell for more on another. Buy, move it through the warband bank, post.
+- **Craft:** every recipe your characters know, with what its materials cost against what the crafted item sells for.
 
 <img src="Docs/CurrentDeals.png" alt="Deals: items listed well below their usual price" width="600">
+
+<img src="Docs/CrossRealmFlipping.png" alt="Other realms: flips between your realms" width="600">
+
+<img src="Docs/CraftingDeals.png" alt="Craft: material cost against what each crafted item sells for" width="600">
+
+<img src="Docs/AuctionHouseShoppingList.png" alt="Shopping list beside the Auction House" width="360">
 
 ### Mailbox, reposting and accounting
 
@@ -52,6 +59,10 @@ Two more views on the same tab:
 - **Sell lists:** plan a sale on one realm, move it through the warband bank, post it on another.
 - **Why isn't it selling?** Hover a listing on the Auctions tab for a plain answer.
 - **Accounting:** the Accounting tab shows where your gold comes from and goes, by category, per character, realm or account.
+
+<img src="Docs/mailbox.png" alt="The Auction Coach inbox at the mailbox" width="420"> <img src="Docs/RepostLists.png" alt="The repost list beside the Auction House" width="340">
+
+<img src="Docs/Accounting.png" alt="Accounting: income and spending by category" width="600">
 
 ### And also
 
