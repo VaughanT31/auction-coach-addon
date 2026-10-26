@@ -116,6 +116,15 @@ local function Create()
     big:SetPoint("TOPLEFT", PAD, -42)
     lines = { Line(-76), Line(-94), Line(-112), Line(-130) }
 
+    -- Hovering the numbers: all the gold in and out this session, by
+    -- category (Data/Ledger.lua), costs like repairs included.
+    local hover = CreateFrame("Frame", nil, frame)
+    hover:SetPoint("TOPLEFT", PAD, -42)
+    hover:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -PAD, -146)
+    hover:EnableMouse(true)
+    hover:SetScript("OnEnter", function(self) Window:ShowLedgerTooltip(self) end)
+    hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     local sub = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sub:SetPoint("TOPLEFT", PAD, -154)
     frame.listTitle = sub
@@ -240,6 +249,26 @@ ns.Events:On("PLAYER_ENTERING_WORLD", function()
         end
     end)
 end)
+
+function Window:ShowLedgerTooltip(owner)
+    local s = ns.Session:Current()
+    local ledger = s and s.ledger
+    if not ledger or not next(ledger) then return end
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    GameTooltip:SetText(L.LEDGER_SESSION, 1, 0.82, 0)
+    local net = 0
+    for _, cat in ipairs(ns.Ledger.CATEGORIES) do
+        local entry = ledger[cat]
+        if entry then
+            net = net + entry[1] - entry[2]
+            if entry[1] > 0 then GameTooltip:AddDoubleLine(L["LEDGER_CAT_" .. cat], "+" .. Util.FormatMoney(entry[1]), 1, 1, 1, 0.4, 1, 0.4) end
+            if entry[2] > 0 then GameTooltip:AddDoubleLine(L["LEDGER_CAT_" .. cat], "-" .. Util.FormatMoney(entry[2]), 1, 1, 1, 1, 0.4, 0.4) end
+        end
+    end
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(L.LEDGER_SESSION_NET:format((net < 0 and "-" or "+") .. Util.FormatMoney(math.abs(net))), 1, 1, 1)
+    GameTooltip:Show()
+end
 
 -- One line for tooltips (the main window's button, the minimap button):
 -- the running or paused session, or nil when there is none.

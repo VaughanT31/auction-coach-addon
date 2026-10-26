@@ -122,6 +122,9 @@ function Share:BuildExport()
         chars = chars,
         warband = warband,
         goldDays = goldDays,
+        -- The whole account's gold in and out per day and category, for
+        -- the website's accounting (Data/Ledger.lua).
+        ledger = ns.Ledger:ExportDays(120),
     }
 end
 

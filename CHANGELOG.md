@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.0
+
+- **Accounting tab:** where your gold comes from and where it goes. Every change in your gold is sorted by what caused it: AH sales, purchases and deposits, vendor sales and purchases, repairs, looted gold, quests, flight paths, trainers, transmog, the barber, crafting orders, mail, trades and the guild bank, with anything else as Other. Pick today, this week (from the weekly reset), this month or all time, for this character, your characters on this realm or the whole account. The top line gives your net gold, where most of it came from and your biggest cost ("Repairs cost you 4,200g this week"). Hover a category to split it by character.
+- Gold moved between your own characters (the warband bank, or mail between them) is kept apart, so it never counts as income or spending.
+- **Gold per hour:** hover the numbers for all the gold in and out during the session, costs like repairs included.
+- **On the website:** `/ac export` now carries your accounting, and the report has a *Where your gold went* section for the last 7 and 30 days.
+- The main window's tabs now fit their names, so all six fit beside the gold per hour button. `/ac accounting` opens the new tab.
+
 ## 0.25.0
 
 - **Why isn't it selling?** Hover one of your listings on the Auctions tab for a plain answer: someone listed it cheaper, you're well over its usual price, it only sells now and then on your realm, there's a queue of cheaper listings ahead of you (and how long that takes to sell through), you only just posted it, or it's a fast seller and you're the cheapest, so just wait. The Sell tab tooltip says how long an item should take to sell at the suggested price.

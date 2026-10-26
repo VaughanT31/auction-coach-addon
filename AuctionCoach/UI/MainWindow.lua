@@ -15,6 +15,7 @@ ns.MainWindow = MainWindow
 local WIDTH, HEIGHT = 640, 516
 local MAX_WIDTH, MAX_HEIGHT = 1400, 1000
 local TAB_WIDTH, TAB_HEIGHT = 92, 24
+local TAB_MIN_WIDTH, TAB_PADDING = 64, 26
 -- Title row, then the tab row, then the open tab's panel.
 local TABS_Y = -44
 
@@ -72,13 +73,13 @@ local function LayoutTabs()
     for _, tab in ipairs(tabs) do
         if not Hidden(tab) then shown = shown + 1 end
     end
-    local x = 0
+    local x = 16
     for i, tab in ipairs(tabs) do
         local show = shown == 0 and i == 1 or not Hidden(tab)
         tab.button:SetShown(show)
         if show then
-            tab.button:SetPoint("TOPLEFT", 16 + x * (TAB_WIDTH + 4), TABS_Y)
-            x = x + 1
+            tab.button:SetPoint("TOPLEFT", x, TABS_Y)
+            x = x + tab.button:GetWidth() + 4
         end
     end
 end
@@ -153,8 +154,9 @@ local function Create()
     SizeGrip()
 
     for i, tab in ipairs(tabs) do
+        -- As wide as its name needs, so six tabs fit beside the gold per hour button.
         local button = ns.Skin.Tab(frame, tab.name, TAB_WIDTH, TAB_HEIGHT)
-        button:SetPoint("TOPLEFT", 16 + (i - 1) * (TAB_WIDTH + 4), TABS_Y)
+        button:SetWidth(math.max(TAB_MIN_WIDTH, math.ceil(button.label:GetStringWidth()) + TAB_PADDING))
         button:SetScript("OnClick", function() SelectTab(i) end)
         tab.button = button
 
