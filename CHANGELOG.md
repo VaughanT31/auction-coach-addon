@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.1
+
+- **Sparks aren't a crafting cost:** a recipe's season Spark is no longer counted in what it costs to craft, on the recipe's cost and profit lines, the cheapest materials panel and the crafting list. Its price used to be added in, and with no price yet it left the profit blank. The recipe now says the Spark isn't counted.
+
 ## 0.26.0
 
 - **Accounting tab:** where your gold comes from and where it goes. Every change in your gold is sorted by what caused it: AH sales, purchases and deposits, vendor sales and purchases, repairs, looted gold, quests, flight paths, trainers, transmog, the barber, crafting orders, mail, trades and the guild bank, with anything else as Other. Pick today, this week (from the weekly reset), this month or all time, for this character, your characters on this realm or the whole account. The top line gives your net gold, where most of it came from and your biggest cost ("Repairs cost you 4,200g this week"). Hover a category to split it by character.

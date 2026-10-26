@@ -112,6 +112,8 @@ local function Materials(recipe, chosen)
     local cost, lines, missing = 0, {}, {}
     local left = {}
     for itemID, n in pairs(chosen or {}) do left[itemID] = n end
+    -- A season's Spark is never a cost, even when one is in its slot.
+    for _, itemID in ipairs(recipe.sp and recipe.sp.ids or {}) do left[itemID] = nil end
     local function Add(itemID, n, each, fromVendor)
         if each then
             cost = cost + each * n
@@ -173,6 +175,9 @@ local function ShowTooltip(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(L.RV_TIP_TITLE)
     for _, line in ipairs(c.lines) do GameTooltip:AddDoubleLine(line[1], line[2], 1, 1, 1, 1, 1, 1) end
+    if c.recipe.sp then
+        GameTooltip:AddDoubleLine(c.recipe.sp.n .. "x " .. ItemName(c.recipe.sp.ids[1] or 0), L.RV_SPARK_NOT_COUNTED, 1, 1, 1, 0.6, 0.6, 0.6)
+    end
     if c.e then
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(L.RV_TIP_MAKES:format(Amount(c.recipe.q or 1), Util.FormatMoney(Util.AfterCut(c.e.each))), 1, 1, 1, true)
@@ -307,6 +312,7 @@ function Block:Show(recipeID)
             .. (profit < 0 and (" " .. L.RV_LOSS) or "") .. "|r"))
         local makes = e.quality and L.RV_MAKES_QUALITY:format(Amount(recipe.q or 1), e.quality, Util.FormatMoney(e.each))
             or L.RV_MAKES:format(Amount(recipe.q or 1), Util.FormatMoney(e.each))
+        if recipe.sp then makes = makes .. " " .. L.RV_SPARK_FREE end
         frame.note:SetText(GREY .. makes .. "|r")
         y = -38 - math.ceil(frame.note:GetStringHeight())
     end

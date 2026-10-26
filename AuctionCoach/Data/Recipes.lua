@@ -41,15 +41,31 @@ local function ViewingOwn()
     return true
 end
 
+-- A season's Spark: the required slot you pick a "modifying" reagent into
+-- (the Spark slot on crafted gear), rather than a basic material. Sparks
+-- come with the season, so they're never counted as a crafting cost.
+function Recipes.IsSpark(slot)
+    if slot.required ~= true then return false end
+    local modifying = Enum and Enum.CraftingReagentType and Enum.CraftingReagentType.Modifying
+    local modified = Enum and Enum.TradeskillSlotDataType and Enum.TradeskillSlotDataType.ModifiedReagent
+    return (modifying ~= nil and slot.reagentType == modifying) or (modified ~= nil and slot.dataSlotType == modified)
+end
+
 -- Required reagent slots of a schematic: { { ids, n }, ... }, or nil when a
--- required slot can't be read.
+-- required slot can't be read. Second: the Spark, { ids, n }, or nil.
 function Recipes.ReadSlots(schematic)
-    local slots = {}
+    local slots, spark = {}, nil
     local basic = Enum and Enum.CraftingReagentType and Enum.CraftingReagentType.Basic
     for _, slot in ipairs(schematic.reagentSlotSchematics or {}) do
         local required = slot.required
         if required == nil then required = basic ~= nil and slot.reagentType == basic end
-        if required then
+        if Recipes.IsSpark(slot) then
+            spark = spark or { ids = {}, n = 0 }
+            spark.n = spark.n + (slot.quantityRequired or 1)
+            for _, reagent in ipairs(slot.reagents or {}) do
+                if reagent.itemID then spark.ids[#spark.ids + 1] = reagent.itemID end
+            end
+        elseif required then
             local ids = {}
             for _, reagent in ipairs(slot.reagents or {}) do
                 if reagent.itemID then ids[#ids + 1] = reagent.itemID end
@@ -59,7 +75,7 @@ function Recipes.ReadSlots(schematic)
             slots[#slots + 1] = { ids = ids, n = slot.quantityRequired or 1 }
         end
     end
-    return slots
+    return slots, spark
 end
 
 -- One recipe as stored, or nil when it isn't worth keeping.
@@ -70,11 +86,11 @@ function Recipes.Read(recipeID, professionName)
     if info.isRecraft or info.isSalvageRecipe or info.isGatheringRecipe or info.isDummyRecipe then return nil end
     local schematic = Call(trade.GetRecipeSchematic, recipeID, false)
     if type(schematic) ~= "table" or not schematic.outputItemID then return nil end
-    local slots = Recipes.ReadSlots(schematic)
+    local slots, spark = Recipes.ReadSlots(schematic)
     if not slots or #slots == 0 then return nil end
     local qMin = schematic.quantityMin or 1
     local qMax = schematic.quantityMax or qMin
-    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName }
+    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName, sp = spark }
     Recipes.ReadQuality(recipeID, recipe)
     return recipe
 end

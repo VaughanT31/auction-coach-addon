@@ -81,7 +81,8 @@ function Picker.Slots(schematic)
     for index, slot in ipairs(schematic.reagentSlotSchematics or {}) do
         local required = slot.required
         if required == nil then required = basic ~= nil and slot.reagentType == basic end
-        if required then
+        -- A season's Spark is never a cost (Data/Recipes.lua).
+        if required and not ns.Recipes.IsSpark(slot) then
             local n = slot.quantityRequired or 1
             local tiers = {}
             for _, reagent in ipairs(slot.reagents or {}) do
