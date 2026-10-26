@@ -60,9 +60,25 @@ end
 -- Export
 -- ---------------------------------------------------------------------
 
+-- A character's listings for the website's "Why isn't it selling?":
+-- { { k = item key, v = unit price, q = quantity, p = when posted } }, the
+-- posted time from the newest post of the item on its realm (Data/Sales.lua).
+local function Listings(char)
+    if not char.auctionList or #char.auctionList == 0 then return nil end
+    local newest = {}
+    for _, post in ipairs(char.realmGroup and ns.db.posts[char.realmGroup] or {}) do
+        if not newest[post.k] or post.p > newest[post.k] then newest[post.k] = post.p end
+    end
+    local list = {}
+    for _, a in ipairs(char.auctionList) do
+        list[#list + 1] = { k = a.k, v = a.v, q = a.q, p = newest[a.k] }
+    end
+    return list
+end
+
 -- Everything the website needs for the report: per character its realm,
--- class, gold and item counts (all locations added up), plus the warband
--- bank. Guild banks are left out: they are not the player's to sell.
+-- class, gold, item counts (all locations added up) and listings, plus the
+-- warband bank. Guild banks are left out: they are not the player's to sell.
 function Share:BuildExport()
     local chars = {}
     for charKey, char in pairs(ns.db.characters) do
@@ -82,6 +98,7 @@ function Share:BuildExport()
             gold = char.gold or 0,
             -- An empty table would come out as a JSON list.
             items = any and items or nil,
+            auctions = Listings(char),
         })
     end
     table.sort(chars, function(a, b) return a.name < b.name end)

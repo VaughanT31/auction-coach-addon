@@ -42,6 +42,17 @@ local function ShowRowTooltip(row)
     for _, line in ipairs(Phrases.Sell(item.suggestion)) do
         GameTooltip:AddLine(line, 1, 1, 1, true)
     end
+    -- How long it would take to sell at the suggested price (Advice/WhySelling.lua).
+    -- Slow sellers are already said above.
+    local s = item.suggestion
+    if s.price then
+        local verdict = ns.WhySelling.Verdict(item.key, s.price, item.count, nil, "CHEAPEST")
+        if verdict.code ~= "NO_DATA" and verdict.code ~= "SLOW" and #verdict.lines > 0 then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(L.WHY_IF_POSTED, 1, 0.82, 0)
+            for _, line in ipairs(verdict.lines) do GameTooltip:AddLine(line, 1, 1, 1, true) end
+        end
+    end
     if Compat.IsAuctionHouseOpen() then
         GameTooltip:AddLine(L.SELL_SUB_AH, 0.6, 0.8, 1, true)
     end

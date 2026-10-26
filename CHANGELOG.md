@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0
+
+- **Why isn't it selling?** Hover one of your listings on the Auctions tab for a plain answer: someone listed it cheaper, you're well over its usual price, it only sells now and then on your realm, there's a queue of cheaper listings ahead of you (and how long that takes to sell through), you only just posted it, or it's a fast seller and you're the cheapest, so just wait. The Sell tab tooltip says how long an item should take to sell at the suggested price.
+- **On the website:** `/ac export` now carries your listings, and the report on auctioncoach.ctrlshiftzed.com has a *Why isn't it selling?* section for each of them, checked against today's Auction House (exactly how many are listed cheaper than you), plus *How to sell more* tips and the fastest sellers on your realms and across the region's materials.
+
 ## 0.24.0
 
 - **Sell lists for your other realms:** plan a sale on one realm and do it on another. In *Deals > Other realms*, tick your own items that sell for more elsewhere and click *Add yours to sell lists*: each goes on the list of the realm that pays more. At the bank, a *Sell lists* panel puts those items into the warband bank with one click (per item or all), and on the other realm the same panel takes them out. There they show up in the repost list at the Auction House, so *Post next* posts them, and they come off the sell list as they're posted. Items already on a list are marked in Other realms, and the panel can be turned off in the options.

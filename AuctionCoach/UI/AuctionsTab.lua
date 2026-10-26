@@ -76,6 +76,13 @@ local function ShowRowTooltip(row)
             Util.FormatMoney(Util.AfterCut(entry.unit * entry.sold))), 0.2, 1, 0.6)
     end
     GameTooltip:AddLine(L.AUCTIONS_LISTED_VALUE:format(Util.FormatMoney(ns.Auctions.ListedValue(entry))), 0.75, 0.75, 0.75)
+    -- Why it hasn't sold yet (Advice/WhySelling.lua).
+    local verdict = ns.WhySelling.ForAuction(entry)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(L.WHY_HEADER, 1, 0.82, 0)
+    for i, line in ipairs(verdict.lines) do
+        if i == 1 then GameTooltip:AddLine(line, 1, 1, 1, true) else GameTooltip:AddLine(line, 0.85, 0.85, 0.85, true) end
+    end
     GameTooltip:Show()
 end
 
