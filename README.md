@@ -2,6 +2,8 @@
 
 **A plain-English Auction House coach for World of Warcraft (Retail).** Auction Coach tells you what your stuff is worth, what to sell, what price to post at and how likely it is to sell. No groups, operations or price formulas to set up.
 
+**New here?** The [wiki](wiki/Home.md) explains every feature step by step (also on the [website](https://ctrlshiftzed.com/wiki/auction-coach/)). Questions it doesn't answer: ask on [Discord](https://discord.gg/wz7fw6jM9Z).
+
 **It advises and never automates.** You do all the buying, posting and cancelling yourself.
 
 [Download on CurseForge](https://www.curseforge.com/wow/addons/auction-coach) | [Website](https://auctioncoach.ctrlshiftzed.com) | [Report a bug or suggest an idea](https://github.com/VaughanT31/auction-coach-addon/issues/new/choose)
