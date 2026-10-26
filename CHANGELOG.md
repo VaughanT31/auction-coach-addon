@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.0
+
+- **Sell lists for your other realms:** plan a sale on one realm and do it on another. In *Deals > Other realms*, tick your own items that sell for more elsewhere and click *Add yours to sell lists*: each goes on the list of the realm that pays more. At the bank, a *Sell lists* panel puts those items into the warband bank with one click (per item or all), and on the other realm the same panel takes them out. There they show up in the repost list at the Auction House, so *Post next* posts them, and they come off the sell list as they're posted. Items already on a list are marked in Other realms, and the panel can be turned off in the options.
+- **Fix:** mail collected with the Auction Coach inbox no longer leaves the minimap's new mail icon lit.
+
 ## 0.23.0
 
 - **Repost list:** keep the items you post again and again on a list beside the Auction House, and post them with one click each. *Post next* posts the next item at Auction Coach's price, never under the floor you set for it, then moves on (Blizzard allows one post per click). When a price is more than 5 minutes old, the first click checks it on the AH and the next click posts. Each item shows whether it's ready, under its floor, worth holding or not in your bags. Add items with *Add to my repost list* in the post helper, by dragging them onto the list, or with one click for everything you posted lately. Right-click an item to set its floor, the most to post at once, or its place in the list, and Skip passes on one for this visit. It stacks under the post helper and the shopping list, so the panels never overlap. Pick 12, 24 or 48 hour auctions in the options, or open it any time with `/ac repost`.

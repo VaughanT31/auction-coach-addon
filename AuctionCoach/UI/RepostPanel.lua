@@ -211,6 +211,12 @@ local function RowMenu(owner, item)
     end
     MenuUtil.CreateContextMenu(owner, function(_, root)
         root:CreateTitle(Name(item))
+        if item.sellList then
+            -- From the sell list (Data/SellLists.lua): no floor or order of its own.
+            root:CreateButton(L.REPOST_MENU_KEEP, function() ns.Repost:Add(item.key, item.link) end)
+            root:CreateButton(L.REPOST_MENU_SELL_REMOVE, function() ns.SellLists:Remove(ns.realmGroup, item.key) end)
+            return
+        end
         root:CreateButton(L.REPOST_MENU_FLOOR:format(Util.FormatMoneyIcons(item.floor)), function()
             Ask("AUCTIONCOACH_REPOST_FLOOR", L.REPOST_ASK_FLOOR, PlainMoney(item.floor), function(text)
                 local copper = ns.Shopping.ParsePrice(text)
@@ -385,6 +391,7 @@ local function SetRow(row, item)
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
     local name = Name(item)
     if skipped[item.key] then name = "|cff9d9d9d" .. ns.Sales.PlainName(name) .. "|r" end
+    if item.sellList then name = name .. " |cff99ccff" .. L.REPOST_SELL_TAG .. "|r" end
     row.name:SetText(name)
     row.count:SetText(item.count > 0 and ("x" .. BreakUpLargeNumbers(item.count)) or "|cff9d9d9d-|r")
     row.price:SetText(item.price and Util.FormatMoneyIcons(item.price) or "|cff9d9d9d-|r")
@@ -493,7 +500,7 @@ local function Soon()
     Util.Debounce("repostPanel", 0.3, function() RepostPanel:Refresh() end)
 end
 
-for _, event in ipairs({ "AC_REPOST_CHANGED", "AC_INVENTORY_CHANGED", "AC_LIVE_PRICE", "AC_SCAN_COMPLETE",
+for _, event in ipairs({ "AC_REPOST_CHANGED", "AC_SELL_LISTS_CHANGED", "AC_INVENTORY_CHANGED", "AC_LIVE_PRICE", "AC_SCAN_COMPLETE",
                          "AC_DATA_CHANGED" }) do
     ns.Events:On(event, function() if panel or event == "AC_REPOST_CHANGED" then Soon() end end)
 end

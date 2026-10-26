@@ -78,15 +78,24 @@ end
 --   HOLD      prices crashed, worth waiting (Rules:SuggestPrice)
 --   VENDOR    a vendor pays more than the AH after its cut
 --   NO_PRICE  no price yet: a scan or a search fixes that
+-- Items on this realm's sell list (Data/SellLists.lua) come after the list's
+-- own, with no floor and at most what the sell list says, marked sellList.
 function Repost:Items()
     local items = {}
     local char = ns.db.characters[ns.charKey]
     local bags = char and char.inventory.bags or {}
-    for _, entry in ipairs(List()) do
+    local entries = {}
+    for _, entry in ipairs(List()) do entries[#entries + 1] = entry end
+    for key, entry in pairs(ns.SellLists:Here()) do
+        if not Find(key) and (bags[key] or 0) > 0 then
+            entries[#entries + 1] = { k = key, floor = 0, max = entry.n, sellList = true }
+        end
+    end
+    for _, entry in ipairs(entries) do
         local link = ns.db.links[entry.k]
         local s = ns.Rules:SuggestPrice(entry.k, link)
         local item = { key = entry.k, link = link, count = bags[entry.k] or 0, floor = entry.floor or 0,
-                       max = entry.max or 0, suggestion = s, price = s.price }
+                       max = entry.max or 0, suggestion = s, price = s.price, sellList = entry.sellList }
         if item.count == 0 then
             item.status = "NONE"
         elseif s.action == "VENDOR" then

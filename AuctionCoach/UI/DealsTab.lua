@@ -47,17 +47,24 @@ local STATUS_COLORS = {
 
 local panelRef
 local mode = "deals"
--- Ticked flips, by FlipID, for "Add checked to shopping list".
+-- Ticked rows, by FlipID: flips for "Add flips to shopping list", your own
+-- items (Flips:YourItems) for "Add yours to sell lists".
 local checked = {}
 local UpdateFlipBar
 
 local function FlipID(flip)
-    return flip.key .. " > " .. flip.buyRealm
+    return (flip.own and "own:" or "") .. flip.key .. " > " .. flip.buyRealm
 end
 
--- Your own items (Flips:YourItems) have nothing to buy, so no tick box.
 local function Tickable(entry)
-    return not entry.heading and not entry.own
+    return not entry.heading
+end
+
+-- Whether your own item is on the sell list of the realm it sells better on.
+local function OnSellList(entry)
+    local group = entry.own and ns.SellLists.GroupOf(entry.sellRealm)
+    local list = group and ns.db.sellLists and ns.db.sellLists[group]
+    return list and list[entry.key] ~= nil
 end
 
 local Column = ns.Skin.Columns(COLUMNS)
@@ -89,6 +96,10 @@ local function ShowRowTooltip(row)
     end
     if Compat.IsAuctionHouseOpen() and row.kind ~= "flips" then
         GameTooltip:AddLine(L.DEALS_SUB_AH, 0.6, 0.8, 1, true)
+    end
+    if row.kind == "flips" and entry.own then
+        GameTooltip:AddLine(OnSellList(entry) and L.SELL_ON_LIST:format(entry.sellRealm)
+            or L.SELL_TICK_TIP:format(entry.sellRealm), 0.6, 0.8, 1, true)
     end
     GameTooltip:Show()
 end
@@ -193,6 +204,7 @@ local function SetRow(row, entry, kind)
             .. Phrases.SignedMoney(entry.profit, Util.FormatMoneyIcons) .. "|r")
         row.speed:SetText(Speed(entry.salesPerDay))
     else
+        if entry.own and OnSellList(entry) then name = name .. " |cff99ccff" .. L.SELL_TAG .. "|r" end
         row.name:SetText(name)
         row.price:SetText(Util.FormatMoneyIcons(entry.price))
         row.usual:SetText(Util.FormatMoneyIcons(entry.resell))
@@ -280,15 +292,37 @@ local function AddChecked()
     local minProfit = ns.db.settings.dealMinProfit or (5 * 10000)
     local added = 0
     for _, flip in ipairs(ns.Flips:List().items) do
-        if checked[FlipID(flip)] then
+        local id = FlipID(flip)
+        if checked[id] then
+            checked[id] = nil
             local max = math.max(flip.price, Util.AfterCut(flip.resell) - minProfit)
             if ns.Shopping:Add(flip.key, max, Util.NamedLink(flip.key), nil, L.FLIPS_SHOP_NOTE:format(flip.buyRealm)) then
                 added = added + 1
             end
         end
     end
-    wipe(checked)
     if added > 0 then Util.Print(L.FLIPS_ADDED:format(added)) end
+    if panelRef then ns.MainWindow:Refresh() end
+end
+
+-- Adds your ticked items to the sell list of the realm each sells better
+-- on (Data/SellLists.lua), and says how to get them there.
+local function AddCheckedToSellLists()
+    local added, realms = 0, {}
+    for _, item in ipairs(ns.Flips:YourItems()) do
+        local id = FlipID(item)
+        if checked[id] then
+            checked[id] = nil
+            if ns.SellLists:Add(ns.SellLists.GroupOf(item.sellRealm), item.key, item.count) then
+                added = added + 1
+                if not realms[item.sellRealm] then
+                    realms[item.sellRealm] = true
+                    realms[#realms + 1] = item.sellRealm
+                end
+            end
+        end
+    end
+    if added > 0 then Util.Print(L.SELL_ADDED:format(added, table.concat(realms, ", "))) end
     if panelRef then ns.MainWindow:Refresh() end
 end
 
@@ -298,11 +332,20 @@ local function BuildFlipBar(panel)
     bar:SetPoint("BOTTOMLEFT", 0, 0)
     bar:SetPoint("BOTTOMRIGHT", 0, 0)
 
-    bar.add = ns.Skin.Button(bar, L.FLIPS_ADD_CHECKED, 200, 20)
+    bar.add = ns.Skin.Button(bar, L.FLIPS_ADD_CHECKED, 190, 20)
     bar.add:SetPoint("LEFT", 4, 0)
     bar.add:SetScript("OnClick", AddChecked)
+    bar.sell = ns.Skin.Button(bar, L.SELL_ADD_CHECKED, 170, 20)
+    bar.sell:SetPoint("LEFT", bar.add, "RIGHT", 6, 0)
+    bar.sell:SetScript("OnClick", AddCheckedToSellLists)
+    bar.sell:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L.SELL_ADD_TIP, 1, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    bar.sell:SetScript("OnLeave", function() GameTooltip:Hide() end)
     bar.clear = ns.Skin.Button(bar, L.FLIPS_CLEAR, 60, 20)
-    bar.clear:SetPoint("LEFT", bar.add, "RIGHT", 6, 0)
+    bar.clear:SetPoint("LEFT", bar.sell, "RIGHT", 6, 0)
     bar.clear:SetScript("OnClick", function()
         wipe(checked)
         ns.MainWindow:Refresh()
@@ -319,9 +362,13 @@ end
 function UpdateFlipBar()
     local bar = panelRef and panelRef.flipBar
     if not bar then return end
-    local count = 0
-    for _ in pairs(checked) do count = count + 1 end
-    bar.add:SetEnabled(count > 0)
+    local count, own = 0, 0
+    for id in pairs(checked) do
+        count = count + 1
+        if id:find("^own:") then own = own + 1 end
+    end
+    bar.add:SetEnabled(count - own > 0)
+    bar.sell:SetEnabled(own > 0)
     bar.clear:SetEnabled(count > 0)
     bar.hint:SetText(count > 0 and L.FLIPS_CHECKED:format(count) or L.FLIPS_CHECK_HINT)
 end

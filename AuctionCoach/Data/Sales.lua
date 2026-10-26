@@ -58,6 +58,7 @@ function Sales:Posted(key, unitPrice, quantity, now, name)
         table.remove(posts, 1)
     end
     ns.Undercuts:Posted(key, unitPrice, quantity, now)
+    ns.SellLists:Posted(key, quantity)
 end
 
 -- Item name without colour codes, links or crafting quality icons.

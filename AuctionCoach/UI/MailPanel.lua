@@ -176,11 +176,27 @@ local function SetStatus(text)
     if frame then frame.status:SetText(text or "") end
 end
 
+-- Takes one mail: everything (items and gold), or only its gold. It's read
+-- first, as opening it in Blizzard's inbox does: mail collected unread
+-- keeps the minimap's new mail icon lit.
+local function Take(index, money, items)
+    local wasRead = select(9, GetInboxHeaderInfo(index))
+    if not wasRead then GetInboxText(index) end
+    if items then
+        AutoLootMailItem(index)
+    elseif money > 0 then
+        TakeInboxMoney(index)
+    end
+end
+
 local function Stop(message)
+    local finished = run ~= nil
     if run and run.timer then run.timer:Cancel() end
     run = nil
     SetStatus(message)
     MailPanel:Refresh()
+    -- Ask the server for the mailbox again, so the new mail icon catches up.
+    if finished and MailFrame and MailFrame:IsShown() then CheckInbox() end
 end
 
 local Step
@@ -232,11 +248,7 @@ Step = function()
     end
     SetStatus(L.MAILP_COLLECTING:format(run.taken, run.total))
     MailPanel:Refresh()
-    if hasItem then
-        AutoLootMailItem(index)
-    elseif money > 0 then
-        TakeInboxMoney(index)
-    end
+    Take(index, money, hasItem)
     Wait()
 end
 
@@ -258,15 +270,11 @@ function MailPanel:TakeOne(mail)
         return
     end
     if mail.hasItem and FreeBagSlots() == 0 then
-        if mail.money > 0 then TakeInboxMoney(mail.index) else SetStatus(L.MAILP_BAGS_FULL_ONE) end
+        if mail.money > 0 then Take(mail.index, mail.money, false) else SetStatus(L.MAILP_BAGS_FULL_ONE) end
         return
     end
     SetStatus("")
-    if mail.hasItem then
-        AutoLootMailItem(mail.index)
-    elseif mail.money > 0 then
-        TakeInboxMoney(mail.index)
-    end
+    Take(mail.index, mail.money, mail.hasItem)
 end
 
 ns.Events:On("MAIL_INBOX_UPDATE", function()

@@ -56,6 +56,8 @@ local DEFAULTS = {
         -- (1 = 12, 2 = 24, 3 = 48 hours) (UI/RepostPanel.lua).
         repostPanel = true,
         repostDuration = "2",
+        -- The sell lists panel beside the bank (UI/SellListPanel.lua).
+        sellListPanel = true,
         -- Cheapest or undercut column on Blizzard's Auctions tab (UI/AuctionsColumn.lua).
         auctionsColumn = true,
         -- Today's Plan: items never suggested, characters whose own items
@@ -78,6 +80,8 @@ local DEFAULTS = {
     mailDue = {},
     -- Items posted again and again, in order (Data/Repost.lua).
     repost = {},
+    -- Items to sell on another of your realms, per realm group (Data/SellLists.lua).
+    sellLists = {},
     -- Per connected-realm group: scans, competition samples, scan times.
     realms = {},
     -- One example link per item key, for names, icons and tooltips.
