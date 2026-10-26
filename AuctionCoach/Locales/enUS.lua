@@ -934,3 +934,15 @@ L.REPOST_UNTIL_SOLD_LINE = "Sell once: it comes off the list when none are left 
 L.REPOST_BATCH_TIP = "Items to sell once. Each comes off the list once it's sold, and the group goes when it's empty. Click for groups."
 L.REPOST_GROUP_TIP = "Click to switch groups on or off for this posting run."
 
+
+-- Today's Plan fast sellers (0.28)
+L.PLAN_TAG_FAST = "FAST"
+L.PLAN_FAST_MARK = "Fast:"
+L.PLAN_FAST_HEADER = "Sells fast here: worth farming or crafting"
+L.PLAN_SHORT_FAST = "%s a day at %s"
+L.PLAN_SHORT_FAST_CRAFT = "(you can craft it)"
+L.PLAN_WHY_FAST = "About %s sell a day at around %s each, so about %s a day changes hands."
+L.PLAN_WHY_FAST_CRAFT = "One of your characters knows the recipe: craft it and it should sell quickly."
+L.PLAN_WHY_FAST_FARM = "A material that sells across the region: worth farming or crafting for a quick sale."
+L.PLAN_WHY_FAST_REALM = "Sells fast on this realm: worth farming or crafting for a quick sale."
+L.PLAN_WHY_IS_FAST = "A fast seller (about %s a day), so this sale is a safe bet."

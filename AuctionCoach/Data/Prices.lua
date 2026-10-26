@@ -119,9 +119,10 @@ local function FromData(key, realmName)
     local data = Prices.ActiveData()
     if not data then return nil end
 
-    local row
+    local row, commodity
     if data.commodities then
         row = data.commodities[key]
+        commodity = row ~= nil
     end
     if not row and data.realmIndex and data.realms and realmName then
         local realmID = data.realmIndex[realmName]
@@ -143,6 +144,8 @@ local function FromData(key, realmName)
         salesPerDay = row.s,
         -- Units listed right now below where a resale would go.
         listed = row.c,
+        -- Region-wide (materials and other commodities), not per realm.
+        commodity = commodity or nil,
         t = row.t or data.generatedAt or 0,
         source = "data",
     }
@@ -180,6 +183,7 @@ end
 --   listed       units listed right now at or below the usual lowest
 --                price (under the wall when there is one): the queue a resold
 --                item joins (Data.lua only)
+--   commodity    true for region-wide commodities (Data.lua only)
 -- }
 function Prices:Get(key, groupKey, realmName)
     if not key or not ns.db then return nil end
@@ -206,6 +210,7 @@ function Prices:Get(key, groupKey, realmName)
         sharedSell = data.sharedSell,
         salesPerDay = data.salesPerDay,
         listed = data.listed,
+        commodity = data.commodity,
         qty = scan.qty,
     }
     if (scan.minAt or 0) >= data.t then

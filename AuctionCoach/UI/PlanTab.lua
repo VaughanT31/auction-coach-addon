@@ -31,12 +31,16 @@ local TAG_COLORS = {
     SHOP = { 0.4, 0.85, 1 },
     DESTROY = { 0.75, 0.55, 1 },
     CRAFT = { 1, 0.65, 0.3 },
+    FAST = { 0.4, 1, 0.75 },
 }
 
 local Column = ns.Skin.Columns(COLUMNS)
 
 -- Steps about one item, which right-click can hide from the plan for good.
-local HIDEABLE = { POST = true, REPOST = true, BUY = true, CRAFT = true, SLOW = true, SKIP = true, CANCEL = true }
+local HIDEABLE = { POST = true, REPOST = true, BUY = true, CRAFT = true, SLOW = true, SKIP = true, CANCEL = true,
+                   FAST = true }
+-- Shown for information, never ticked off or counted.
+local INFO = { SKIP = true, SLOW = true, FAST = true }
 
 local function ShowRowTooltip(row)
     local step = row.step
@@ -53,7 +57,7 @@ local function ShowRowTooltip(row)
     for _, line in ipairs(Phrases.PlanDetails(step)) do
         GameTooltip:AddLine(line, 1, 1, 1, true)
     end
-    if step.kind ~= "SKIP" and step.kind ~= "SLOW" then
+    if not INFO[step.kind] then
         GameTooltip:AddLine(L.PLAN_DONE_TIP, 0.6, 0.8, 1, true)
     end
     if step.key and HIDEABLE[step.kind] then
@@ -66,7 +70,8 @@ local function StartStep(step)
     if not step or not step.key then return false end
     if step.kind == "POST" or step.kind == "SLOW" then
         return ns.Sell:PutInSellBox(step.key)
-    elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" or step.kind == "SHOP" then
+    elseif step.kind == "REPOST" or step.kind == "BUY" or step.kind == "CANCEL" or step.kind == "SHOP"
+        or step.kind == "FAST" then
         return Compat.ShowAtAuctionHouse(step.key, Util.NamedLink(step.key), step.price)
     end
     return false
@@ -179,10 +184,12 @@ local function SetStep(row, step)
         row.name:SetText(name)
     end
 
-    row.reason:SetText(Phrases.PlanShort(step, Util.FormatMoneyIcons))
+    local reason = Phrases.PlanShort(step, Util.FormatMoneyIcons)
+    if step.fast then reason = "|cff66ffbb" .. L.PLAN_FAST_MARK .. "|r " .. reason end
+    row.reason:SetText(reason)
     row.gold:SetText(step.gold and step.gold > 0 and ("|cff66ff66+" .. Util.FormatMoneyIcons(step.gold) .. "|r") or "")
 
-    if step.kind == "SKIP" or step.kind == "SLOW" then
+    if INFO[step.kind] then
         row.check:Hide()
         row:SetAlpha(0.8)
     else
@@ -284,7 +291,7 @@ local function Refresh(panel, reason)
         sub = L.PLAN_SUB_EMPTY:format(plan.budget)
     end
     panel.sub:SetText(sub .. (Compat.IsAuctionHouseOpen() and (" " .. L.PLAN_SUB_AH) or ""))
-    panel.empty:SetText((#plan.steps == 0 and #plan.skips == 0 and #plan.slow == 0) and L.PLAN_EMPTY or "")
+    panel.empty:SetText((#plan.steps == 0 and #plan.skips == 0 and #plan.slow == 0 and #plan.fast == 0) and L.PLAN_EMPTY or "")
 
     local notes = {}
     if plan.left > 0 then notes[#notes + 1] = L.PLAN_LEFT:format(plan.left) end
@@ -314,6 +321,10 @@ local function Refresh(panel, reason)
     if #plan.skips > 0 then
         SetHeading(NextRow(), L.PLAN_SKIP_HEADER)
         for _, step in ipairs(plan.skips) do SetStep(NextRow(), step) end
+    end
+    if #plan.fast > 0 then
+        SetHeading(NextRow(), L.PLAN_FAST_HEADER)
+        for _, step in ipairs(plan.fast) do SetStep(NextRow(), step) end
     end
     for i = n + 1, #panel.rows do
         panel.rows[i]:Hide()

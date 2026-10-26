@@ -365,6 +365,9 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_DESTROY:format(money(step.gain))
     elseif kind == "CRAFT" then
         return L.PLAN_SHORT_CRAFT:format(money(step.gain))
+    elseif kind == "FAST" then
+        local text = L.PLAN_SHORT_FAST:format(BreakUpLargeNumbers(math.floor(step.salesPerDay + 0.5)), money(step.price))
+        return step.craftable and (text .. " " .. L.PLAN_SHORT_FAST_CRAFT) or text
     elseif kind == "SLOW" then
         return L.PLAN_SHORT_SLOW:format(math.floor(step.first * 100 + 0.5), ns.Styles:WindowHours())
     elseif kind == "SKIP" then
@@ -456,6 +459,15 @@ function Phrases.PlanDetails(step, money)
         lines[#lines + 1] = L.PLAN_WHY_SLOW_POST:format(money(step.price), money(step.value))
     elseif kind == "SKIP" then
         for _, line in ipairs(Phrases.Sell(step.suggestion, money)) do lines[#lines + 1] = line end
+    elseif kind == "FAST" then
+        lines[#lines + 1] = L.PLAN_WHY_FAST:format(BreakUpLargeNumbers(math.floor(step.salesPerDay + 0.5)),
+            money(step.price), money(step.perDay))
+        lines[#lines + 1] = step.craftable and L.PLAN_WHY_FAST_CRAFT
+            or (step.commodity and L.PLAN_WHY_FAST_FARM or L.PLAN_WHY_FAST_REALM)
+    end
+    if step.fast then
+        local spd = (step.suggestion and step.suggestion.salesPerDay) or (step.craft and step.craft.salesPerDay)
+        lines[#lines + 1] = L.PLAN_WHY_IS_FAST:format(spd and BreakUpLargeNumbers(math.floor(spd + 0.5)) or "20+")
     end
     if step.seconds then
         lines[#lines + 1] = L.PLAN_TAKES:format(Util.FormatDuration(step.seconds))

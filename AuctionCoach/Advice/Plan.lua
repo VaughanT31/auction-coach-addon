@@ -43,6 +43,13 @@
 -- the bank costs time once, the first time a step needs it. Buys also
 -- need the gold to pay for them.
 --
+-- Fast sellers (0.28): items that sell at least FAST_SALES a day on the
+-- realm (FAST_MATERIALS for region-wide materials) are marked fast on
+-- POST, REPOST and CRAFT steps, and rank as if they made FAST_BONUS more,
+-- so a near tie goes to the sale that's surer to happen. Under the plan,
+-- "Sells fast here" lists the items that sell the most gold a day on this
+-- realm, worth farming or crafting, marking those your characters can craft.
+--
 -- Items the player hid (settings.planHidden[key], right-click a step) are
 -- never suggested. A character left out (settings.planSkipChars[charKey])
 -- gets no selling, vendoring, destroying or crafting from its own bags,
@@ -107,6 +114,23 @@ local CRAFT_MIN_PROFIT = 10000
 local MAX_CRAFT_STEPS = 3
 -- Without a sales rate, craft only a few.
 local UNKNOWN_CRAFTS = 5
+-- Fast sellers: sales a day on the realm, and for region-wide materials.
+local FAST_SALES = 20
+local FAST_MATERIALS = 100
+local FAST_BONUS = 1.1
+local MAX_FAST_LIST = 5
+Plan.FAST_SALES, Plan.FAST_MATERIALS = FAST_SALES, FAST_MATERIALS
+
+-- True when an item sells fast: at least FAST_SALES a day, FAST_MATERIALS
+-- for commodities.
+function Plan.IsFast(salesPerDay, commodity)
+    return salesPerDay ~= nil and salesPerDay >= (commodity and FAST_MATERIALS or FAST_SALES)
+end
+
+local function Fast(key, salesPerDay)
+    local price = salesPerDay and ns.Prices:Get(key)
+    return Plan.IsFast(salesPerDay, price and price.commodity) or nil
+end
 
 -- ---------------------------------------------------------------------
 -- Ranking (pure: no WoW API)
@@ -128,7 +152,8 @@ function Plan.Select(candidates, budgetSeconds, setups, money)
         end
     end
     table.sort(ranked, function(a, b)
-        local ra, rb = a.gold / a.seconds, b.gold / b.seconds
+        local ra = a.gold * (a.fast and FAST_BONUS or 1) / a.seconds
+        local rb = b.gold * (b.fast and FAST_BONUS or 1) / b.seconds
         if ra ~= rb then return ra > rb end
         if a.gold ~= b.gold then return a.gold > b.gold end
         return (a.id or "") < (b.id or "")
@@ -207,7 +232,7 @@ local function PostCandidate(item)
         price = s.price, full = item.value, gold = gold, sold = sold, first = first,
         slow = first ~= nil and first < FAST_ENOUGH or nil,
         seconds = COST.POST + (fromBank and COST.WITHDRAW or 0),
-        ah = true, bank = fromBank or nil, suggestion = s,
+        ah = true, bank = fromBank or nil, suggestion = s, fast = Fast(item.key, s.salesPerDay),
     }
 end
 
@@ -312,6 +337,7 @@ local function AuctionCandidates(list)
                 count = entry.quantity, price = entry.newPrice, oldPrice = entry.unit, lowest = entry.lowest,
                 gold = math.floor(gold * ns.Styles.Factor(s.contested)), sold = sold,
                 seconds = COST.REPOST * entry.auctions, ah = true, suggestion = s,
+                fast = Fast(entry.key, s.salesPerDay),
             }
         elseif entry.action == "CANCEL" then
             list[#list + 1] = {
@@ -472,6 +498,7 @@ function Plan.CraftCandidates(list)
                     gain = e.profit * crafts, value = e.value * crafts,
                     gold = math.floor(each * (sold or total * UNKNOWN_SPEED_FACTOR)),
                     seconds = COST.CRAFT + COST.CRAFT_EACH * crafts, ah = true,
+                    fast = Fast(e.key, e.salesPerDay),
                 }
             end
         end
@@ -510,6 +537,71 @@ local function ShopSteps(money)
     return steps, spend
 end
 
+-- Item IDs any of your characters can craft (recipes seen in their
+-- profession windows, every quality).
+local function Craftable()
+    local ids = {}
+    for _, recipes in pairs(ns.db.recipes or {}) do
+        for _, recipe in pairs(recipes) do
+            if recipe.o then ids[recipe.o] = true end
+            for _, itemID in pairs(recipe.qo or {}) do ids[itemID] = true end
+        end
+    end
+    return ids
+end
+
+-- Pure: the best fast sellers from Data.lua rows, by gold a day after the
+-- cut. rows: { [key] = row } per source, commodity: whether they're
+-- region-wide. Returns { { key, salesPerDay, price, perDay, commodity }, ... }.
+function Plan.RankFast(sources, limit, afterCut, skip)
+    local found = {}
+    for _, source in ipairs(sources) do
+        for key, row in pairs(source.rows or {}) do
+            local price = row.m or row.n
+            if price and price > 0 and Plan.IsFast(row.s, source.commodity) and not (skip and skip[key]) then
+                found[#found + 1] = { key = key, salesPerDay = row.s, price = price,
+                                      perDay = afterCut(price) * row.s, commodity = source.commodity }
+            end
+        end
+    end
+    table.sort(found, function(a, b)
+        if a.perDay ~= b.perDay then return a.perDay > b.perDay end
+        return a.key < b.key
+    end)
+    for i = #found, limit + 1, -1 do found[i] = nil end
+    return found
+end
+
+-- "Sells fast here": FAST steps (shown, never counted), cached per price
+-- data and realm, since a realm has thousands of rows.
+local fastCache = {}
+function Plan:FastSellers()
+    local data = ns.Prices.ActiveData()
+    if not data then return {} end
+    local realm = GetNormalizedRealmName()
+    local realmID = data.realmIndex and data.realmIndex[realm]
+    local stamp = tostring(data.generatedAt) .. ":" .. tostring(realmID)
+    if fastCache.stamp ~= stamp then
+        fastCache.stamp = stamp
+        fastCache.list = Plan.RankFast({
+            { rows = realmID and data.realms and data.realms[realmID], commodity = false },
+            { rows = data.commodities, commodity = true },
+        }, MAX_FAST_LIST * 3, Util.AfterCut)
+    end
+    local hidden, craftable, steps = HiddenItems(), Craftable(), {}
+    for _, f in ipairs(fastCache.list) do
+        if #steps >= MAX_FAST_LIST then break end
+        if not hidden[f.key] then
+            local itemID = Util.ItemIDFromKey(f.key)
+            steps[#steps + 1] = {
+                id = "FAST:" .. f.key, kind = "FAST", key = f.key, price = f.price, salesPerDay = f.salesPerDay,
+                perDay = f.perDay, commodity = f.commodity, craftable = itemID and craftable[itemID] or nil,
+            }
+        end
+    end
+    return steps
+end
+
 -- Returns {
 --   steps        picked steps, best gold per minute first
 --   gold         expected gold from all steps
@@ -527,10 +619,12 @@ end
 --   hasSpeed     true when sales rates (desktop app data) were available
 --   hidden       how many items the player hid from the plan
 --   leftOut      true when this character's own items are left out
+--   fast         up to MAX_FAST_LIST { kind = "FAST", key, price, salesPerDay,
+--                perDay, craftable }: what sells fast here (Plan:FastSellers)
 -- }
 function Plan:Build(minutes)
     local result = { steps = {}, gold = 0, seconds = 0, skips = {}, slow = {}, slowDeals = 0, left = 0,
-        unaffordable = 0, elsewhere = {} }
+        unaffordable = 0, elsewhere = {}, fast = {} }
     if not ns.db or not ns.charKey then
         result.budget = minutes or 15
         return result
@@ -648,6 +742,7 @@ function Plan:Build(minutes)
             result.elsewhere[#result.elsewhere + 1] = o
         end
     end
+    result.fast = Plan:FastSellers()
     return result
 end
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.28.0
+
+- **Today's Plan favours fast sellers:** items that sell 20 or more a day on your realm (100 or more for materials) are marked **Fast:** on post, repost and craft steps, and win a near tie in the ranking, since their sale is the surer one.
+- **Sells fast here:** under the plan, the five items that trade the most gold a day on your realm and across the region's materials, worth farming or crafting. Items one of your characters can craft are marked. Click one at the AH to see its listings, or right-click to hide it. Needs the desktop app's prices or an import from the website.
+
 ## 0.27.0
 
 - **Repost list groups:** keep items in groups you name, like Herbs or Transmog, beside your regulars. **Groups...** switches a group on or off for a posting run, makes new ones and deletes them. Right-click an item to move it to another group.
