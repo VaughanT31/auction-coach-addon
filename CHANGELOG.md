@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- **Accounting:** the commission from a crafting order you complete for someone else (a craft or a recraft) now counts as *Crafting orders* income instead of *Other*.
+
 ## 1.0.0
 
 **Auction Coach 1.0: the full release.** Everything since 0.20.7 in one update:

@@ -124,8 +124,8 @@ end
 
 -- The last action: { cat, sign, at, refund }. Used once.
 local action
-local function Expect(cat, sign, refund)
-    action = { cat = cat, sign = sign, at = GetTime(), refund = refund }
+local function Expect(cat, sign, refund, grace)
+    action = { cat = cat, sign = sign, at = GetTime(), refund = refund, grace = grace }
 end
 
 -- Open windows: [name] = true while open, or the GetTime() it closed.
@@ -215,7 +215,7 @@ ns.Events:On("PLAYER_MONEY", function()
     lastMoney = money
     if delta == 0 then return end
     local now = GetTime()
-    local last = action and now - action.at <= ACTION_GRACE and action or nil
+    local last = action and now - action.at <= (action.grace or ACTION_GRACE) and action or nil
     local cat, refund = Ledger.Categorise(delta, last, IsOpen, now - questAt, now - lootMoneyAt,
         InRepairMode and InRepairMode())
     if last and cat == last.cat then action = nil end
@@ -297,6 +297,14 @@ Hook(C_AuctionHouse, "CancelAuction", "ahFees", -1)
 Hook(C_AuctionHouse, "PlaceBid", "ahBuy", -1)
 Hook(C_AuctionHouse, "ConfirmCommoditiesPurchase", "ahBuy", -1)
 Hook(C_CraftingOrders, "PlaceNewOrder", "craftingOrders", -1)
+-- Completing an order (a craft or recraft for someone else) pays the
+-- commission straight into your gold, from the orders page inside the
+-- profession window, so no window of its own is open. The server's answer
+-- can take a moment, so it gets longer than other actions.
+local ORDER_GRACE = 15
+if C_CraftingOrders and C_CraftingOrders.FulfillOrder then
+    hooksecurefunc(C_CraftingOrders, "FulfillOrder", function() Expect("craftingOrders", 1, nil, ORDER_GRACE) end)
+end
 -- A repair paid by the guild bank costs you nothing: no gold change follows.
 
 -- ---------------------------------------------------------------------
