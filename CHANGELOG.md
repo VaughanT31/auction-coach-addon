@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+- **Sell lists panel:** it now opens at the bank whenever you have sell lists, not only when an item is in your bags. Items in your character bank get a *To bags* button, and items already in the warband bank say so.
+- **ElvUI:** the panel now sits beside ElvUI's bank window and in front of it.
+- **Clearer message** after adding items to a sell list: it says to open your bank on that character.
+
 ## 1.0.1
 
 - **Accounting:** the commission from a crafting order you complete for someone else (a craft or a recraft) now counts as *Crafting orders* income instead of *Other*.

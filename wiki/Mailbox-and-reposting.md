@@ -24,6 +24,13 @@ Items you post again and again, beside the Auction House (`/ac repost`). Each on
 
 Plan a sale on one realm, move the items through the Warband Bank, and post them on another.
 
+1. Open **Deals**, then **Other realms**. Tick your items that sell for more on another of your realms, then click **Add yours to sell lists**.
+2. Open your bank on the character holding them. The **Sell lists** panel opens beside the bank window, with a **Put in** button for each item in your bags. Items still in your character bank get a **To bags** button first.
+3. Log in on a character on the realm you're selling on and open the bank there. The panel lists the items in the Warband Bank with a **Take out** button.
+4. Go to the Auction House. They're on the repost list, one click each to post, and each one leaves the sell list once it's posted.
+
+> The panel only opens at a bank, and only when you have a sell list. It works with ElvUI and other bag addons. To turn it off, untick **Sell lists at the bank** in the options.
+
 ---
 
 Previous: [Crafting](Crafting.md) | [Wiki home](Home.md) | Next: [Accounting](Accounting.md)

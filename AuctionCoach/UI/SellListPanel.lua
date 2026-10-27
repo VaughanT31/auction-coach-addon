@@ -60,30 +60,52 @@ local function Sum(stacks)
     return n
 end
 
--- What can be moved right now: { here = { { key, n, stacks } }, away = { { key, group, n, stacks } } }.
---   here  this realm's list, found in the warband bank (to take out)
---   away  other realms' lists, found in the bags (to put in)
+-- Where each listed item is: { here = { { key, n, stacks, state } }, away = { { key, group, n, stacks, state } } }.
+--   here  this realm's list: "move" in the warband bank (to take out),
+--         "bags" already in the bags, "missing" not in the warband bank yet
+--   away  other realms' lists: "move" in the bags (to put in), "bank" in
+--         this character's bank (to take out first), "warband" already in
+--         the warband bank; ones this character doesn't hold are left out
+local ORDER = { move = 1, bank = 2, bags = 3, warband = 4, missing = 5 }
+
 local function Read()
     local result = { here = {}, away = {} }
-    local bagIDs = {}
+    local bagIDs, bankIDs = {}, {}
     for bag = 0, NUM_BAG_SLOTS or 4 do bagIDs[#bagIDs + 1] = bag end
+    for _, bag in ipairs(Compat.Bags.bank) do bankIDs[#bankIDs + 1] = bag end
+    for _, bag in ipairs(Compat.Bags.reagentBank) do bankIDs[#bankIDs + 1] = bag end
     for key, entry in pairs(ns.SellLists:Here()) do
         local stacks = Stacks(Compat.Bags.warband, key)
-        if #stacks > 0 then
-            result.here[#result.here + 1] = { key = key, n = math.min(entry.n, Sum(stacks)), stacks = stacks }
-        end
+        local state = "move"
+        if #stacks == 0 then state = #Stacks(bagIDs, key) > 0 and "bags" or "missing" end
+        result.here[#result.here + 1] = { key = key, n = math.min(entry.n, Sum(stacks)), stacks = stacks, state = state }
     end
     for _, item in ipairs(ns.SellLists:Elsewhere()) do
-        local stacks = Stacks(bagIDs, item.key)
-        if #stacks > 0 then
+        local stacks, state = Stacks(bagIDs, item.key), "move"
+        if #stacks == 0 then stacks, state = Stacks(bankIDs, item.key), "bank" end
+        if #stacks == 0 then
+            state = #Stacks(Compat.Bags.warband, item.key) > 0 and "warband" or nil
+        end
+        if state then
             result.away[#result.away + 1] = { key = item.key, group = item.group,
-                                              n = math.min(item.n, Sum(stacks)), stacks = stacks }
+                                              n = math.min(item.n, Sum(stacks)), stacks = stacks, state = state }
         end
     end
-    local function ByName(a, b) return (Util.NamedLink(a.key) or a.key) < (Util.NamedLink(b.key) or b.key) end
-    table.sort(result.here, ByName)
-    table.sort(result.away, ByName)
+    local function ByState(a, b)
+        if a.state ~= b.state then return ORDER[a.state] < ORDER[b.state] end
+        return (Util.NamedLink(a.key) or a.key) < (Util.NamedLink(b.key) or b.key)
+    end
+    table.sort(result.here, ByState)
+    table.sort(result.away, ByState)
     return result
+end
+
+local function Movable(list)
+    local n = 0
+    for _, item in ipairs(list) do
+        if item.state == "move" then n = n + 1 end
+    end
+    return n
 end
 
 -- The stacks to move for up to n items.
@@ -150,7 +172,9 @@ end
 function SellListPanel:TakeOut(item)
     local moves = {}
     if item then MovesFor(item, false, moves) else
-        for _, it in ipairs(Read().here) do MovesFor(it, false, moves) end
+        for _, it in ipairs(Read().here) do
+            if it.state == "move" then MovesFor(it, false, moves) end
+        end
     end
     Start(moves, L.SELLP_TAKING)
 end
@@ -158,7 +182,9 @@ end
 function SellListPanel:PutIn(item)
     local moves = {}
     if item then MovesFor(item, true, moves) else
-        for _, it in ipairs(Read().away) do MovesFor(it, true, moves) end
+        for _, it in ipairs(Read().away) do
+            if it.state == "move" then MovesFor(it, true, moves) end
+        end
     end
     Start(moves, L.SELLP_PUTTING)
 end
@@ -193,7 +219,8 @@ local function CreateRow()
     row.button:SetPoint("RIGHT", -2, 0)
     row.button:SetScript("OnClick", function()
         if not row.item then return end
-        if row.here then SellListPanel:TakeOut(row.item) else SellListPanel:PutIn(row.item) end
+        -- From the bank, a plain use moves the stack into the bags.
+        if row.here or row.item.state == "bank" then SellListPanel:TakeOut(row.item) else SellListPanel:PutIn(row.item) end
     end)
 
     row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -226,7 +253,8 @@ end
 local function Create()
     panel = CreateFrame("Frame", "AuctionCoachSellListPanel", UIParent, "BackdropTemplate")
     panel:SetWidth(WIDTH)
-    panel:SetFrameStrata("HIGH")
+    -- Above bag addons' bank windows, which sit in HIGH.
+    panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     ns.Skin.Backdrop(panel, ns.Skin.BG, { 0.88, 0.65, 0.15, 0.9 })
 
@@ -253,17 +281,28 @@ local function Create()
     panel:Hide()
 end
 
--- Beside the bank window, or beside the bags when the bank frame is hidden
--- by a bag addon.
+-- Beside the bank window: ElvUI's when it replaces Blizzard's, or a fixed
+-- spot when another bag addon hides it.
+local BANK_FRAMES = { "ElvUI_BankContainerFrame", "BankFrame" }
+
 local function Place()
     panel:ClearAllPoints()
-    local bank = _G.BankFrame
-    if bank and bank:IsShown() then
-        panel:SetPoint("TOPLEFT", bank, "TOPRIGHT", 4, 0)
-    else
-        panel:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 420, -120)
+    for _, name in ipairs(BANK_FRAMES) do
+        local bank = _G[name]
+        if bank and bank:IsShown() then
+            panel:SetPoint("TOPLEFT", bank, "TOPRIGHT", 4, 0)
+            return
+        end
     end
+    panel:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 420, -120)
 end
+
+local STATE_TEXT = {
+    bags = function() return L.SELLP_IN_BAGS end,
+    missing = function() return L.SELLP_NOT_IN_WARBAND end,
+    bank = function(item) return L.SELLP_IN_BANK:format(ns.SellLists.RealmOf(item.group), item.n) end,
+    warband = function(item) return L.SELLP_READY:format(ns.SellLists.RealmOf(item.group)) end,
+}
 
 function SellListPanel:Refresh()
     if not bankOpen or not ns.db or ns.db.settings.sellListPanel == false then
@@ -294,10 +333,14 @@ function SellListPanel:Refresh()
             local itemID = Util.ItemIDFromKey(item.key) or Util.PET_CAGE_ITEM_ID
             row.icon:SetTexture(Compat.GetItemIconByID(itemID))
             local name = Util.NamedLink(item.key) or ("|cff9d9d9d" .. L.ITEM_LOADING .. "|r")
-            local where = here and L.SELLP_IN_WARBAND:format(item.n)
-                or L.SELLP_TO_REALM:format(ns.SellLists.RealmOf(item.group), item.n)
+            local where
+            if STATE_TEXT[item.state] then where = STATE_TEXT[item.state](item)
+            elseif here then where = L.SELLP_IN_WARBAND:format(item.n)
+            else where = L.SELLP_TO_REALM:format(ns.SellLists.RealmOf(item.group), item.n) end
             row.name:SetText(name .. " |cff9d9d9d" .. where .. "|r")
-            row.button:SetText(here and L.SELLP_TAKE or L.SELLP_PUT)
+            local action = item.state == "move" or item.state == "bank"
+            row.button:SetShown(action)
+            row.button:SetText(item.state == "bank" and L.SELLP_TO_BAGS or here and L.SELLP_TAKE or L.SELLP_PUT)
             row.button:SetEnabled(not queue)
             Put(row, ROW)
             row:Show()
@@ -305,24 +348,28 @@ function SellListPanel:Refresh()
     end
 
     panel.hereHeader:SetShown(#lists.here > 0)
-    panel.takeAll:SetShown(#lists.here > 0)
+    panel.takeAll:SetShown(Movable(lists.here) > 1)
     if #lists.here > 0 then
         panel.hereHeader:SetText(L.SELLP_HERE:format(GetRealmName()))
         Put(panel.hereHeader, 18)
         Rows(lists.here, true)
-        y = y - 4
-        Put(panel.takeAll, 28)
-        panel.takeAll:SetEnabled(not queue)
+        if panel.takeAll:IsShown() then
+            y = y - 4
+            Put(panel.takeAll, 28)
+            panel.takeAll:SetEnabled(not queue)
+        end
     end
     panel.awayHeader:SetShown(#lists.away > 0)
-    panel.putAll:SetShown(#lists.away > 0)
+    panel.putAll:SetShown(Movable(lists.away) > 1)
     if #lists.away > 0 then
         if #lists.here > 0 then y = y - 6 end
         Put(panel.awayHeader, 18)
         Rows(lists.away, false)
-        y = y - 4
-        Put(panel.putAll, 28)
-        panel.putAll:SetEnabled(not queue)
+        if panel.putAll:IsShown() then
+            y = y - 4
+            Put(panel.putAll, 28)
+            panel.putAll:SetEnabled(not queue)
+        end
     end
     for i = used + 1, #panel.rows do panel.rows[i]:Hide() end
     Put(panel.status, 16)
