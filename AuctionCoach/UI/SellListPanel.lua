@@ -65,8 +65,9 @@ end
 --         "bags" already in the bags, "missing" not in the warband bank yet
 --   away  other realms' lists: "move" in the bags (to put in), "bank" in
 --         this character's bank (to take out first), "warband" already in
---         the warband bank; ones this character doesn't hold are left out
-local ORDER = { move = 1, bank = 2, bags = 3, warband = 4, missing = 5 }
+--         the warband bank, "elsewhere" planned on this realm but not on
+--         this character; ones planned on other realms are left out
+local ORDER = { move = 1, bank = 2, bags = 3, warband = 4, missing = 5, elsewhere = 6 }
 
 local function Read()
     local result = { here = {}, away = {} }
@@ -84,7 +85,9 @@ local function Read()
         local stacks, state = Stacks(bagIDs, item.key), "move"
         if #stacks == 0 then stacks, state = Stacks(bankIDs, item.key), "bank" end
         if #stacks == 0 then
-            state = #Stacks(Compat.Bags.warband, item.key) > 0 and "warband" or nil
+            if #Stacks(Compat.Bags.warband, item.key) > 0 then state = "warband"
+            elseif item.from == GetNormalizedRealmName() then state = "elsewhere"
+            else state = nil end
         end
         if state then
             result.away[#result.away + 1] = { key = item.key, group = item.group,
@@ -302,6 +305,7 @@ local STATE_TEXT = {
     missing = function() return L.SELLP_NOT_IN_WARBAND end,
     bank = function(item) return L.SELLP_IN_BANK:format(ns.SellLists.RealmOf(item.group), item.n) end,
     warband = function(item) return L.SELLP_READY:format(ns.SellLists.RealmOf(item.group)) end,
+    elsewhere = function(item) return L.SELLP_NOT_HERE:format(ns.SellLists.RealmOf(item.group)) end,
 }
 
 function SellListPanel:Refresh()

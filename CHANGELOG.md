@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- **Sell lists panel:** on the realm where you planned a sale, the panel now also lists the items you still need to put in when they're on another character, so you can see what's left to move.
+
 ## 1.0.2
 
 - **Sell lists panel:** it now opens at the bank whenever you have sell lists, not only when an item is in your bags. Items in your character bank get a *To bags* button, and items already in the warband bank say so.

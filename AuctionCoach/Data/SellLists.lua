@@ -63,13 +63,13 @@ function SellLists:Here()
     return Lists()[ns.realmGroup] or {}
 end
 
--- Items on other realms' lists: { { group, key, n } }.
+-- Items on other realms' lists: { { group, key, n, from } }.
 function SellLists:Elsewhere()
     local result = {}
     for group, list in pairs(Lists()) do
         if group ~= ns.realmGroup then
             for key, entry in pairs(list) do
-                result[#result + 1] = { group = group, key = key, n = entry.n }
+                result[#result + 1] = { group = group, key = key, n = entry.n, from = entry.from }
             end
         end
     end
