@@ -72,6 +72,7 @@ end
 -- profit, each, salesPerDay, quality, concentration = { quality, cost, extra } }
 -- or nil when anything is missing a price.
 function Crafting.Evaluate(recipeID, recipe, charKey)
+    if ns.Recipes.Stale(recipe) then return nil end
     local outputID, quality = Crafting.OutputOf(recipe)
     local key = tostring(outputID)
     if ns.Rules:IsJunk(key) then return nil end

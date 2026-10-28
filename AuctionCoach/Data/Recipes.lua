@@ -14,6 +14,7 @@
 --       bq quality this character makes with the cheapest materials
 --       cq quality with concentration, when that's higher
 --       cc concentration it costs
+--       v  Recipes.VERSION when read
 --     },
 --   }
 --
@@ -26,6 +27,16 @@ local _, ns = ...
 
 local Recipes = {}
 ns.Recipes = Recipes
+
+-- Bumped when how recipes are read changes. Before 2, materials that come
+-- in qualities could be read as the Spark and left out of the cost.
+Recipes.VERSION = 2
+
+-- A recipe read before the Spark fix may be missing materials from its
+-- cost, so it isn't priced until the profession window is opened again.
+function Recipes.Stale(recipe)
+    return recipe.sp ~= nil and (recipe.v or 1) < 2
+end
 
 local function Call(fn, ...)
     if not fn then return nil end
@@ -44,11 +55,15 @@ end
 -- A season's Spark: the required slot you pick a "modifying" reagent into
 -- (the Spark slot on crafted gear), rather than a basic material. Sparks
 -- come with the season, so they're never counted as a crafting cost.
+-- Midnight's basic materials that come in qualities (Sunfire Silk and the
+-- like) are also "modified reagent" slots, so the slot's reagent type
+-- decides when the game gives one.
 function Recipes.IsSpark(slot)
     if slot.required ~= true then return false end
     local modifying = Enum and Enum.CraftingReagentType and Enum.CraftingReagentType.Modifying
+    if slot.reagentType ~= nil and modifying ~= nil then return slot.reagentType == modifying end
     local modified = Enum and Enum.TradeskillSlotDataType and Enum.TradeskillSlotDataType.ModifiedReagent
-    return (modifying ~= nil and slot.reagentType == modifying) or (modified ~= nil and slot.dataSlotType == modified)
+    return modified ~= nil and slot.dataSlotType == modified
 end
 
 -- Required reagent slots of a schematic: { { ids, n }, ... }, or nil when a
@@ -90,7 +105,7 @@ function Recipes.Read(recipeID, professionName)
     if not slots or #slots == 0 then return nil end
     local qMin = schematic.quantityMin or 1
     local qMax = schematic.quantityMax or qMin
-    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName, sp = spark }
+    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName, sp = spark, v = Recipes.VERSION }
     Recipes.ReadQuality(recipeID, recipe)
     return recipe
 end

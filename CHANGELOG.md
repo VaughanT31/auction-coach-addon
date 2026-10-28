@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4
+
+- **Fixed: crafting costs missing materials.** Midnight materials that come in qualities, such as Sunfire Silk and Sunfire Silk Bolt, were taken for the season's Spark and left out of a recipe's cost, so the Craft list showed recipes like the Sunfire Silk Backpack costing a few gold. They're counted again. Open each crafter's profession window once to update their recipes; until then those recipes are left off the Craft list rather than shown with the wrong cost.
+
 ## 1.0.3
 
 - **Sell lists panel:** on the realm where you planned a sale, the panel now also lists the items you still need to put in when they're on another character, so you can see what's left to move.
