@@ -308,3 +308,62 @@ function ShoppingPanel:Open()
     self:Refresh()
     return self:IsShown()
 end
+
+-- ---------------------------------------------------------------------
+-- Next listing, selected (1.0.7)
+-- ---------------------------------------------------------------------
+-- Gear, pets and other items that aren't commodities are one auction per
+-- listing, and Blizzard needs a click on Buyout for each. When Blizzard's
+-- item buy window shows something on the shopping list, the cheapest
+-- listing at or under its max (never your own) is selected for you: when
+-- the listings arrive, and again after each buyout. So it's Buyout, Buyout,
+-- Buyout instead of picking the listing each time. The buying is still
+-- yours: this only selects. It stops once the item is off the list (all of
+-- its count bought), and a listing you picked yourself is left alone.
+
+local justBought -- the auction just bought, which may still be listed for a moment
+
+local function CheapestUnderMax(itemKey)
+    local bestID, bestPrice
+    for i = 1, C_AuctionHouse.GetNumItemSearchResults(itemKey) or 0 do
+        local row = C_AuctionHouse.GetItemSearchResultInfo(itemKey, i)
+        local price = row and row.buyoutAmount
+        local own = row and (row.containsOwnerItem or row.containsAccountItem)
+        if price and price > 0 and not own and row.auctionID ~= justBought and (not bestPrice or price < bestPrice) then
+            local key = row.itemLink and Util.ItemKeyFromLink(row.itemLink)
+            local entry = key and ns.Shopping:Get(key)
+            if entry and price <= entry.max then bestID, bestPrice = row.auctionID, price end
+        end
+    end
+    return bestID
+end
+
+-- afterBuy: the selection is the auction just bought, so replace it.
+local function SelectNext(afterBuy)
+    if ns.db.settings.shopAutoSelect == false then return end
+    local frame = AuctionHouseFrame and AuctionHouseFrame.ItemBuyFrame
+    local list = frame and frame.ItemList
+    if not (frame and frame:IsVisible() and frame.itemKey and list and list.SetSelectedEntryByCondition) then return end
+    if list:GetSelectedEntry() and not afterBuy then return end
+    local auctionID = CheapestUnderMax(frame.itemKey)
+    if not auctionID then return end
+    pcall(list.SetSelectedEntryByCondition, list, function(row) return row.auctionID == auctionID end, true)
+end
+
+-- One pass for both events below, whichever comes last.
+local function Run()
+    SelectNext(justBought ~= nil)
+    justBought = nil
+end
+
+ns.Events:On("ITEM_SEARCH_RESULTS_UPDATED", function(_, _, auctionID)
+    -- With an auction ID, Blizzard is selecting that one itself.
+    if auctionID then return end
+    Util.Debounce("shopSelect", 0.2, Run)
+end)
+ns.Events:On("AUCTION_HOUSE_PURCHASE_COMPLETED", function(_, auctionID)
+    justBought = auctionID
+    -- After Data/Shopping.lua has counted it (and maybe taken it off the list).
+    Util.Debounce("shopSelect", 0.3, Run)
+end)
+ns.Events:On("AUCTION_HOUSE_CLOSED", function() justBought = nil end)

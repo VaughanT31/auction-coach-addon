@@ -13,6 +13,7 @@ The **Deals** tab lists items listed well below their usual price that sell at l
 
 - **Alt-click** any item (bags, chat, the Auction House) to add it, with the most you'll pay.
 - Auction Coach tells you, in the list, the tooltip and chat, when one is listed at or below that.
+- **Buying several of an item:** reagents and other commodities let you type how many. Gear, pets and other items are one auction per listing, and Blizzard needs a Buyout click for each, so Auction Coach selects the cheapest listing at or under your max for you, and the next one after each Buyout. Just keep clicking **Buyout**. Turn it off with **Select the next listing to buy** in the options.
 - Right-click an item in the list to edit or remove it.
 - At the Auction House the list opens beside it, grouped by who added each item (you, Patron Planner, a craft).
 - From chat: `/ac shop add [item] 12.5`, `/ac shop remove [item]`, `/ac shop alerts`.

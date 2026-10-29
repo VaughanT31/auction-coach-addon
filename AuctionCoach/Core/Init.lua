@@ -16,6 +16,8 @@ local DEFAULTS = {
         autoScan = true,
         -- Full scan even when the desktop app's prices are fresh (Scan/FullScan.lua).
         scanWithApp = false,
+        -- Shopping list: select the next listing under the max after each buyout (UI/ShoppingPanel.lua).
+        shopAutoSelect = true,
         tooltip = true,
         vendorGuard = true,
         -- Warn when the AH pays at least this much more than a vendor (copper).
