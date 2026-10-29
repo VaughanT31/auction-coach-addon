@@ -22,7 +22,7 @@ The **Auctions** tab (`/ac auctions`) shows which of your listings are undercut 
 
 ### Why isn't it selling?
 
-Hover a listing on the Auctions tab for a plain answer: someone listed it cheaper, your price is over what it usually sells for, it simply sells slowly on your realm, or it's just early days. It also says how many cheaper listings are ahead of yours and about how long to expect.
+The **Why** column on the Auctions tab gives every listing a short answer at a glance: *Undercut*, *Overpriced*, *Slow seller*, *Long queue*, *Just posted* or *Fast seller*, the same labels as your website report. Hover a listing for the full answer: someone listed it cheaper, your price is over what it usually sells for, it simply sells slowly on your realm, or it's just early days. It also says how many cheaper listings are ahead of yours and about how long to expect.
 
 ### Sale messages
 

@@ -299,6 +299,52 @@ local function QueueShown()
     return queue ~= nil and queue:IsShown()
 end
 
+-- The game's Crafting Results log opens in the same spot beside the
+-- profession window, under this panel. While the panel shows, the log
+-- moves to the right of it (and of the order queue), then goes back.
+local logHome = {}  -- [log] = its own anchor points
+local logOffset
+
+local function Logs()
+    local page = ProfessionsFrame and ProfessionsFrame.CraftingPage
+    local orders = ProfessionsFrame and ProfessionsFrame.OrdersPage
+    local view = orders and orders.OrderView
+    return { page and page.CraftingOutputLog, view and view.CraftingOutputLog }
+end
+
+local function MoveLogs()
+    local right = frame:GetRight()
+    local queue = _G.PatronPlannerQueuePanel
+    if QueueShown() and queue:GetRight() and (not right or queue:GetRight() > right) then right = queue:GetRight() end
+    local edge = ProfessionsFrame:GetRight()
+    if not right or not edge then return end
+    -- No room on screen: it stays where the game puts it.
+    local page = ProfessionsFrame.CraftingPage
+    local craftLog = page and page.CraftingOutputLog
+    if craftLog and right + 6 + craftLog:GetWidth() > UIParent:GetRight() then return end
+    local x = math.floor(right - edge + 6 + 0.5)
+    if x == logOffset then return end
+    logOffset = x
+    for _, log in pairs(Logs()) do
+        if not logHome[log] then
+            local points = {}
+            for i = 1, log:GetNumPoints() do points[i] = { log:GetPoint(i) } end
+            logHome[log] = points
+        end
+        log:ClearAllPoints()
+        log:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", x, 0)
+    end
+end
+
+local function RestoreLogs()
+    logOffset = nil
+    for log, points in pairs(logHome) do
+        log:ClearAllPoints()
+        for _, p in ipairs(points) do log:SetPoint(unpack(p)) end
+    end
+    logHome = {}
+end
+
 function Panel:Place()
     if not frame then return end
     if not frame.watchingQueue then
@@ -308,7 +354,9 @@ function Panel:Place()
             if sinceCheck < 0.2 then return end
             sinceCheck = 0
             if QueueShown() ~= underQueue then Panel:Place() end
+            MoveLogs()
         end)
+        frame:HookScript("OnHide", RestoreLogs)
     end
     local queue = _G.PatronPlannerQueuePanel
     underQueue = QueueShown()

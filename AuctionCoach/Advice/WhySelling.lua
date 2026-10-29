@@ -101,9 +101,10 @@ function WhySelling.Verdict(key, unit, quantity, postedAt, standing)
     return { code = code, lines = lines }
 end
 
--- For one of your auctions (an Auctions:List entry).
-function WhySelling.ForAuction(entry)
-    local posts = ns.Auctions.NewestPosts()
+-- For one of your auctions (an Auctions:List entry). posts: from
+-- Auctions.NewestPosts(), passed in when checking a whole list.
+function WhySelling.ForAuction(entry, posts)
+    posts = posts or ns.Auctions.NewestPosts()
     local standing = ns.Auctions.Standing(entry.key, entry.unit, posts)
     local post = posts[entry.key]
     return WhySelling.Verdict(entry.key, entry.unit, entry.quantity, post and post.p, standing)

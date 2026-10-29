@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.6
+
+- **Why isn't it selling, at a glance:** the Auctions tab has a new **Why** column with a short answer for every listing, the same as your website report: *Undercut*, *Overpriced*, *Slow seller*, *Long queue*, *Just posted* or *Fast seller*, coloured by how much it matters. Hover the row for the full reason, as before.
+
+## 1.0.5
+
+- **Crafting Results stays in view:** the game's Crafting Results list opens in the same spot as the Cheapest materials panel, behind it. While the panel shows, the list now moves to its right (and to the right of Patron Planner's order queue), and goes back when the panel closes. When there's no room on screen, it stays where the game puts it.
+
 ## 1.0.4
 
 - **Fixed: crafting costs missing materials.** Midnight materials that come in qualities, such as Sunfire Silk and Sunfire Silk Bolt, were taken for the season's Spark and left out of a recipe's cost, so the Craft list showed recipes like the Sunfire Silk Backpack costing a few gold. They're counted again. Open each crafter's profession window once to update their recipes; until then those recipes are left off the Craft list rather than shown with the wrong cost.

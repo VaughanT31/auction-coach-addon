@@ -10,10 +10,11 @@ local ROW_HEIGHT = 24
 
 -- Column layout: x offset and width, shared by header and rows.
 local COLUMNS = {
-    name = { 24, 200, 0.5 },
-    yours = { 230, 86 },
-    lowest = { 322, 86 },
-    advice = { 420, 160, 0.5 },
+    name = { 24, 180, 0.5 },
+    yours = { 208, 78 },
+    lowest = { 290, 78 },
+    advice = { 374, 124, 0.25 },
+    why = { 502, 80, 0.25 },
 }
 
 local ACTION_COLORS = {
@@ -22,6 +23,19 @@ local ACTION_COLORS = {
     CANCEL = { 1, 0.5, 0.35 },
     WAIT = { 0.7, 0.7, 0.7 },
     UNKNOWN = { 0.55, 0.55, 0.55 },
+}
+
+-- "Why isn't it selling?" labels (Advice/WhySelling.lua codes), coloured
+-- like the website report's: bad, warn, info, good.
+local WHY_COLORS = {
+    UNDERCUT = { 1, 0.5, 0.35 },
+    OVERPRICED = { 1, 0.5, 0.35 },
+    SLOW = { 1, 0.75, 0.3 },
+    QUEUE = { 1, 0.75, 0.3 },
+    FRESH = { 0.6, 0.75, 1 },
+    NO_DATA = { 0.6, 0.6, 0.6 },
+    OK = { 0.6, 0.6, 0.6 },
+    FAST = { 0.4, 1, 0.4 },
 }
 
 local Column = ns.Skin.Columns(COLUMNS)
@@ -77,7 +91,7 @@ local function ShowRowTooltip(row)
     end
     GameTooltip:AddLine(L.AUCTIONS_LISTED_VALUE:format(Util.FormatMoney(ns.Auctions.ListedValue(entry))), 0.75, 0.75, 0.75)
     -- Why it hasn't sold yet (Advice/WhySelling.lua).
-    local verdict = ns.WhySelling.ForAuction(entry)
+    local verdict = row.verdict or ns.WhySelling.ForAuction(entry)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine(L.WHY_HEADER, 1, 0.82, 0)
     for i, line in ipairs(verdict.lines) do
@@ -100,6 +114,7 @@ local function CreateRow(parent, index)
     row.yours = Column(row, "yours", "GameFontHighlight", "RIGHT")
     row.lowest = Column(row, "lowest", "GameFontHighlight", "RIGHT")
     row.advice = Column(row, "advice", "GameFontHighlightSmall")
+    row.why = Column(row, "why", "GameFontHighlightSmall")
 
     local highlight = row:CreateTexture(nil, "HIGHLIGHT")
     highlight:SetAllPoints()
@@ -116,7 +131,7 @@ local function CreateRow(parent, index)
     return row
 end
 
-local function SetRow(row, entry)
+local function SetRow(row, entry, posts)
     row.entry = entry
     local itemID = Util.ItemIDFromKey(entry.key) or Util.PET_CAGE_ITEM_ID
     row.icon:SetTexture(Compat.GetItemIconByID(itemID))
@@ -138,6 +153,12 @@ local function SetRow(row, entry)
     local color = ACTION_COLORS[entry.action]
     row.advice:SetText(AdviceText(entry))
     row.advice:SetTextColor(color[1], color[2], color[3])
+
+    local verdict = ns.WhySelling.ForAuction(entry, posts)
+    row.verdict = verdict
+    local whyColor = WHY_COLORS[verdict.code] or WHY_COLORS.OK
+    row.why:SetText(L["WHY_LABEL_" .. verdict.code] or verdict.code)
+    row.why:SetTextColor(whyColor[1], whyColor[2], whyColor[3])
     row:Show()
 end
 
@@ -156,7 +177,7 @@ local function Build(panel)
     header:SetHeight(18)
     header:SetPoint("TOPLEFT", panel.sub, "BOTTOMLEFT", 0, -10)
     header:SetPoint("RIGHT", -26, 0)
-    for name, key in pairs({ name = "ITEM", yours = "YOURS", lowest = "LOWEST", advice = "ADVICE" }) do
+    for name, key in pairs({ name = "ITEM", yours = "YOURS", lowest = "LOWEST", advice = "ADVICE", why = "WHY" }) do
         local justify = (name == "yours" or name == "lowest") and "RIGHT" or "LEFT"
         Column(header, name, "GameFontNormalSmall", justify):SetText(L["AUCTIONS_HEAD_" .. key])
     end
@@ -186,13 +207,16 @@ local function Refresh(panel, reason)
     else
         panel.title:SetText(L.AUCTIONS_TITLE_NONE)
     end
-    panel.sub:SetText(list.at and L.AUCTIONS_SUB:format(Util.FormatAge(list.at)) or L.AUCTIONS_SUB_NEVER)
+    local sub = list.at and L.AUCTIONS_SUB:format(Util.FormatAge(list.at)) or L.AUCTIONS_SUB_NEVER
+    if #list.items > 0 then sub = sub .. " " .. L.AUCTIONS_WHY_HINT end
+    panel.sub:SetText(sub)
     panel.empty:SetText((list.at and #list.items == 0) and L.AUCTIONS_EMPTY or "")
 
+    local posts = ns.Auctions.NewestPosts()
     for i, entry in ipairs(list.items) do
         local row = panel.rows[i] or CreateRow(panel.content, i)
         panel.rows[i] = row
-        SetRow(row, entry)
+        SetRow(row, entry, posts)
     end
     for i = #list.items + 1, #panel.rows do
         panel.rows[i]:Hide()
