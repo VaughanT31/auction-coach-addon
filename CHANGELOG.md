@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.8
+
+- **What you paid:** Auction Coach now remembers what you pay for everything you buy at the Auction House, shopping list or not. An item's tooltip says what you paid for the ones you still have (the average, when you bought several) and how its price has moved since, up or down, so a slow flip like a raid BoE shows whether it's gaining or losing value. Hold Shift to see your last 5 buys of it. Purchases from before this version aren't known.
+- **Your items on other realms, a lower bar:** your own items only need another of your realms to pay 10% more (it was 25%, the same as buying a flip), as well as your smallest profit and sales a day. Moving something you already have costs nothing but a trip through the warband bank, so an 18,000g item that sells for 1,900g more elsewhere now shows under *Yours* in Other realms and on its tooltip.
+- **Fixed: the tooltip explained the wrong realm.** When several of your realms fell short for the same reason, the tooltip named the first one it checked (say, one paying 0% more) instead of the one that came closest. It now names the realm that pays the most.
+
 ## 1.0.7
 
 - **No more waiting on full scans with the desktop app:** when the app's prices for your realm are under 2 hours old, opening the Auction House no longer runs the full scan. The app's prices are used instead, and only the items you have listed are searched, one by one, to spot undercuts. It steps aside the moment you search something yourself. Without the app, or with older prices, it scans as before. `/ac scan` always scans, and the new **Full scan even with fresh app prices** option brings back the old way.

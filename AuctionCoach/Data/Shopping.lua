@@ -137,6 +137,52 @@ function Shopping:Bought(key, quantity)
     end
 end
 
+-- What you paid (1.0.7): every Auction House purchase, on the list or not,
+-- so the tooltip can say what the ones you still have cost and how their
+-- price has moved since (handy for a slow flip). Account-wide, the last 20
+-- buys of each item, kept a year.
+--   db.purchases[itemKey] = { { t = time, q = quantity, c = copper each }, ... } newest last
+local MAX_BUYS = 20
+local KEEP_BUYS = 365 * 86400
+
+function Shopping:RecordPurchase(key, quantity, each, now)
+    if not key or not each or each <= 0 then return end
+    ns.db.purchases = ns.db.purchases or {}
+    local list = ns.db.purchases[key] or {}
+    ns.db.purchases[key] = list
+    list[#list + 1] = { t = now or Util.Now(), q = math.max(1, quantity or 1), c = math.floor(each + 0.5) }
+    while #list > MAX_BUYS do table.remove(list, 1) end
+end
+
+function Shopping:Purchases(key)
+    return ns.db and ns.db.purchases and ns.db.purchases[key]
+end
+
+-- What the ones you have cost: the newest buys first, as many units as you
+-- have (sold ones are taken to be the older ones). { each = average,
+-- count = units it covers, at = newest buy } or nil.
+function Shopping.PaidFor(list, have)
+    if not list or not have or have <= 0 then return nil end
+    local left, units, cost, at = have, 0, 0, nil
+    for i = #list, 1, -1 do
+        local buy = list[i]
+        local take = math.min(buy.q, left)
+        units, cost, left = units + take, cost + take * buy.c, left - take
+        at = at or buy.t
+        if left <= 0 then break end
+    end
+    if units == 0 then return nil end
+    return { each = math.floor(cost / units + 0.5), count = units, at = at }
+end
+
+ns.Events:On("AC_LOGIN", function()
+    local cutoff = Util.Now() - KEEP_BUYS
+    for key, list in pairs(ns.db.purchases or {}) do
+        while list[1] and list[1].t < cutoff do table.remove(list, 1) end
+        if not list[1] then ns.db.purchases[key] = nil end
+    end
+end)
+
 -- Purchases, seen through Blizzard's own calls. Commodities: the confirm
 -- names the item and how many, then COMMODITY_PURCHASE_SUCCEEDED says it
 -- went through. Other items: a bid at the buyout price is a purchase, and
@@ -145,22 +191,33 @@ local commodity
 local buyouts = {}
 
 local function RememberCommodity(itemID, quantity)
-    if itemID and quantity then commodity = { itemID = itemID, quantity = quantity } end
+    if not (itemID and quantity) then return end
+    -- The confirm repeats the start: keep the price already quoted for it.
+    local total = commodity and commodity.itemID == itemID and commodity.quantity == quantity and commodity.total or nil
+    commodity = { itemID = itemID, quantity = quantity, total = total }
 end
 hooksecurefunc(C_AuctionHouse, "StartCommoditiesPurchase", RememberCommodity)
 hooksecurefunc(C_AuctionHouse, "ConfirmCommoditiesPurchase", RememberCommodity)
 
+-- The price Blizzard quotes after StartCommoditiesPurchase, for the whole lot.
+ns.Events:On("COMMODITY_PRICE_UPDATED", function(_, _, totalPrice)
+    if commodity and totalPrice and totalPrice > 0 then commodity.total = totalPrice end
+end)
+
 ns.Events:On("COMMODITY_PURCHASE_SUCCEEDED", function()
     local c = commodity
     commodity = nil
-    if c and ns.db then Shopping:Bought(Util.SimpleItemKey(c.itemID), c.quantity) end
+    if not (c and ns.db) then return end
+    local key = Util.SimpleItemKey(c.itemID)
+    if c.total then Shopping:RecordPurchase(key, c.quantity, c.total / c.quantity) end
+    Shopping:Bought(key, c.quantity)
 end)
 ns.Events:On("COMMODITY_PURCHASE_FAILED", function() commodity = nil end)
 
 hooksecurefunc(C_AuctionHouse, "PlaceBid", function(auctionID, bidAmount)
     local ok, info = pcall(C_AuctionHouse.GetAuctionInfoByID, auctionID)
     if ok and info and info.itemLink and info.buyoutAmount and bidAmount and bidAmount >= info.buyoutAmount then
-        buyouts[auctionID] = { link = info.itemLink, quantity = info.quantity }
+        buyouts[auctionID] = { link = info.itemLink, quantity = info.quantity, paid = bidAmount }
     end
 end)
 
@@ -168,7 +225,11 @@ ns.Events:On("AUCTION_HOUSE_PURCHASE_COMPLETED", function(_, auctionID)
     local b = auctionID and buyouts[auctionID]
     if not b then return end
     buyouts[auctionID] = nil
-    if ns.db then Shopping:Bought(Util.ItemKeyFromLink(b.link), b.quantity) end
+    if not ns.db then return end
+    local key = Util.ItemKeyFromLink(b.link)
+    local quantity = math.max(1, b.quantity or 1)
+    Shopping:RecordPurchase(key, quantity, b.paid / quantity)
+    Shopping:Bought(key, quantity)
 end)
 ns.Events:On("AUCTION_HOUSE_CLOSED", function()
     commodity = nil

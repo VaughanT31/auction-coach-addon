@@ -234,6 +234,16 @@ function Rules:ForLink(link)
     local count = ns.Inventory:GetCount(key)
     if count > 0 then
         Add(Phrases.YouHave(count, afterCut * count))
+        -- What you paid for the ones you have, against what they're worth
+        -- now; Shift lists the buys.
+        local buys = ns.Shopping:Purchases(key)
+        local paid = ns.Shopping.PaidFor(buys, count)
+        if paid then
+            Add(Phrases.Paid(paid, price.value), price.value >= paid.each and "good" or "bad")
+            if IsShiftKeyDown() then
+                for i = #buys, math.max(1, #buys - 4), -1 do Add(Phrases.Buy(buys[i]), "muted") end
+            end
+        end
     end
 
     local better, whyNot = nil, nil

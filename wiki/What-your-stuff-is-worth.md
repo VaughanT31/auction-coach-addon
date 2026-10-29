@@ -13,6 +13,8 @@ The **My Stuff** tab adds up everything sellable on all your characters and your
 
 Item tooltips say what an item is worth, how many you have across your characters, whether a vendor pays more and how tough the competition is. Once you've disenchanted, milled or prospected a few of something, they also say what it's worth destroyed. Turn the tooltip advice off or on with `/ac tooltip`.
 
+Bought it at the Auction House? The tooltip also says what you paid for the ones you still have (the average, if you bought several) and how its price has moved since, up or down. That's handy for a slow flip, like a raid BoE you're holding for a better price. Hold Shift to see your last 5 buys of it.
+
 ### Gold overview and history
 
 Beside the list, the **gold overview** shows each character's gold and the Warband Bank's. **History** shows how your gold changed today, this week and this month, with your AH sales and purchases day by day. `/ac gold` opens it too.

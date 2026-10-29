@@ -18,6 +18,27 @@ function Phrases.YouHave(count, totalAfterCut)
     return L.TT_YOU_HAVE:format(BreakUpLargeNumbers(count), Util.FormatMoney(totalAfterCut))
 end
 
+-- What you paid (Shopping.PaidFor) against what one is worth now.
+function Phrases.Paid(paid, worth)
+    local change = worth / paid.each - 1
+    local moved
+    if math.abs(change) < 0.01 then
+        moved = L.TT_PAID_SAME
+    else
+        moved = (change > 0 and L.TT_PAID_UP or L.TT_PAID_DOWN):format(math.floor(math.abs(change) * 100 + 0.5))
+    end
+    if paid.count == 1 then
+        return L.TT_PAID_ONE:format(Util.FormatMoney(paid.each), Util.FormatAge(paid.at), Util.FormatMoney(worth), moved)
+    end
+    return L.TT_PAID_MANY:format(Util.FormatMoney(paid.each), BreakUpLargeNumbers(paid.count),
+        Util.FormatAge(paid.at), Util.FormatMoney(worth), moved)
+end
+
+-- One purchase, for the list under Shift.
+function Phrases.Buy(buy)
+    return L.TT_BUY:format(BreakUpLargeNumbers(buy.q), Util.FormatMoney(buy.c), Util.FormatAge(buy.t))
+end
+
 function Phrases.Stale(price)
     return L.TT_STALE:format(Util.FormatAge(price.t))
 end
@@ -558,7 +579,7 @@ function Phrases.BetterRealmWhy(w, money)
     if r == "NOREALMS" then return L.BR_WHY_NOREALMS end
     if r == "NOHERE" then return L.BR_WHY_NOHERE end
     if r == "NOTHERE" then return L.BR_WHY_NOTHERE:format(w.realm) end
-    if r == "GAIN" then return L.BR_WHY_GAIN:format(w.realm, math.max(0, w.percent)) end
+    if r == "GAIN" then return L.BR_WHY_GAIN:format(w.realm, math.max(0, w.percent), w.need or 25) end
     if r == "PROFIT" then return L.BR_WHY_PROFIT:format(w.realm, money(math.max(0, w.gain)), money(w.need)) end
     if r == "SLOW" then
         local sales = w.sales < 1 and "<1" or BreakUpLargeNumbers(math.floor(w.sales + 0.5))
