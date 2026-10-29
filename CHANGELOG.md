@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.10
+
+- **How long it takes to sell:** *sells 30 a day* doesn't help much when 120 are already listed. The tooltip's *Sells for more on* line and every Other realms row now add how long it takes to sell there: everything listed now plus yours, at the pace it sells on that realm, for example *Takes about 4 days to sell on Kazzak: 120 listed there now, and yours joins the queue.*
+- **Sales a day are more honest for gear, pets and other realm items** (with fresh prices from the desktop app): an auction cancelled and reposted cheaper within the hour no longer counts as a sale, so undercut wars stop making an item look like it sells many a day. The numbers settle over the next 7 days as older counts drop out. Sales a day were already measured on each realm on its own, so a quieter realm shows fewer.
+
 ## 1.0.9
 
 - **Tooltip: why the realm that pays the most isn't the one to move it to.** The *Sells for more on* line picks a realm where the item also sells often enough and isn't buried in listings, so it can name a different realm from the *pays the most* line. That line now says why, for example *Quel'Thalas pays the most (6,650g each after the AH cut), but it only sells 2 a day there, under your 5*, or that too many are listed there to sell soon.

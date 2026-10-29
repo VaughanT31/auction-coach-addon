@@ -27,6 +27,7 @@ Items that are cheap on one of your realms and usually sell for more on another.
 
 - **Your items come first:** things you already have that sell for at least 10% more on another of your realms, and your smallest profit more. Tick them and click **Add yours to sell lists**.
 - **Filters above the list:** pick an Auction House category (Weapons, Armor, Battle Pets...), the smallest profit and how many a day it must sell there. Each category shows its own best 100.
+- **How long it takes:** each row's tooltip, and the item tooltip, say how long it takes to sell on that realm: what's listed there now plus yours, at the pace it sells there. Sales a day are measured on each realm on its own, so quieter realms show fewer.
 - **Reagents never show:** commodities share one Auction House across every realm, so they cost the same everywhere.
 - **Tooltips say why not:** on an item you have, the tooltip says why another realm isn't better, for example it pays less than 10% more or sells too slowly there, naming the realm that came closest. Hold Shift to see it on any item.
 - **Where it pays the most:** the tooltip also says which of your realms pays the most for it, whatever the margin. Handy when you're holding stock for a sale day. When that isn't the realm it tells you to move it to, it says why: it sells too slowly there, or too many are listed.

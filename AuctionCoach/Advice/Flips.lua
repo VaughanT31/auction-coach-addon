@@ -335,7 +335,8 @@ function Flips.BetterRealm(key, group, realmName)
                 local there = Util.AfterCut(resell)
                 local gain = there - here
                 if not best or gain > best.gain then
-                    best = { realm = r.realm, here = here, there = there, gain = gain, salesPerDay = price.salesPerDay }
+                    best = { realm = r.realm, here = here, there = there, gain = gain, salesPerDay = price.salesPerDay,
+                             listed = price.listed or 0 }
                 end
             end
         end
@@ -399,7 +400,7 @@ function Flips:YourItems()
                 if better then
                     items[#items + 1] = {
                         key = key, count = count, price = better.here, resell = better.there,
-                        profit = better.gain * count, salesPerDay = better.salesPerDay,
+                        profit = better.gain * count, salesPerDay = better.salesPerDay, listed = better.listed,
                         buyRealm = here, sellRealm = better.realm, own = true,
                     }
                 end

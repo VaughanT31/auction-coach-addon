@@ -595,21 +595,47 @@ end
 
 -- Why a cross-realm flip is worth it, from Flips:List. Your own items
 -- (Flips:YourItems) have nothing to buy.
+-- How long it takes to sell on a realm (1.0.10): everything listed there
+-- now plus yours, at the pace it sells. "Sells 30 a day" with 120 listed
+-- is days, not hours. nil without a sales pace.
+function Phrases.SellTime(salesPerDay, listed, realm)
+    if not salesPerDay or salesPerDay <= 0 then return nil end
+    local days = ((listed or 0) + 1) / salesPerDay
+    local wait
+    if days < 1 then
+        wait = L.SELL_TIME_HOURS
+    elseif days < 1.5 then
+        wait = L.SELL_TIME_DAY
+    else
+        wait = L.SELL_TIME_DAYS:format(math.floor(days + 0.5))
+    end
+    return L.SELL_TIME:format(wait, realm, BreakUpLargeNumbers(listed or 0))
+end
+
 function Phrases.Flip(f, money)
     money = money or Util.FormatMoney
+    local speed = L.SELL_SPEED:format(f.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(f.salesPerDay + 0.5)))
+    local lines
     if f.own then
-        return {
+        lines = {
             L.OWN_HERE:format(f.buyRealm, money(f.price)),
             L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.resell - f.price)),
-            L.SELL_SPEED:format(f.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(f.salesPerDay + 0.5))),
-            L.OWN_HOW:format(f.count, money(f.profit)),
+            speed,
+        }
+    else
+        lines = {
+            L.FLIP_BUY:format(f.buyRealm, money(f.price), Util.FormatAge(f.priceAt)),
+            L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.profit)),
+            speed,
         }
     end
-    return {
-        L.FLIP_BUY:format(f.buyRealm, money(f.price), Util.FormatAge(f.priceAt)),
-        L.FLIP_SELL:format(f.sellRealm, money(f.resell), money(f.profit)),
-        L.SELL_SPEED:format(f.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(f.salesPerDay + 0.5))),
-        L.FLIP_HOW,
-        L.DEAL_CHECK,
-    }
+    local wait = Phrases.SellTime(f.salesPerDay, f.listed, f.sellRealm)
+    if wait then lines[#lines + 1] = wait end
+    if f.own then
+        lines[#lines + 1] = L.OWN_HOW:format(f.count, money(f.profit))
+    else
+        lines[#lines + 1] = L.FLIP_HOW
+        lines[#lines + 1] = L.DEAL_CHECK
+    end
+    return lines
 end
