@@ -4,7 +4,7 @@
 
 ### Craft or sell
 
-The **Craft** view on the Deals tab lists every recipe your characters know, with what its materials cost against what the crafted item sells for, at the quality you actually make.
+The **Craft** view on the Deals tab lists every recipe your characters know, with what its materials cost against what the crafted item sells for, at the quality you actually make. Enchants count as the scroll they make on Enchanting Vellum, which is what sells (the vellum isn't in the cost).
 
 ![Material cost against what each craft sells for](https://ctrlshiftzed.com/assets/img/shots/ac-craft.webp)
 *Material cost against what each craft sells for*

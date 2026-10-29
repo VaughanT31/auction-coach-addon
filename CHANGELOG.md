@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.11
+
+- **Enchants on the Craft list:** enchanting recipes now show, priced as the scroll they make on Enchanting Vellum (the scroll is what sells on the AH), at the quality you make and with concentration, like any other recipe. The game doesn't say which scroll an enchant makes, so Auction Coach now carries that list itself. Open your Enchanting window once on each enchanter so their enchants are read. The vellum itself isn't counted in the cost.
+
 ## 1.0.10
 
 - **How long it takes to sell:** *sells 30 a day* doesn't help much when 120 are already listed. The tooltip's *Sells for more on* line and every Other realms row now add how long it takes to sell there: everything listed now plus yours, at the pace it sells on that realm, for example *Takes about 4 days to sell on Kazzak: 120 listed there now, and yours joins the queue.*

@@ -21,7 +21,8 @@
 -- Only the recipes of the expansion shown in the window are kept (the
 -- newest by default), so SavedVariables stay small. Viewing someone else's
 -- profession (a link or the guild list) is ignored. Recipes with no output
--- item (enchants, recrafts, salvage, gathering) aren't kept.
+-- item (recrafts, salvage, gathering) aren't kept. Enchants are kept as the
+-- scroll they make (Data/EnchantScrolls.lua).
 
 local _, ns = ...
 
@@ -100,14 +101,31 @@ function Recipes.Read(recipeID, professionName)
     if type(info) ~= "table" or not info.learned then return nil end
     if info.isRecraft or info.isSalvageRecipe or info.isGatheringRecipe or info.isDummyRecipe then return nil end
     local schematic = Call(trade.GetRecipeSchematic, recipeID, false)
-    if type(schematic) ~= "table" or not schematic.outputItemID then return nil end
+    if type(schematic) ~= "table" then return nil end
+    -- Enchants make no item; the scroll they make on Enchanting Vellum is
+    -- what sells (1.0.11, Data/EnchantScrolls.lua).
+    local scrolls = not schematic.outputItemID and info.isEnchantingRecipe and Recipes.EnchantScrolls(recipeID)
+    if not schematic.outputItemID and not scrolls then return nil end
     local slots, spark = Recipes.ReadSlots(schematic)
     if not slots or #slots == 0 then return nil end
     local qMin = schematic.quantityMin or 1
     local qMax = schematic.quantityMax or qMin
-    local recipe = { o = schematic.outputItemID, q = (qMin + qMax) / 2, r = slots, p = professionName, sp = spark, v = Recipes.VERSION }
-    Recipes.ReadQuality(recipeID, recipe)
+    local recipe = { o = schematic.outputItemID or scrolls[1], q = (qMin + qMax) / 2, r = slots, p = professionName,
+                     sp = spark, v = Recipes.VERSION }
+    if scrolls then
+        Recipes.ApplyQuality(recipeID, recipe, scrolls)
+    else
+        Recipes.ReadQuality(recipeID, recipe)
+    end
     return recipe
+end
+
+-- The scrolls an enchant recipe makes, one per quality, or nil when it
+-- isn't in the table (or isn't an enchant that makes one).
+function Recipes.EnchantScrolls(recipeID)
+    local op = Call(C_TradeSkillUI.GetCraftingOperationInfo, recipeID, {}, nil, false)
+    local id = type(op) == "table" and op.craftingDataID or nil
+    return id and ns.EnchantScrolls and ns.EnchantScrolls[id] or nil
 end
 
 -- Which quality this character makes, with and without concentration, and
@@ -117,16 +135,23 @@ function Recipes.ReadQuality(recipeID, recipe)
     local trade = C_TradeSkillUI
     local qualities = Call(trade.GetQualitiesForRecipe, recipeID)
     if type(qualities) ~= "table" or #qualities < 2 then return end
-    local outputs, distinct, seen = {}, 0, {}
+    local outputs = {}
     for i, qualityID in ipairs(qualities) do
         local data = Call(trade.GetRecipeOutputItemData, recipeID, nil, nil, qualityID)
-        local itemID = type(data) == "table" and data.itemID or nil
-        if itemID then
-            outputs[i] = itemID
-            if not seen[itemID] then
-                seen[itemID] = true
-                distinct = distinct + 1
-            end
+        outputs[i] = type(data) == "table" and data.itemID or nil
+    end
+    Recipes.ApplyQuality(recipeID, recipe, outputs)
+end
+
+-- outputs: { [quality] = item ID }. Sets qo, bq and, with concentration, cq
+-- and cc.
+function Recipes.ApplyQuality(recipeID, recipe, outputs)
+    local trade = C_TradeSkillUI
+    local distinct, seen = 0, {}
+    for _, itemID in pairs(outputs) do
+        if not seen[itemID] then
+            seen[itemID] = true
+            distinct = distinct + 1
         end
     end
     if distinct < 2 then return end
