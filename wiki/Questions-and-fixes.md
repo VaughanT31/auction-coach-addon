@@ -12,7 +12,11 @@ No. The addon works on its own from its own Auction House scans. The app adds pr
 
 **The Auction House scan is slow or doesn't start.**
 
-Blizzard allows one full scan every 15 minutes, shared by all addons. If another auction addon just scanned, Auction Coach waits until the 15 minutes are up. `/ac status` shows what the scanner is doing.
+Blizzard allows one full scan every 15 minutes, shared by all addons. If another auction addon just scanned, the automatic scan waits until the 15 minutes are up. `/ac scan` asks anyway: if Blizzard still says no, it stops after a short wait and tells you. A scan that got no data, for example when you closed the Auction House straight away, doesn't start the 15 minutes. `/ac status` shows what the scanner is doing.
+
+**The desktop app updated its prices. Do I need to scan?**
+
+No. Type `/reload` (or log in) and the app's prices load for every character on your account. A scan still helps at the Auction House: it adds what's listed right now, while the app's prices can be an hour or two old.
 
 **Windows says it protected my PC when I run the installer.**
 

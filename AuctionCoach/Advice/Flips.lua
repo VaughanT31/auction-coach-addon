@@ -25,7 +25,7 @@ local MAX_AGE = 3 * 3600
 -- but the item still has to sell daily and not be buried in listings.
 local MIN_CHANCE = 0.5
 local MIN_GAIN = 0.25 -- the other realm must pay at least 25% more
-local MAX_FLIPS = 100
+local MAX_FLIPS = 100 -- shown per category
 
 local cache, cacheAt
 local ownCache, ownAt
@@ -206,13 +206,68 @@ function Flips:List()
     for key, why in pairs(closest) do
         if not best[key] then result.why[why] = (result.why[why] or 0) + 1 end
     end
+    -- Every flip is kept: the view shows the best MAX_FLIPS of the category
+    -- picked (Flips.InCategory), so a category isn't crowded out by others.
     table.sort(result.items, function(a, b)
         if a.profit ~= b.profit then return a.profit > b.profit end
         return a.key < b.key
     end)
-    for i = #result.items, MAX_FLIPS + 1, -1 do result.items[i] = nil end
     cache, cacheAt = result, now
     return result
+end
+
+-- ---------------------------------------------------------------------
+-- Categories (1.0.7): the AH's top-level categories, from each item's class
+-- ---------------------------------------------------------------------
+
+local GetItemClassInfo = (C_Item and C_Item.GetItemClassInfo) or GetItemClassInfo
+local classOf = {}
+
+-- An item's class ID (Weapon, Armor, Battle Pets...), cached. Pet keys have
+-- no item ID: they're the pet cage, which is Battle Pets.
+function Flips.ClassOf(key)
+    local class = classOf[key]
+    if class == nil then
+        local itemID = Util.ItemIDFromKey(key) or Util.PET_CAGE_ITEM_ID
+        class = select(6, ns.Compat.GetItemInfoInstant(itemID)) or false
+        classOf[key] = class
+    end
+    return class or nil
+end
+
+-- The best MAX_FLIPS rows (already best first) in one class, or in all of
+-- them when classID is nil.
+function Flips.InCategory(rows, classID)
+    local shown = {}
+    for _, row in ipairs(rows) do
+        if not classID or Flips.ClassOf(row.key) == classID then
+            shown[#shown + 1] = row
+            if #shown >= MAX_FLIPS then break end
+        end
+    end
+    return shown
+end
+
+-- The categories the rows have, for the filter menu:
+-- { { classID, name, count }, ... } by name.
+function Flips.Categories(...)
+    local counts = {}
+    for i = 1, select("#", ...) do
+        for _, row in ipairs((select(i, ...))) do
+            local class = Flips.ClassOf(row.key)
+            if class then counts[class] = (counts[class] or 0) + 1 end
+        end
+    end
+    local list = {}
+    for class, count in pairs(counts) do
+        list[#list + 1] = { classID = class, name = GetItemClassInfo(class) or tostring(class), count = count }
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
+function Flips.CategoryName(classID)
+    return classID and (GetItemClassInfo(classID) or tostring(classID)) or nil
 end
 
 function Flips:Invalidate()

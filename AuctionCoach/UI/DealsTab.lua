@@ -374,12 +374,96 @@ function UpdateFlipBar()
 end
 
 -- ---------------------------------------------------------------------
+-- Other realms filters (1.0.7): category, smallest profit, sales a day
+-- ---------------------------------------------------------------------
+
+local GOLD = 10000
+local PROFIT_STEPS = { 1, 5, 10, 25, 50, 100, 250, 500, 1000 } -- gold
+local SALES_STEPS = { 1, 2, 3, 5, 10, 20, 50 }
+
+-- The same settings as Options, so both stay in step.
+local function SetSetting(field, value)
+    ns.db.settings[field] = value
+    ns.Deals:Invalidate()
+    ns.Flips:Invalidate()
+    ns.MainWindow:Refresh()
+end
+
+local function StepMenu(owner, title, note, field, steps, toValue, label)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+    MenuUtil.CreateContextMenu(owner, function(_, root)
+        root:CreateTitle(title)
+        for _, step in ipairs(steps) do
+            local value = toValue(step)
+            root:CreateRadio(label(step), function() return ns.db.settings[field] == value end,
+                function() SetSetting(field, value) end)
+        end
+        root:CreateTitle(note)
+    end)
+end
+
+local function CategoryMenu(owner)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+    MenuUtil.CreateContextMenu(owner, function(_, root)
+        root:CreateTitle(L.FLIPS_FILTER_CATEGORY_TITLE)
+        local function Pick(classID)
+            return function()
+                ns.db.settings.flipCategory = classID
+                ns.MainWindow:Refresh()
+            end
+        end
+        root:CreateRadio(L.FLIPS_FILTER_ALL, function() return ns.db.settings.flipCategory == nil end, Pick(nil))
+        for _, c in ipairs(ns.Flips.Categories(ns.Flips:List().items, ns.Flips:YourItems())) do
+            root:CreateRadio(L.FLIPS_FILTER_CATEGORY_ROW:format(c.name, c.count),
+                function() return ns.db.settings.flipCategory == c.classID end, Pick(c.classID))
+        end
+    end)
+end
+
+local function BuildFilterBar(panel)
+    local bar = CreateFrame("Frame", nil, panel)
+    bar:SetHeight(20)
+    bar:SetPoint("TOPLEFT", panel.sub, "BOTTOMLEFT", 0, -8)
+    bar:SetPoint("RIGHT", -4, 0)
+
+    bar.category = ns.Skin.Button(bar, nil, 200, 20)
+    bar.category:SetPoint("LEFT", 0, 0)
+    bar.category:SetScript("OnClick", CategoryMenu)
+    bar.profit = ns.Skin.Button(bar, nil, 130, 20)
+    bar.profit:SetPoint("LEFT", bar.category, "RIGHT", 6, 0)
+    bar.profit:SetScript("OnClick", function(self)
+        StepMenu(self, L.FLIPS_FILTER_PROFIT_TITLE, L.FLIPS_FILTER_PROFIT_NOTE, "dealMinProfit", PROFIT_STEPS,
+            function(gold) return gold * GOLD end, function(gold) return L.OPT_GOLD:format(gold) end)
+    end)
+    bar.sales = ns.Skin.Button(bar, nil, 140, 20)
+    bar.sales:SetPoint("LEFT", bar.profit, "RIGHT", 6, 0)
+    bar.sales:SetScript("OnClick", function(self)
+        StepMenu(self, L.FLIPS_FILTER_SALES_TITLE, L.FLIPS_FILTER_SALES_NOTE, "flipMinSales", SALES_STEPS,
+            function(count) return count end, function(count) return L.OPT_PER_DAY:format(count) end)
+    end)
+    panel.filterBar = bar
+end
+
+local function UpdateFilterBar(panel)
+    local bar, s = panel.filterBar, ns.db.settings
+    bar.category:SetText(L.FLIPS_FILTER_CATEGORY:format(ns.Flips.CategoryName(s.flipCategory) or L.FLIPS_FILTER_ALL))
+    bar.profit:SetText(L.FLIPS_FILTER_PROFIT:format(Util.FormatMoneyIcons(s.dealMinProfit)))
+    bar.sales:SetText(L.FLIPS_FILTER_SALES:format(BreakUpLargeNumbers(s.flipMinSales or 1)))
+end
+
+-- ---------------------------------------------------------------------
 -- Panel
 -- ---------------------------------------------------------------------
 
 local function SetMode(panel, newMode)
     mode = newMode
     for name, button in pairs(panel.modeButtons) do button:SetActive(name == mode) end
+    -- Other realms has its filters between the line under the title and
+    -- the column headers.
+    panel.filterBar:SetShown(mode == "flips")
+    panel.header:ClearAllPoints()
+    panel.header:SetPoint("TOPLEFT", mode == "flips" and panel.filterBar or panel.sub, "BOTTOMLEFT", 0, -10)
+    panel.header:SetPoint("RIGHT", -26, 0)
     for col, label in pairs(panel.headers) do
         local key = HEADERS[mode][col]
         label:SetText(key and L[key] or "")
@@ -418,11 +502,13 @@ local function Build(panel)
     panel.sub:SetPoint("TOPLEFT", panel.title, "BOTTOMLEFT", 0, -10)
     panel.sub:SetPoint("RIGHT", -4, 0)
     panel.sub:SetJustifyH("LEFT")
+    BuildFilterBar(panel)
 
     local header = CreateFrame("Frame", nil, panel)
     header:SetHeight(18)
     header:SetPoint("TOPLEFT", panel.sub, "BOTTOMLEFT", 0, -10)
     header:SetPoint("RIGHT", -26, 0)
+    panel.header = header
     panel.headers = {}
     Column(header, "name", "GameFontNormalSmall", "LEFT"):SetText(L.SELL_COL_ITEM)
     for _, col in ipairs({ "price", "usual", "profit", "speed" }) do
@@ -483,9 +569,9 @@ local function ByRoute(items)
 end
 
 -- Your items worth moving to another realm first, then the flips.
-local function OwnThenFlips(flips)
+local function OwnThenFlips(own, flips)
     local all = {}
-    for _, item in ipairs(ns.Flips:YourItems()) do all[#all + 1] = item end
+    for _, item in ipairs(own) do all[#all + 1] = item end
     for _, flip in ipairs(flips) do all[#all + 1] = flip end
     return all
 end
@@ -495,14 +581,19 @@ local function ModeContent()
     local s = ns.db.settings
     local minProfit = Util.FormatMoneyIcons(s.dealMinProfit)
     if mode == "flips" then
-        local list = ns.Flips:List()
+        local list, yours = ns.Flips:List(), ns.Flips:YourItems()
+        -- The best 100 of the category picked, of each list.
+        local flips = ns.Flips.InCategory(list.items, s.flipCategory)
+        local own = ns.Flips.InCategory(yours, s.flipCategory)
         local empty = ""
         if list.realms < 2 then
             empty = L.FLIPS_NEED_REALMS
-        elseif #list.items == 0 and #ns.Flips:YourItems() == 0 then
+        elseif #list.items == 0 and #yours == 0 then
             empty = ns.Prices.ActiveData() and Phrases.FlipsWhy(list, minProfit) or L.FLIPS_NEED_APP
+        elseif #flips == 0 and #own == 0 then
+            empty = L.FLIPS_EMPTY_CATEGORY:format(ns.Flips.CategoryName(s.flipCategory))
         end
-        return L.FLIPS_TITLE:format(#list.items), L.FLIPS_SUB:format(minProfit, BreakUpLargeNumbers(s.flipMinSales or 1)), empty, ByRoute(OwnThenFlips(list.items))
+        return L.FLIPS_TITLE:format(#flips), L.FLIPS_SUB:format(minProfit, BreakUpLargeNumbers(s.flipMinSales or 1)), empty, ByRoute(OwnThenFlips(own, flips))
     elseif mode == "craft" then
         local list = ns.Crafting:List()
         local worth = 0
@@ -542,6 +633,7 @@ local function Refresh(panel, reason)
 
     -- Forget ticks on flips that have left the list.
     if mode == "flips" then
+        UpdateFilterBar(panel)
         local shown = {}
         for _, entry in ipairs(entries) do
             if Tickable(entry) then shown[FlipID(entry)] = true end

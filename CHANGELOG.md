@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7
+
+- **Other realms filters in the window:** pick an Auction House category (Weapons, Armor, Battle Pets and so on), the smallest profit and how many a day it must sell, right above the list. Profit and sales are the same settings as in the options. Each category shows its own best 100, so a busy category no longer pushes the rest out.
+- **Tooltips explain more:** on items you have, the tooltip now says why another of your realms isn't better (pays less than 25% more, sells too slowly, too many listed...) without holding Shift. Shift still shows it on everything else. Reagents and other commodities cost the same on every realm, so they never get this line.
+- **Scans:** a scan that never got any data, for example when the Auction House closed straight away, no longer starts the 15 minute wait. `/ac scan` now always asks Blizzard for a scan, even inside the 15 minutes: if Blizzard says no, the scan stops after a short wait and tells you.
+
 ## 1.0.6
 
 - **Why isn't it selling, at a glance:** the Auctions tab has a new **Why** column with a short answer for every listing, the same as your website report: *Undercut*, *Overpriced*, *Slow seller*, *Long queue*, *Just posted* or *Fast seller*, coloured by how much it matters. Hover the row for the full reason, as before.

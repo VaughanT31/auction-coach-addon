@@ -240,10 +240,16 @@ function Rules:ForLink(link)
     if ns.Flips then better, whyNot = ns.Flips.BetterRealm(key) end
     if better then
         Add(Phrases.BetterRealm(better), "good")
-    elseif whyNot and IsShiftKeyDown() then
-        -- Shift explains a missing "sells for more on" line.
-        local text = Phrases.BetterRealmWhy(whyNot)
-        if text then Add(text, "muted") end
+    elseif whyNot then
+        -- Explains a missing "sells for more on" line: always on items you
+        -- have (where to sell them is the question), with Shift on the rest.
+        -- "No other realm" and "no price here" only with Shift: they'd be on
+        -- every item.
+        local close = (ns.Flips.WHY_ORDER[whyNot.reason] or 0) > 0
+        if IsShiftKeyDown() or (count > 0 and close) then
+            local text = Phrases.BetterRealmWhy(whyNot)
+            if text then Add(text, "muted") end
+        end
     end
 
     local vendor = Compat.GetVendorPrice(link)

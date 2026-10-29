@@ -1,6 +1,6 @@
 -- Auction Coach - full Auction House scan.
 -- Uses C_AuctionHouse.ReplicateItems, which Blizzard allows once every 15
--- minutes. The result can hold 100,000+ auctions, so it is processed in
+-- minutes. The auto scan waits for that; /ac scan always asks. The result can hold 100,000+ auctions, so it is processed in
 -- small chunks across frames to avoid freezing the game.
 --
 -- Fires AC_SCAN_PROGRESS (fraction) while running and AC_SCAN_COMPLETE
@@ -41,18 +41,19 @@ function FullScan:Start(manual)
         if manual then Util.Print(L.SCAN_NEED_AH) end
         return
     end
+    -- The 15 minutes are Blizzard's to enforce: /ac scan asks anyway, and if
+    -- Blizzard is still holding it, no data comes and the scan says so.
     local wait = self:SecondsUntilAllowed()
-    if wait > 0 then
-        if manual then Util.Print(L.SCAN_TOO_SOON:format(Util.FormatDuration(wait))) end
-        return
-    end
+    if wait > 0 and not manual then return end
 
     self.state = "waiting"
     self.progress = 0
     self.startedAt = Util.Now()
     self.sends = 0
-    ns:GetRealmData().lastFullScanStart = self.startedAt
-    Util.Print(L.SCAN_STARTED)
+    -- The 15 minutes start once data arrives (BeginProcessing): a scan
+    -- that never got any, say the AH closed straight away, doesn't hold
+    -- the next one back.
+    Util.Print(wait > 0 and L.SCAN_TRY_ANYWAY:format(Util.FormatDuration(wait)) or L.SCAN_STARTED)
     self:Send()
     self:StartPolling()
 end
@@ -257,6 +258,7 @@ local function BeginProcessing()
     end
     FullScan.state = "processing"
     FullScan.total = total
+    ns:GetRealmData().lastFullScanStart = FullScan.startedAt
     listings, pending = {}, {}
     ownNames = BuildOwnNames()
     ProcessChunk(0, total)

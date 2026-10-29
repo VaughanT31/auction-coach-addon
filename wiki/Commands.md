@@ -15,7 +15,7 @@
 | `/ac shop remove [item]` | Remove an item from your shopping list |
 | `/ac shop alerts` | Turn shopping list alerts on or off |
 | `/ac destroy` | What it has learned about milling, prospecting and disenchanting |
-| `/ac scan` | Scan the Auction House now (it must be open) |
+| `/ac scan` | Scan the Auction House now (it must be open), even inside the 15 minute wait |
 | `/ac status` | What the scanner is doing |
 | `/ac tooltip` | Turn the tooltip advice on or off |
 | `/ac sales` | Turn the sale messages on or off |
