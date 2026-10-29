@@ -251,6 +251,12 @@ function Rules:ForLink(link)
             if text then Add(text, "muted") end
         end
     end
+    -- Where it pays the most, period: on items you have, Shift on the rest.
+    -- Left out when the "sells for more on" line already names that realm.
+    local top = ns.Flips and (count > 0 or IsShiftKeyDown()) and ns.Flips.HighestRealm(key)
+    if top and not (better and better.realm == top.realm) then
+        Add(Phrases.HighestRealm(top), "muted")
+    end
 
     local vendor = Compat.GetVendorPrice(link)
     if vendor > 0 and afterCut <= vendor then

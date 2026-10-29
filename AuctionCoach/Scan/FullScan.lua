@@ -330,7 +330,24 @@ end)
 -- Auto scan: start shortly after the AH opens. If the 15 minute limit is
 -- still running, say so and start by itself once it ends, as long as the
 -- AH is still open.
+--
+-- Not when the desktop app's prices for this realm are fresh (1.0.7): like
+-- TSM, they're the prices, and only the player's own listings are searched,
+-- one by one, for undercuts (Scan/ItemCheck.lua, OwnCheck). /ac scan and the
+-- "Full scan even with fresh app prices" option still scan.
+local APP_FRESH = 2 * 3600
 local autoScanTimer
+local toldAppFresh
+
+-- When the desktop app's prices loaded for this realm (generatedAt), if
+-- they're fresh enough to stand in for a scan.
+function FullScan.FreshAppData()
+    local data = ns.Prices.ActiveData()
+    local realm = GetNormalizedRealmName()
+    if not (data and data.realmIndex and realm and data.realmIndex[realm]) then return nil end
+    if Util.Now() - data.generatedAt > APP_FRESH then return nil end
+    return data.generatedAt
+end
 
 local function CancelAutoScan()
     if autoScanTimer then
@@ -342,6 +359,15 @@ end
 ns.Events:On("AUCTION_HOUSE_SHOW", function()
     if not ns.db.settings.autoScan then return end
     CancelAutoScan()
+    local appAt = not ns.db.settings.scanWithApp and FullScan.FreshAppData()
+    if appAt then
+        if not toldAppFresh then
+            toldAppFresh = true
+            Util.Print(L.SCAN_APP_FRESH:format(Util.FormatAge(appAt)))
+        end
+        ns.OwnCheck:Request()
+        return
+    end
     local wait = FullScan:SecondsUntilAllowed()
     if wait > 0 and not FullScan:IsRunning() then
         Util.Print(L.SCAN_AUTO_LATER:format(Util.FormatDuration(wait)))

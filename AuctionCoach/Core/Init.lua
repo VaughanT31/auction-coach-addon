@@ -14,6 +14,8 @@ local DEFAULTS = {
         sellerStyle = "casual", -- "casual" | "active" | "camper"
         shareData = false,
         autoScan = true,
+        -- Full scan even when the desktop app's prices are fresh (Scan/FullScan.lua).
+        scanWithApp = false,
         tooltip = true,
         vendorGuard = true,
         -- Warn when the AH pays at least this much more than a vendor (copper).

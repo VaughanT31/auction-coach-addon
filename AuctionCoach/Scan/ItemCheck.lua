@@ -117,3 +117,102 @@ ns.Events:On("ITEM_SEARCH_RESULTS_UPDATED", function(_, itemKey)
     local id = itemKey.itemID .. ":" .. (itemKey.itemLevel or 0) .. ":" .. (itemKey.battlePetSpeciesID or 0)
     Util.Debounce("item:" .. id, 1, function() CheckItem(itemKey) end)
 end)
+
+-- ---------------------------------------------------------------------
+-- Own listings check (1.0.7)
+-- ---------------------------------------------------------------------
+-- When the desktop app's prices are fresh, the AH opening skips the full
+-- scan (Scan/FullScan.lua), so undercuts are found the way TSM does it:
+-- each item the player has listed is searched once, one at a time at the
+-- pace the game allows. The answers land in the handlers above, like any
+-- search. It stops when the AH closes, or as soon as anything else
+-- searches (the player, Blizzard's own UI or the Auctions tab column), so
+-- it never gets in the way.
+
+local OwnCheck = {}
+ns.OwnCheck = OwnCheck
+
+local STEP = 1.2
+local RECHECK_AFTER = 60 -- items searched this recently are skipped
+local SORTS = { { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false } }
+local queue, wanted, running, sending = {}, false, false, false
+
+local function Stop()
+    wipe(queue)
+    running = false
+end
+
+local function Ready()
+    return not C_AuctionHouse.IsThrottledMessageSystemReady or C_AuctionHouse.IsThrottledMessageSystemReady()
+end
+
+local function Step()
+    if not running then return end
+    if not ns.Compat.IsAuctionHouseOpen() then return Stop() end
+    local nextItem = queue[1]
+    if not nextItem then
+        running = false
+        return
+    end
+    if Ready() then
+        table.remove(queue, 1)
+        sending = true
+        pcall(C_AuctionHouse.SendSearchQuery, nextItem, SORTS, false)
+        sending = false
+    end
+    C_Timer.After(Ready() and STEP or 0.5, Step)
+end
+
+local function Start()
+    if running or not C_AuctionHouse.SendSearchQuery then return end
+    local now, seen = Util.Now(), {}
+    wipe(queue)
+    for i = 1, C_AuctionHouse.GetNumOwnedAuctions() do
+        local info = C_AuctionHouse.GetOwnedAuctionInfo(i)
+        if info and info.status == Enum.AuctionStatus.Active and info.itemKey then
+            local key = info.itemLink and Util.ItemKeyFromLink(info.itemLink)
+                or (info.itemKey.itemID and Util.SimpleItemKey(info.itemKey.itemID))
+            local price = key and ns.Prices:Get(key)
+            local fresh = price and price.minAt and now - price.minAt < RECHECK_AFTER
+            if key and not seen[key] and not fresh then
+                seen[key] = true
+                queue[#queue + 1] = info.itemKey
+            end
+        end
+    end
+    if #queue == 0 then return end
+    running = true
+    -- Blizzard's AH window searches as soon as it opens: let that go first.
+    C_Timer.After(2, Step)
+end
+
+-- Asked by the full scan when it skips: runs once the player's auctions
+-- arrive (Data/Inventory.lua asks for them when the AH opens).
+function OwnCheck:Request()
+    wanted = true
+end
+
+function OwnCheck:IsRunning()
+    return running
+end
+
+ns.Events:On("OWNED_AUCTIONS_UPDATED", function()
+    if wanted then
+        wanted = false
+        C_Timer.After(0.5, Start)
+    end
+end)
+
+ns.Events:On("AUCTION_HOUSE_CLOSED", function()
+    wanted = false
+    Stop()
+end)
+
+-- Any other search means someone else wants the AH: step aside.
+for _, name in ipairs({ "SendSearchQuery", "SendBrowseQuery", "SendSellSearchQuery" }) do
+    if C_AuctionHouse[name] then
+        hooksecurefunc(C_AuctionHouse, name, function()
+            if running and not sending then Stop() end
+        end)
+    end
+end

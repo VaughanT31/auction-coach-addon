@@ -16,7 +16,7 @@ Blizzard allows one full scan every 15 minutes, shared by all addons. If another
 
 **The desktop app updated its prices. Do I need to scan?**
 
-No. Type `/reload` (or log in) and the app's prices load for every character on your account. A scan still helps at the Auction House: it adds what's listed right now, while the app's prices can be an hour or two old.
+No. Type `/reload` (or log in) and the app's prices load for every character on your account. While they're under 2 hours old, opening the Auction House skips the full scan and only searches the items you have listed, for undercuts. `/ac scan` still scans whenever you want every live price, and the **Full scan even with fresh app prices** option scans every time, as before.
 
 **Windows says it protected my PC when I run the installer.**
 

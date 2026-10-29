@@ -541,6 +541,13 @@ function Phrases.BetterRealm(b, money)
     return L.BETTER_REALM:format(money(b.gain), b.realm, money(b.there), speed)
 end
 
+-- Which of your realms pays the most for it (Flips.HighestRealm).
+function Phrases.HighestRealm(top, money)
+    money = money or Util.FormatMoney
+    if top.here then return L.HIGHEST_HERE:format(money(top.price)) end
+    return L.HIGHEST_REALM:format(top.realm, money(top.price))
+end
+
 -- Why an item has no "sells for more on" line (Flips.BetterRealm's second
 -- result), for Shift on its tooltip. nil when there's nothing to explain.
 function Phrases.BetterRealmWhy(w, money)

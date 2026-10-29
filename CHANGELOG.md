@@ -2,9 +2,11 @@
 
 ## 1.0.7
 
+- **No more waiting on full scans with the desktop app:** when the app's prices for your realm are under 2 hours old, opening the Auction House no longer runs the full scan. The app's prices are used instead, and only the items you have listed are searched, one by one, to spot undercuts. It steps aside the moment you search something yourself. Without the app, or with older prices, it scans as before. `/ac scan` always scans, and the new **Full scan even with fresh app prices** option brings back the old way.
+- **Which realm pays the most:** on items you have (and any item with Shift held), the tooltip says which of your realms pays the most for it, whatever the margin, so you can pick where to sell. Not for reagents and other commodities, which cost the same on every realm.
 - **Other realms filters in the window:** pick an Auction House category (Weapons, Armor, Battle Pets and so on), the smallest profit and how many a day it must sell, right above the list. Profit and sales are the same settings as in the options. Each category shows its own best 100, so a busy category no longer pushes the rest out.
 - **Tooltips explain more:** on items you have, the tooltip now says why another of your realms isn't better (pays less than 25% more, sells too slowly, too many listed...) without holding Shift. Shift still shows it on everything else. Reagents and other commodities cost the same on every realm, so they never get this line.
-- **Scans:** a scan that never got any data, for example when the Auction House closed straight away, no longer starts the 15 minute wait. `/ac scan` now always asks Blizzard for a scan, even inside the 15 minutes: if Blizzard says no, the scan stops after a short wait and tells you.
+- **Scans:** a full scan that never got any data, for example when the Auction House closed straight away, no longer starts the 15 minute wait. `/ac scan` now always asks Blizzard for a scan, even inside the 15 minutes: if Blizzard says no, the scan stops after a short wait and tells you.
 
 ## 1.0.6
 

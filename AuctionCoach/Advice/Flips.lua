@@ -333,6 +333,30 @@ function Flips.BetterRealm(key, group, realmName)
     return nil, why or { reason = "NOREALMS" }
 end
 
+-- Which of the player's realms pays the most for an item, whatever the
+-- margin (1.0.7): { realm, here = it's this realm, price = after the AH
+-- cut }. nil for commodities (one price everywhere) or when fewer than two
+-- realms have a price.
+function Flips.HighestRealm(key)
+    if not ns.db or not key then return nil end
+    local data = ns.Prices.ActiveData()
+    if data and data.commodities and data.commodities[key] then return nil end
+    local best, priced = nil, 0
+    for _, r in ipairs(Flips.PlayerRealms()) do
+        local price = ns.Prices:Get(key, r.group, r.realm)
+        local resell = price and ResellPrice(price)
+        if resell and resell > 0 then
+            priced = priced + 1
+            if not best or resell > best.resell then
+                best = { realm = r.realm, resell = resell, here = r.group == ns.realmGroup }
+            end
+        end
+    end
+    if not best or priced < 2 then return nil end
+    best.price = Util.AfterCut(best.resell)
+    return best
+end
+
 -- Your items (this character's bags, bank and reagent bank, and the warband
 -- bank) that sell for clearly more on another of your realms, as rows for
 -- the Other realms view: { key, count, price = here each, resell = there
