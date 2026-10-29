@@ -359,12 +359,24 @@ function Flips.HighestRealm(key)
         if resell and resell > 0 then
             priced = priced + 1
             if not best or resell > best.resell then
-                best = { realm = r.realm, resell = resell, here = r.group == ns.realmGroup }
+                best = { realm = r.realm, resell = resell, here = r.group == ns.realmGroup,
+                         salesPerDay = price.salesPerDay or 0, listed = price.listed or 0 }
             end
         end
     end
     if not best or priced < 2 then return nil end
     best.price = Util.AfterCut(best.resell)
+    -- Why it isn't the realm to move it to (1.0.9), when that's down to how
+    -- it sells there rather than the price: the "sells for more on" line
+    -- names a slower-paying realm, and this says why.
+    if not best.here then
+        local minSales = ns.db.settings.flipMinSales or 1
+        if best.salesPerDay < minSales then
+            best.slow, best.need = true, minSales
+        elseif ns.Deals.ResellChance(best.salesPerDay, best.listed) < MIN_CHANCE then
+            best.crowded = true
+        end
+    end
     return best
 end
 

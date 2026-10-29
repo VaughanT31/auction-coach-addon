@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.9
+
+- **Tooltip: why the realm that pays the most isn't the one to move it to.** The *Sells for more on* line picks a realm where the item also sells often enough and isn't buried in listings, so it can name a different realm from the *pays the most* line. That line now says why, for example *Quel'Thalas pays the most (6,650g each after the AH cut), but it only sells 2 a day there, under your 5*, or that too many are listed there to sell soon.
+
 ## 1.0.8
 
 - **What you paid:** Auction Coach now remembers what you pay for everything you buy at the Auction House, shopping list or not. An item's tooltip says what you paid for the ones you still have (the average, when you bought several) and how its price has moved since, up or down, so a slow flip like a raid BoE shows whether it's gaining or losing value. Hold Shift to see your last 5 buys of it. Purchases from before this version aren't known.

@@ -566,6 +566,11 @@ end
 function Phrases.HighestRealm(top, money)
     money = money or Util.FormatMoney
     if top.here then return L.HIGHEST_HERE:format(money(top.price)) end
+    if top.slow then
+        local sales = top.salesPerDay < 1 and "<1" or BreakUpLargeNumbers(math.floor(top.salesPerDay + 0.5))
+        return L.HIGHEST_REALM_SLOW:format(top.realm, money(top.price), sales, top.need)
+    end
+    if top.crowded then return L.HIGHEST_REALM_CROWDED:format(top.realm, money(top.price), top.listed) end
     return L.HIGHEST_REALM:format(top.realm, money(top.price))
 end
 
