@@ -11,6 +11,7 @@
 | `/ac gold` | Your gold and AH sales over time |
 | `/ac gph` | Gold per hour for a farming session (`/ac gph start`, `pause`, `stop`) |
 | `/ac repost` | Open the repost list at the Auction House |
+| `/ac sell` | See and change your sell lists |
 | `/ac shop add [item] 12.5` | Add an item to your shopping list with the most you'll pay |
 | `/ac shop remove [item]` | Remove an item from your shopping list |
 | `/ac shop alerts` | Turn shopping list alerts on or off |

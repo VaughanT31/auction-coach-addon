@@ -29,6 +29,8 @@ Plan a sale on one realm, move the items through the Warband Bank, and post them
 3. Log in on a character on the realm you're selling on and open the bank there. The panel lists the items in the Warband Bank with a **Take out** button.
 4. Go to the Auction House. They're on the repost list, one click each to post, and each one leaves the sell list once it's posted.
 
+**See or change your lists:** open **Deals**, then **Sell lists**, or type `/ac sell`. Each realm's items are listed with how many, what they sell for there and how many you have. To add any item yourself, even one that doesn't meet your Other realms settings, shift-click it into the box at the bottom, pick the realm and click **Add**. Leave **How many** empty for all you have. Right-click a row to remove it.
+
 > The panel only opens at a bank, and only when you have a sell list. It works with ElvUI and other bag addons. To turn it off, untick **Sell lists at the bank** in the options.
 
 ---

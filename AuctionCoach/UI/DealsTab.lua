@@ -1,10 +1,12 @@
--- Auction Coach - "Deals" tab, four views:
+-- Auction Coach - "Deals" tab, five views:
 --   Deals         items listed well below their usual price on this realm
 --   Other realms  cross-realm flips between the player's realms (Advice/Flips.lua)
 --   Shopping      the shopping list, with what each item is listed at now
 --                 (Data/Shopping.lua); items are added from the bar below
 --   Craft         craft or sell: your recipes' profit over their materials
 --                 (Advice/Crafting.lua)
+--   Sell lists    what's planned for your other realms (Data/SellLists.lua):
+--                 add any item from the bar below, right-click to remove
 -- At the AH, clicking a row opens that item's listings. Buying is always
 -- left to the player.
 
@@ -17,7 +19,7 @@ ns.DealsTab = DealsTab
 local ROW_HEIGHT = 22
 -- Older than this, the "prices are old" hint replaces the empty message.
 local OLD_AFTER = 2 * 3600
-local MODES = { "deals", "flips", "shopping", "craft" }
+local MODES = { "deals", "flips", "shopping", "craft", "sell" }
 local MODE_WIDTH, MODE_HEIGHT = 86, 20
 local ADD_BAR_HEIGHT = 30
 
@@ -36,6 +38,7 @@ local HEADERS = {
     flips = { price = "FLIPS_COL_BUY", usual = "FLIPS_COL_SELL", profit = "DEALS_COL_PROFIT", speed = "SELL_COL_SPEED" },
     shopping = { price = "SHOP_COL_LOWEST", usual = "SHOP_COL_MAX", profit = "SHOP_COL_STATUS", speed = nil },
     craft = { price = "CRAFT_COL_COST", usual = "CRAFT_COL_VALUE", profit = "DEALS_COL_PROFIT", speed = "SELL_COL_SPEED" },
+    sell = { price = "SELLV_COL_COUNT", usual = "SELLV_COL_THERE", profit = "SELLV_COL_HAVE", speed = "SELL_COL_SPEED" },
 }
 
 local STATUS_COLORS = {
@@ -73,6 +76,7 @@ local function TooltipLines(row)
     if row.kind == "flips" then return Phrases.Flip(row.entry) end
     if row.kind == "shopping" then return Phrases.Shop(row.entry) end
     if row.kind == "craft" then return Phrases.Craft(row.entry) end
+    if row.kind == "sell" then return Phrases.SellListRow(row.entry) end
     return Phrases.Deal(row.entry)
 end
 
@@ -94,7 +98,7 @@ local function ShowRowTooltip(row)
     if row.kind == "shopping" then
         GameTooltip:AddLine(L.SHOP_MENU_TIP, 0.6, 0.8, 1, true)
     end
-    if Compat.IsAuctionHouseOpen() and row.kind ~= "flips" then
+    if Compat.IsAuctionHouseOpen() and row.kind ~= "flips" and row.kind ~= "sell" then
         GameTooltip:AddLine(L.DEALS_SUB_AH, 0.6, 0.8, 1, true)
     end
     if row.kind == "flips" and entry.own then
@@ -145,11 +149,18 @@ local function CreateRow(parent, index)
             if self.kind == "shopping" then
                 GameTooltip:Hide()
                 ns.ShoppingEditor:RowMenu(self, entry)
+            elseif self.kind == "sell" and MenuUtil and MenuUtil.CreateContextMenu then
+                GameTooltip:Hide()
+                MenuUtil.CreateContextMenu(self, function(_, root)
+                    root:CreateTitle(Util.NamedLink(entry.key) or entry.key)
+                    root:CreateButton(L.SELLV_REMOVE, function() ns.SellLists:Remove(entry.group, entry.key) end)
+                end)
             end
             return
         end
-        -- Flips are bought on another realm, so there is nothing to open here.
-        if self.kind ~= "flips" and Compat.ShowAtAuctionHouse(entry.key, Util.NamedLink(entry.key), entry.lowest or entry.price) then
+        -- Flips are bought on another realm, so there is nothing to open here,
+        -- and sell list items are yours already.
+        if self.kind ~= "flips" and self.kind ~= "sell" and Compat.ShowAtAuctionHouse(entry.key, Util.NamedLink(entry.key), entry.lowest or entry.price) then
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
         end
     end)
@@ -202,6 +213,12 @@ local function SetRow(row, entry, kind)
         row.usual:SetText(Util.FormatMoneyIcons(entry.value))
         row.profit:SetText((entry.profit > 0 and "|cff66ff66" or "|cffff7070")
             .. Phrases.SignedMoney(entry.profit, Util.FormatMoneyIcons) .. "|r")
+        row.speed:SetText(Speed(entry.salesPerDay))
+    elseif kind == "sell" then
+        row.name:SetText(name)
+        row.price:SetText(BreakUpLargeNumbers(entry.n))
+        row.usual:SetText(entry.there and Util.FormatMoneyIcons(entry.there) or "|cff9d9d9d-|r")
+        row.profit:SetText(BreakUpLargeNumbers(entry.have))
         row.speed:SetText(Speed(entry.salesPerDay))
     else
         if entry.own and OnSellList(entry) then name = name .. " |cff99ccff" .. L.SELL_TAG .. "|r" end
@@ -374,6 +391,98 @@ function UpdateFlipBar()
 end
 
 -- ---------------------------------------------------------------------
+-- Sell lists add bar (1.0.12): any item, how many, which realm
+-- ---------------------------------------------------------------------
+
+-- The player's other realms: { { group, realm } }.
+local function OtherRealms()
+    local others = {}
+    for _, r in ipairs(ns.Flips.PlayerRealms()) do
+        if r.group ~= ns.realmGroup then others[#others + 1] = r end
+    end
+    return others
+end
+
+local function UpdateSellBar(bar)
+    local others = OtherRealms()
+    local chosen
+    for _, r in ipairs(others) do
+        if r.group == bar.group then chosen = r end
+    end
+    chosen = chosen or others[1]
+    bar.group = chosen and chosen.group or nil
+    bar.realm:SetText(L.SELLV_ADD_REALM:format(chosen and chosen.realm or "-"))
+    bar.realm:SetEnabled(chosen ~= nil)
+end
+
+local function AddToSellList(bar)
+    local text = bar.item:GetText()
+    local key = Util.ItemKeyFromLink(text)
+    local count = tonumber(bar.count:GetText()) or (key and ns.Inventory:GetCount(key)) or 0
+    if not key or not bar.group or count <= 0 then
+        bar.hint:SetText("|cffff8080" .. L.SELLV_ADD_INVALID .. "|r")
+        return
+    end
+    ns.db.links[key] = ns.db.links[key] or text
+    ns.SellLists:Add(bar.group, key, math.floor(count))
+    Util.Print(L.SELLV_ADDED:format(text, ns.SellLists.RealmOf(bar.group)))
+    bar.item:SetText("")
+    bar.count:SetText("")
+    bar.item:ClearFocus()
+    bar.count:ClearFocus()
+    bar.hint:SetText("")
+end
+
+local function BuildSellBar(panel)
+    local bar = CreateFrame("Frame", nil, panel)
+    bar:SetHeight(ADD_BAR_HEIGHT - 6)
+    bar:SetPoint("BOTTOMLEFT", 0, 0)
+    bar:SetPoint("BOTTOMRIGHT", 0, 0)
+
+    bar.label = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bar.label:SetPoint("LEFT", 4, 0)
+    bar.label:SetText(L.SELLV_ADD_LABEL)
+
+    bar.item = EditBox(bar, 230, L.SHOP_ADD_ITEM)
+    bar.item:SetPoint("LEFT", bar.label, "RIGHT", 8, 0)
+    bar.count = EditBox(bar, 70, L.SELLV_ADD_COUNT)
+    bar.count:SetPoint("LEFT", bar.item, "RIGHT", 6, 0)
+    bar.realm = ns.Skin.Button(bar, nil, 170, 20)
+    bar.realm:SetPoint("LEFT", bar.count, "RIGHT", 6, 0)
+    bar.realm:SetScript("OnClick", function(self)
+        if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            root:CreateTitle(L.SELLV_ADD_REALM_TITLE)
+            for _, r in ipairs(OtherRealms()) do
+                root:CreateRadio(r.realm, function() return bar.group == r.group end, function()
+                    bar.group = r.group
+                    UpdateSellBar(bar)
+                end)
+            end
+        end)
+    end)
+    bar.add = ns.Skin.Button(bar, L.SELLV_ADD_BUTTON, 60, 20)
+    bar.add:SetPoint("LEFT", bar.realm, "RIGHT", 6, 0)
+    bar.add:SetScript("OnClick", function() AddToSellList(bar) end)
+
+    bar.item:SetScript("OnEnterPressed", function() bar.count:SetFocus() end)
+    bar.item:SetScript("OnTabPressed", function() bar.count:SetFocus() end)
+    bar.count:SetScript("OnEnterPressed", function() AddToSellList(bar) end)
+
+    bar.hint = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    bar.hint:SetPoint("LEFT", bar.add, "RIGHT", 8, 0)
+    bar.hint:SetPoint("RIGHT", -4, 0)
+    bar.hint:SetJustifyH("LEFT")
+    bar.hint:SetWordWrap(false)
+
+    hooksecurefunc("ChatEdit_InsertLink", function(link)
+        if link and bar.item:HasFocus() then bar.item:SetText(link) end
+    end)
+
+    panel.sellBar = bar
+end
+
+-- ---------------------------------------------------------------------
 -- Other realms filters (1.0.7): category, smallest profit, sales a day
 -- ---------------------------------------------------------------------
 
@@ -470,7 +579,8 @@ local function SetMode(panel, newMode)
     end
     panel.addBar:SetShown(mode == "shopping")
     panel.flipBar:SetShown(mode == "flips")
-    local bar = mode == "shopping" or mode == "flips"
+    panel.sellBar:SetShown(mode == "sell")
+    local bar = mode == "shopping" or mode == "flips" or mode == "sell"
     panel.scroll:SetPoint("BOTTOMRIGHT", -26, bar and ADD_BAR_HEIGHT or 4)
     if panel.content then panel.scroll:SetVerticalScroll(0) end
 end
@@ -533,6 +643,7 @@ local function Build(panel)
 
     BuildAddBar(panel)
     BuildFlipBar(panel)
+    BuildSellBar(panel)
     SetMode(panel, mode)
 end
 
@@ -576,11 +687,31 @@ local function OwnThenFlips(own, flips)
     return all
 end
 
+-- Sell list rows, each realm's under its heading.
+local function SellEntries(rows)
+    local entries, last = {}, nil
+    for _, row in ipairs(rows) do
+        if row.realm ~= last then
+            last = row.realm
+            entries[#entries + 1] = { heading = L.SELLV_GROUP:format(row.realm) }
+        end
+        entries[#entries + 1] = row
+    end
+    return entries
+end
+
 -- title, sub, empty text, entries for the current mode.
 local function ModeContent()
     local s = ns.db.settings
     local minProfit = Util.FormatMoneyIcons(s.dealMinProfit)
-    if mode == "flips" then
+    if mode == "sell" then
+        local rows = ns.SellLists:Rows()
+        local empty = ""
+        if #rows == 0 then
+            empty = #OtherRealms() == 0 and L.FLIPS_NEED_REALMS or L.SELLV_EMPTY
+        end
+        return L.SELLV_TITLE:format(#rows), L.SELLV_SUB, empty, SellEntries(rows)
+    elseif mode == "flips" then
         local list, yours = ns.Flips:List(), ns.Flips:YourItems()
         -- The best 100 of the category picked, of each list.
         local flips = ns.Flips.InCategory(list.items, s.flipCategory)
@@ -631,6 +762,8 @@ local function Refresh(panel, reason)
     panel.sub:SetText(sub)
     panel.empty:SetText(empty)
 
+    if mode == "sell" then UpdateSellBar(panel.sellBar) end
+
     -- Forget ticks on flips that have left the list.
     if mode == "flips" then
         UpdateFilterBar(panel)
@@ -668,3 +801,5 @@ ns.MainWindow:AddTab({ name = L.TAB_DEALS, Build = Build, Refresh = Refresh })
 ns.MainWindow:RefreshOn("AC_LIVE_PRICE")
 ns.MainWindow:RefreshOn("AC_SHOPPING_CHANGED")
 ns.MainWindow:RefreshOn("AC_RECIPES_CHANGED")
+ns.MainWindow:RefreshOn("AC_SELL_LISTS_CHANGED")
+ns:RegisterCommand("sell", function() DealsTab:ShowMode("sell") end, L.HELP_SELL)

@@ -6,6 +6,10 @@
 
 No, never. It only gives advice. Every click is yours.
 
+**It says my auction is the cheapest, but others are at the same price.**
+
+Nobody is lower, so there's nothing to undercut, but a buyer could take any of the tied listings first. The Auctions tab says **tied for cheapest** and how many others there are. It knows once the item has been searched or fully scanned in the last 15 minutes.
+
 **Do I need the desktop app?**
 
 No. The addon works on its own from its own Auction House scans. The app adds price history and sales estimates, which make the advice much better.

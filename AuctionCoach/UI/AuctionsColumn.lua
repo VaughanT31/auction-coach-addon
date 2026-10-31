@@ -100,13 +100,18 @@ local function Describe(info)
     if standing == "UNDERCUT" then
         d.by = unit - price.min
         d.cheaper = CheaperCount(key, unit, d.commodity)
+    elseif standing == "CHEAPEST" then
+        d.tied = ns.Auctions.TiedWith(key, unit)
     end
     return d
 end
 
 local function CellText(d)
     if pending[d.key] then return GREY .. L.AHCOL_CHECKING .. "|r" end
-    if d.standing == "CHEAPEST" then return GREEN .. L.AHCOL_CHEAPEST .. "|r" end
+    if d.standing == "CHEAPEST" then
+        if (d.tied or 0) > 0 then return GREEN .. L.AHCOL_TIED:format(BreakUpLargeNumbers(d.tied)) .. "|r" end
+        return GREEN .. L.AHCOL_CHEAPEST .. "|r"
+    end
     if d.standing == "UNDERCUT" then
         local by = Util.FormatMoney(d.by)
         if d.cheaper and d.cheaper > 0 then
@@ -144,8 +149,8 @@ function Cell:OnEnter()
     if not d then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     if d.standing == "CHEAPEST" then
-        GameTooltip:SetText(L.AHCOL_CHEAPEST, 0.4, 0.87, 0.47)
-        GameTooltip:AddLine(L.AUCTIONS_WHY_KEEP, 1, 1, 1, true)
+        GameTooltip:SetText(CellText(d), 0.4, 0.87, 0.47)
+        GameTooltip:AddLine(ns.Phrases.Keep(d.tied), 1, 1, 1, true)
     elseif d.standing == "UNDERCUT" then
         GameTooltip:SetText(L.AHCOL_TIP_UNDERCUT:format(Util.FormatMoney(d.by)), 1, 0.4, 0.4)
         GameTooltip:AddLine(L.AHCOL_TIP_PRICES:format(Util.FormatMoney(d.lowest), Util.FormatMoney(d.unit)), 1, 1, 1, true)

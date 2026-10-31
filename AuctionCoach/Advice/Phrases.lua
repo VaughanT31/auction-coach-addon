@@ -18,6 +18,22 @@ function Phrases.YouHave(count, totalAfterCut)
     return L.TT_YOU_HAVE:format(BreakUpLargeNumbers(count), Util.FormatMoney(totalAfterCut))
 end
 
+-- Why a listing can stay: alone at the lowest price, tied with others, or
+-- not looked at lately (tied = nil), when all that's known is nobody's lower.
+function Phrases.Keep(tied)
+    if not tied then return L.AUCTIONS_WHY_KEEP_UNSEEN end
+    if tied > 0 then return L.AUCTIONS_WHY_KEEP_TIED:format(BreakUpLargeNumbers(tied)) end
+    return L.AUCTIONS_WHY_KEEP
+end
+
+-- Why a listing can stay: alone at the lowest price, tied with others, or
+-- not looked at lately (tied = nil), when all that's known is nobody's lower.
+function Phrases.Keep(tied)
+    if not tied then return L.AUCTIONS_WHY_KEEP_UNSEEN end
+    if tied > 0 then return L.AUCTIONS_WHY_KEEP_TIED:format(BreakUpLargeNumbers(tied)) end
+    return L.AUCTIONS_WHY_KEEP
+end
+
 -- What you paid (Shopping.PaidFor) against what one is worth now.
 function Phrases.Paid(paid, worth)
     local change = worth / paid.each - 1
@@ -595,6 +611,17 @@ end
 
 -- Why a cross-realm flip is worth it, from Flips:List. Your own items
 -- (Flips:YourItems) have nothing to buy.
+-- One row of the Sell lists view, for its tooltip.
+function Phrases.SellListRow(row, money)
+    money = money or Util.FormatMoney
+    local lines = { row.there and L.SELLV_TIP_THERE:format(money(row.there), row.realm)
+        or L.SELLV_TIP_NO_PRICE:format(row.realm) }
+    local wait = Phrases.SellTime(row.salesPerDay, row.listed, row.realm)
+    if wait then lines[#lines + 1] = wait end
+    lines[#lines + 1] = L.SELLV_TIP_HOW:format(row.realm)
+    return lines
+end
+
 -- How long it takes to sell on a realm (1.0.10): everything listed there
 -- now plus yours, at the pace it sells. "Sells 30 a day" with 120 listed
 -- is days, not hours. nil without a sales pace.

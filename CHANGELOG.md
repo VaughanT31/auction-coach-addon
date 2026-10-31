@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.12
+
+- **See and change your sell lists:** the Deals tab has a new **Sell lists** view (or type `/ac sell`) showing everything planned for your other realms, by realm, with how many, what it sells for there and how many you have. Add any item yourself: shift-click it into the box at the bottom, pick the realm and click **Add**, even when it doesn't meet your Other realms settings. Right-click a row to remove it. The Sell lists panel at the bank then prompts you to put it in and take it out, as usual.
+- **Tied for cheapest:** when other sellers are at exactly your price, the Auctions tab and the Status column on Blizzard's Auctions tab now say *tied for cheapest* and how many, instead of *still the cheapest* with the promise that yours sells next. A full scan now tells ties too, not only a search of the item.
+
 ## 1.0.11
 
 - **Enchants on the Craft list:** enchanting recipes now show, priced as the scroll they make on Enchanting Vellum (the scroll is what sells on the AH), at the quality you make and with concentration, like any other recipe. The game doesn't say which scroll an enchant makes, so Auction Coach now carries that list itself. Open your Enchanting window once on each enchanter so their enchants are read. The vellum itself isn't counted in the cost.

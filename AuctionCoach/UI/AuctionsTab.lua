@@ -44,6 +44,8 @@ local function AdviceText(entry)
     if entry.action == "REPOST" then
         return L.AUCTIONS_REPOST:format(Util.FormatMoneyIcons(entry.newPrice))
     end
+    if entry.action == "KEEP" and (entry.tied or 0) > 0 then return L.AUCTIONS_KEEP_TIED end
+    if entry.action == "KEEP" and (entry.tied or 0) > 0 then return L.AUCTIONS_KEEP_TIED end
     return L["AUCTIONS_" .. entry.action]
 end
 
@@ -60,6 +62,8 @@ local function WhyText(entry)
             return L.AUCTIONS_WHY_WAIT_HOLD:format(math.floor((1 - s.lowest / s.usual) * 100 + 0.5))
         end
         return L.AUCTIONS_WHY_WAIT_CONTESTED
+    elseif action == "KEEP" then
+        return ns.Phrases.Keep(entry.tied)
     end
     return L["AUCTIONS_WHY_" .. action]
 end

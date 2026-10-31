@@ -73,6 +73,8 @@ local function ResellPrice(price)
     return resell
 end
 
+Flips.ResellPrice = ResellPrice
+
 -- Why a pair isn't a flip, in the order the checks run: the further an
 -- item got, the closer it was. The Other realms view counts these when it
 -- has nothing to show, so an empty list says why.

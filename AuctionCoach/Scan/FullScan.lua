@@ -152,9 +152,16 @@ local function Finish(stoppedAt)
             auctions = #list,
         }
     end
+    -- Other sellers' listings of what the player owns, as a search of each
+    -- would give: how many are cheaper or tied. Not after a partial scan.
+    local now = Util.Now()
+    if not partial then
+        for key in pairs(ns.Inventory:GetTotals()) do
+            ns.SellChance:SetLadder(key, listings[key] or {}, now)
+        end
+    end
     listings, pending, closed = nil, nil, nil
 
-    local now = Util.Now()
     local count = ns.Prices:RecordFullScan(ns.realmGroup, results, now, partial)
 
     -- Competition samples only for items the player owns.

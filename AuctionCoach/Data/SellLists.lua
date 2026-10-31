@@ -82,6 +82,31 @@ function SellLists:Count(group)
     return n
 end
 
+-- Every list, for the Sell lists view: rows { key, group, realm, n, have,
+-- there = after the AH cut each, or nil, salesPerDay, listed }, by realm name
+-- and then item key, so the view stays in the same order.
+function SellLists:Rows()
+    local rows = {}
+    for group, list in pairs(Lists()) do
+        local realm = SellLists.RealmOf(group)
+        for key, entry in pairs(list) do
+            local price = ns.Prices:Get(key, group, realm)
+            local resell = price and ns.Flips.ResellPrice(price)
+            rows[#rows + 1] = {
+                key = key, group = group, realm = realm, n = entry.n, from = entry.from,
+                have = ns.Inventory:GetCount(key),
+                there = resell and resell > 0 and Util.AfterCut(resell) or nil,
+                salesPerDay = price and price.salesPerDay, listed = price and price.listed,
+            }
+        end
+    end
+    table.sort(rows, function(a, b)
+        if a.realm ~= b.realm then return a.realm < b.realm end
+        return a.key < b.key
+    end)
+    return rows
+end
+
 -- A post on this realm: what's posted comes off its list (Data/Sales.lua).
 function SellLists:Posted(key, quantity)
     local list = Lists()[ns.realmGroup]

@@ -7,7 +7,8 @@
 -- of the same item at the same price are one entry.
 --
 -- Each entry gets an action:
---   KEEP    still the cheapest (or tied), nothing to do
+--   KEEP    still the cheapest, nothing to do (entry.tied: how many others
+--           are listed at exactly the same price)
 --   REPOST  someone listed lower: cancel and post again at a new price
 --   CANCEL  undercut, and a vendor now pays more than the AH would: cancel,
 --           collect it from the mail and sell it to a vendor
@@ -53,6 +54,32 @@ function Auctions.Standing(key, unit, posts)
     return "UNDERCUT", price
 end
 
+-- How many of other sellers' items are listed at exactly this price, from
+-- the last look at the item's listings. nil when it hasn't been looked at
+-- in the last 15 minutes, so a tie can't be told from being alone.
+function Auctions.TiedWith(key, unit)
+    local rows = ns.SellChance:GetLadder(key)
+    if not rows then return nil end
+    local tied = 0
+    for _, row in ipairs(rows) do
+        if row[1] == unit then tied = tied + row[2] end
+    end
+    return tied
+end
+
+-- How many of other sellers' items are listed at exactly this price, from
+-- the last look at the item's listings. nil when it hasn't been looked at
+-- in the last 15 minutes, so a tie can't be told from being alone.
+function Auctions.TiedWith(key, unit)
+    local rows = ns.SellChance:GetLadder(key)
+    if not rows then return nil end
+    local tied = 0
+    for _, row in ipairs(rows) do
+        if row[1] == unit then tied = tied + row[2] end
+    end
+    return tied
+end
+
 local function Advise(entry, posts)
     local standing, price = Auctions.Standing(entry.key, entry.unit, posts)
     local s = ns.Rules:SuggestPrice(entry.key, ns.db.links[entry.key])
@@ -65,6 +92,8 @@ local function Advise(entry, posts)
 
     if standing == "CHEAPEST" then
         entry.action = "KEEP"
+        entry.tied = Auctions.TiedWith(entry.key, entry.unit)
+        entry.tied = Auctions.TiedWith(entry.key, entry.unit)
     elseif s.action == "VENDOR" and s.vendor and s.vendor > 0 then
         entry.action = "CANCEL"
         entry.vendorGold = s.vendor * entry.quantity
