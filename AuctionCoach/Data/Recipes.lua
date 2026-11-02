@@ -14,6 +14,8 @@
 --       bq quality this character makes with the cheapest materials
 --       cq quality with concentration, when that's higher
 --       cc concentration it costs
+--       mc, rs, ing  this character's chance (0 to 1) of multicraft,
+--          resourcefulness and ingenuity on it (Advice/CraftStats.lua)
 --       v  Recipes.VERSION when read
 --     },
 --   }
@@ -117,6 +119,7 @@ function Recipes.Read(recipeID, professionName)
     else
         Recipes.ReadQuality(recipeID, recipe)
     end
+    recipe.mc, recipe.rs, recipe.ing = ns.CraftStats.Read(Call(trade.GetCraftingOperationInfo, recipeID, {}, nil, false))
     return recipe
 end
 

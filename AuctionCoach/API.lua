@@ -1,4 +1,4 @@
--- Auction Coach - public API for other addons (CraftSim, WeakAuras, ...).
+-- Auction Coach - public API for other addons (crafting addons, WeakAuras, ...).
 --
 -- All prices are copper per item. Functions return nil when Auction Coach
 -- has no data for the item (never 0, so callers can fall back cleanly).

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0
+
+- **Profit now counts your crafting stats:** the Craft list, Today's Plan, tooltips and the profit under each recipe now include what multicraft and resourcefulness add on average, with your character's own chances on that recipe. Hover for how much each adds. The concentration line also counts ingenuity's refund. A recipe picks up your stats the next time you open that profession's window on that character. What a proc is worth is an average, not a promise.
+- **Gold per hour by profession:** finished farming sessions now count for the gathering profession most of their loot came from (Herbalism, Mining, Skinning or Fishing, or Mixed farming). The button at the bottom of the Gold per hour window now goes through Session, History and **By profession**, your own gold per hour for each one, best first. Sessions from before this version aren't counted.
+
 ## 1.0.12
 
 - **See and change your sell lists:** the Deals tab has a new **Sell lists** view (or type `/ac sell`) showing everything planned for your other realms, by realm, with how many, what it sells for there and how many you have. Add any item yourself: shift-click it into the box at the bottom, pick the realm and click **Add**, even when it doesn't meet your Other realms settings. Right-click a row to remove it. The Sell lists panel at the bank then prompts you to put it in and take it out, as usual.

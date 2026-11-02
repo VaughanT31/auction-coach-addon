@@ -9,6 +9,10 @@ The **Craft** view on the Deals tab lists every recipe your characters know, wit
 ![Material cost against what each craft sells for](https://ctrlshiftzed.com/assets/img/shots/ac-craft.webp)
 *Material cost against what each craft sells for*
 
+### Multicraft, resourcefulness and ingenuity
+
+Profit includes what multicraft and resourcefulness add on average, using your character's own chances on that recipe. Hover a row or the profit under a recipe to see how much each adds. The concentration line counts ingenuity's refund too. Your stats are read when you open that profession's window on that character, and what a proc is worth is an average, not a promise.
+
 ### Cheapest materials
 
 Beside the profession window, Auction Coach shows each quality you can make with the cheapest mix of material qualities that gets there, its cost and profit. **Use** fills the recipe in. The **+** on a row adds that craft's materials to your shopping list, less what you already have.

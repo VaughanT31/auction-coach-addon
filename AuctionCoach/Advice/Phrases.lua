@@ -75,7 +75,7 @@ function Phrases.CraftTooltip(c)
     if c.profit > 0 then
         return L.CRAFT_TT_PROFIT:format(who, Util.FormatMoney(c.cost), Util.FormatMoney(c.profit))
     end
-    return L.CRAFT_TT_LOSS:format(who, Util.FormatMoney(c.cost), Util.FormatMoney(c.value))
+    return L.CRAFT_TT_LOSS:format(who, Util.FormatMoney(c.cost), Util.FormatMoney(c.value + (c.extra or 0) + (c.saved or 0)))
 end
 
 -- Why, for the Deals tab's craft view.
@@ -86,6 +86,8 @@ function Phrases.Craft(c, money)
         L.CRAFT_COST:format(money(c.cost)),
         c.quality and L.CRAFT_VALUE_QUALITY:format(c.quality, money(c.value)) or L.CRAFT_VALUE:format(money(c.value)),
     }
+    if (c.extra or 0) > 0 then lines[#lines + 1] = L.CRAFT_MULTICRAFT:format(money(c.extra)) end
+    if (c.saved or 0) > 0 then lines[#lines + 1] = L.CRAFT_RESOURCEFUL:format(money(c.saved)) end
     if c.profit > 0 then
         lines[#lines + 1] = L.CRAFT_VERDICT_CRAFT:format(money(c.profit))
     else

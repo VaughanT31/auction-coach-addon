@@ -3,6 +3,7 @@
 --   Start / Pause / Resume / Stop   by hand only (Data/Session.lua)
 --   Now       time, gold per hour, gold looted, items' value, the best items
 --   History   your last sessions: when, where, how long, gold per hour
+--   By profession  those sessions added up per gathering profession
 --   Minimise  the button beside the X shrinks it to the numbers only (0.20)
 -- Updates every second while it's open and a session is running.
 
@@ -23,7 +24,11 @@ local GREY = "|cff999999"
 
 local frame, big, lines, rows, startButton, pauseButton, stopButton, historyButton, emptyText
 local buttons
-local showHistory = false
+-- The list under the numbers: "now", "history" or "professions". The button
+-- goes through them in turn and is named for the next one.
+local listView = "now"
+local NEXT_VIEW = { now = "history", history = "professions", professions = "now" }
+local VIEW_LABEL = { now = "GPH_NOW", history = "GPH_HISTORY", professions = "GPH_BY_PROFESSION" }
 local ticker
 
 local function Clock(seconds)
@@ -150,10 +155,10 @@ local function Create()
         local t = ns.Session:Stop()
         if t then Util.Print(L.GPH_STOPPED:format(Clock(t.seconds), Util.FormatMoney(t.total), t.perHour and Util.FormatMoney(t.perHour) or "-")) end
     end)
-    historyButton = Skin.Button(frame, L.GPH_HISTORY, 74, 22)
+    historyButton = Skin.Button(frame, L.GPH_HISTORY, 88, 22)
     historyButton:SetPoint("BOTTOMRIGHT", -PAD, 12)
     historyButton:SetScript("OnClick", function()
-        showHistory = not showHistory
+        listView = NEXT_VIEW[listView]
         Window:Refresh()
     end)
     buttons = { startButton, pauseButton, stopButton, historyButton }
@@ -189,7 +194,7 @@ function Window:Refresh()
     pauseButton:SetEnabled(session ~= nil)
     pauseButton:SetText(session and not running and L.GPH_RESUME or L.GPH_PAUSE)
     stopButton:SetEnabled(session ~= nil)
-    historyButton:SetText(showHistory and L.GPH_NOW or L.GPH_HISTORY)
+    historyButton:SetText(L[VIEW_LABEL[NEXT_VIEW[listView]]])
 
     local t = session and ns.Session:Totals(session)
     if t then
@@ -205,7 +210,17 @@ function Window:Refresh()
     end
 
     local list = {}
-    if showHistory then
+    if listView == "professions" then
+        frame.listTitle:SetText(L.GPH_RATES_TITLE)
+        for _, row in ipairs(ns.Session:ProfessionRates()) do
+            if #list >= LIST_ROWS then break end
+            list[#list + 1] = {
+                left = L.GPH_RATE_ROW:format(L["GPH_PROF_" .. row.prof] or row.prof, row.sessions, GREY .. Clock(row.seconds) .. "|r"),
+                right = L.GPH_PER_HOUR_SHORT:format(Util.FormatMoney(row.perHour)),
+            }
+        end
+        emptyText:SetText(#list == 0 and L.GPH_NO_RATES or "")
+    elseif listView == "history" then
         frame.listTitle:SetText(L.GPH_HISTORY_TITLE)
         for _, h in ipairs(ns.Session:History()) do
             if #list >= LIST_ROWS then break end

@@ -17,6 +17,11 @@
 -- quality, what that's worth is worked out too, but never counted in the
 -- profit: concentration is limited and the player decides where it goes.
 -- Gear keeps one item ID for every quality, so it is priced as one item.
+--
+-- The profit also counts what multicraft and resourcefulness add on average
+-- (Advice/CraftStats.lua), with this character's chances on the recipe, read
+-- when its profession window is opened. cost and value stay what one plain
+-- craft takes and makes; extra and saved are what's on top.
 
 local _, ns = ...
 local Util = ns.Util
@@ -68,8 +73,9 @@ function Crafting.OutputOf(recipe)
     return recipe.o, nil
 end
 
--- One recipe priced: { key, recipeID, profession, char, cost, value,
--- profit, each, salesPerDay, quality, concentration = { quality, cost, extra } }
+-- One recipe priced: { key, recipeID, profession, char, cost, value, extra,
+-- saved, profit, each, salesPerDay, quality,
+-- concentration = { quality, cost, extra } }
 -- or nil when anything is missing a price.
 function Crafting.Evaluate(recipeID, recipe, charKey)
     if ns.Recipes.Stale(recipe) then return nil end
@@ -89,6 +95,8 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
     if not cost then return nil end
     local made = recipe.q or 1
     local value = math.floor(Util.AfterCut(each) * made)
+    local extra = math.floor(Util.AfterCut(each) * ns.CraftStats.ExtraItems(recipe))
+    local saved = ns.CraftStats.Saved(recipe, cost)
     local e = {
         key = key,
         recipeID = recipeID,
@@ -97,7 +105,9 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
         char = charKey,
         cost = math.floor(cost),
         value = value,
-        profit = value - math.floor(cost),
+        extra = extra,
+        saved = saved,
+        profit = value + extra + saved - math.floor(cost),
         each = each,
         salesPerDay = price and price.salesPerDay,
         quality = quality,
@@ -107,8 +117,8 @@ function Crafting.Evaluate(recipeID, recipe, charKey)
         if better and better > each then
             e.concentration = {
                 quality = recipe.cq,
-                cost = recipe.cc,
-                extra = math.floor(Util.AfterCut(better - each) * made),
+                cost = ns.CraftStats.Concentration(recipe),
+                extra = math.floor(Util.AfterCut(better - each) * (made + ns.CraftStats.ExtraItems(recipe))),
             }
         end
     end

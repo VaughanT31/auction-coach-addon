@@ -15,9 +15,14 @@
 -- A /reload or logout keeps a running session; the time while logged out
 -- isn't counted.
 --
+-- A finished session is tagged with the gathering profession most of its
+-- items' value came from (herbs, ore, leather, or fishing), or "mixed" when
+-- none reaches half, so past sessions add up to gold per hour by profession.
+--
 --   db.session  = { elapsed, since, money, items = { [key] = count },
---                   links = { [key] = link }, zones = { [zone] = loots }, startedAt }
---   db.sessions = { { at, duration, money, value, items, zone, top = { { key, count, value } } }, ... }
+--                   links = { [key] = link }, zones = { [zone] = loots },
+--                   prof = { [key] = profession }, startedAt }
+--   db.sessions = { { at, duration, money, value, items, zone, prof, top = { { key, count, value } } }, ... }
 
 local _, ns = ...
 local Util, Compat = ns.Util, ns.Compat
@@ -30,6 +35,7 @@ local TOP = 8
 local LOOT_GRACE = 2                -- seconds after a loot window closes that money still counts
 
 local lootOpen, lootClosedAt = false, 0
+local lootFishing = false
 local lastMoney
 
 local function Secret(v)
@@ -128,16 +134,70 @@ function Session:Totals(s, now)
     }
 end
 
+-- Trade goods subclasses that come from one gathering profession.
+local TRADE_GOODS = 7
+local GATHERED = { [6] = "skinning", [7] = "mining", [9] = "herbalism" }
+
+function Session.GatheredBy(link)
+    if lootFishing then return "fishing" end
+    local _, _, _, _, _, classID, subClassID = C_Item.GetItemInfoInstant(link)
+    return classID == TRADE_GOODS and GATHERED[subClassID] or nil
+end
+
+-- The profession most of a session's item value came from, or "mixed".
+function Session.ProfessionOf(s)
+    local byProf, total = {}, 0
+    for key, n in pairs(s.items) do
+        local value = Session.ValueOf(key, s.links[key]) * n
+        total = total + value
+        local prof = s.prof and s.prof[key]
+        if prof then byProf[prof] = (byProf[prof] or 0) + value end
+    end
+    local best, most = nil, 0
+    for prof, value in pairs(byProf) do
+        if value > most or (value == most and best and prof < best) then best, most = prof, value end
+    end
+    if best and total > 0 and most * 2 >= total then return best end
+    return "mixed"
+end
+
+-- Your own gold per hour from past sessions, by profession, best first:
+-- { { prof, sessions, seconds, total, perHour }, ... }. Sessions from before
+-- professions were noted aren't counted.
+function Session:ProfessionRates()
+    local byProf, list = {}, {}
+    for _, h in ipairs(self:History()) do
+        if h.prof and (h.duration or 0) > 0 then
+            local row = byProf[h.prof]
+            if not row then
+                row = { prof = h.prof, sessions = 0, seconds = 0, total = 0 }
+                byProf[h.prof] = row
+                list[#list + 1] = row
+            end
+            row.sessions = row.sessions + 1
+            row.seconds = row.seconds + h.duration
+            row.total = row.total + (h.money or 0) + (h.value or 0)
+        end
+    end
+    for _, row in ipairs(list) do row.perHour = math.floor(row.total / row.seconds * 3600) end
+    table.sort(list, function(a, b)
+        if a.perHour ~= b.perHour then return a.perHour > b.perHour end
+        return a.prof < b.prof
+    end)
+    return list
+end
+
 function Session:Stop()
     local s = self:Current()
     if not s then return nil end
     local t = self:Totals(s)
+    local prof = Session.ProfessionOf(s)
     ns.db.session = nil
     if t.seconds >= 60 and t.total > 0 then
         local top = {}
         for i = 1, math.min(3, #t.top) do top[i] = { key = t.top[i].key, count = t.top[i].count, value = t.top[i].value } end
         table.insert(ns.db.sessions, 1, {
-            at = s.startedAt, duration = t.seconds, money = t.money, value = t.value, items = t.items, zone = t.zone, top = top,
+            at = s.startedAt, duration = t.seconds, money = t.money, value = t.value, items = t.items, zone = t.zone, prof = prof, top = top,
         })
         for i = #ns.db.sessions, KEEP + 1, -1 do ns.db.sessions[i] = nil end
     end
@@ -183,6 +243,8 @@ function Session:AddItem(link, count)
     if not key then return false end
     s.items[key] = (s.items[key] or 0) + count
     s.links[key] = s.links[key] or link
+    s.prof = s.prof or {}
+    s.prof[key] = s.prof[key] or Session.GatheredBy(link)
     local zone = GetRealZoneText and GetRealZoneText()
     if zone and zone ~= "" and not Secret(zone) then s.zones[zone] = (s.zones[zone] or 0) + 1 end
     ns.Events:Fire("AC_SESSION_CHANGED")
@@ -202,7 +264,10 @@ function Session.Looting()
 end
 
 ns.Events:On("LOOT_READY", function() lootOpen = true end)
-ns.Events:On("LOOT_OPENED", function() lootOpen = true end)
+ns.Events:On("LOOT_OPENED", function()
+    lootOpen = true
+    lootFishing = IsFishingLoot and IsFishingLoot() or false
+end)
 ns.Events:On("LOOT_CLOSED", function()
     lootOpen = false
     lootClosedAt = GetTime()

@@ -135,7 +135,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added: 1.0.0, the full release**
+**Just added: 1.1.0**
+- Profit counts what multicraft and resourcefulness add on average, with your own stats, and gold per hour shows your rate for each gathering profession.
+
+**Added in 1.0.0, the full release**
 - The mailbox inbox and gold on the way, the repost list with groups and sell-once batches, sell lists for your other realms, *Why isn't it selling?*, the Accounting tab, fast sellers in Today's Plan, safer full scans, and a gold goal and fuller report on the website. The [changelog](CHANGELOG.md) has the details.
 
 **Added in 0.14.0 and desktop app 0.9**

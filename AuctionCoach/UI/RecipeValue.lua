@@ -181,6 +181,8 @@ local function ShowTooltip(self)
     if c.e then
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(L.RV_TIP_MAKES:format(Amount(c.recipe.q or 1), Util.FormatMoney(Util.AfterCut(c.e.each))), 1, 1, 1, true)
+        if (c.extra or 0) > 0 then GameTooltip:AddLine(L.CRAFT_MULTICRAFT:format(Util.FormatMoney(c.extra)), 1, 1, 1, true) end
+        if (c.saved or 0) > 0 then GameTooltip:AddLine(L.CRAFT_RESOURCEFUL:format(Util.FormatMoney(c.saved)), 1, 1, 1, true) end
     end
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine(L.RV_TIP_NOTE, 0.6, 0.6, 0.6, true)
@@ -306,7 +308,10 @@ function Block:Show(recipeID)
         frame.note:SetText(GREY .. L.RV_NO_SELL .. "|r")
         y = -38 - math.ceil(frame.note:GetStringHeight())
     else
-        local profit = e.value - cost
+        local extra = math.floor(Util.AfterCut(e.each) * ns.CraftStats.ExtraItems(recipe))
+        local saved = ns.CraftStats.Saved(recipe, cost)
+        frame.current.extra, frame.current.saved = extra, saved
+        local profit = e.value + extra + saved - cost
         frame.cost:SetText(L.RV_COST:format(Util.FormatMoney(cost)))
         frame.profit:SetText(L.RV_PROFIT:format((profit >= 0 and GREEN or RED) .. Util.FormatMoney(math.abs(profit))
             .. (profit < 0 and (" " .. L.RV_LOSS) or "") .. "|r"))

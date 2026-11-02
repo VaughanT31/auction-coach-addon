@@ -23,6 +23,8 @@ Beside the list, the **gold overview** shows each character's gold and the Warba
 
 Farming? Click **Gold per hour** in the main window, Shift-click the minimap button, or type `/ac gph`. Start a session by hand (`/ac gph start`, `pause`, `stop`) and it shows gold per hour from looting and gathering, your best items and past sessions.
 
+Finished sessions count for the gathering profession most of their loot came from (Herbalism, Mining, Skinning or Fishing, or Mixed farming). The button at the bottom of the window goes through Session, History and **By profession**, your own gold per hour for each, best first.
+
 ---
 
 Previous: [Today's Plan](Today-s-Plan.md) | [Wiki home](Home.md) | Next: [Selling and posting](Selling-and-posting.md)
