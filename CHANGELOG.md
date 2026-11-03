@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Fixed: an error on item tooltips and in the Craft list ("attempt to index field 'CraftStats'") since 1.1.0, so crafting profit didn't show. Multicraft, resourcefulness and ingenuity now count as 1.1.0 described.
+
 ## 1.2.0
 
 - **Cheapest materials stacks with the other side panels:** it no longer overlaps Patron Planner's order queue or Alt Inventory's Other characters. They stack beside the profession window, the order queue on top, and a panel that doesn't fit starts a new column. The Crafting Results log moves out of the way of all of them.
