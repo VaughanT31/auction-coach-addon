@@ -10,7 +10,9 @@
 --   Use           puts that mix in the recipe's material slots
 --   +             puts that mix's materials on the shopping list, for as
 --                 many crafts as you want (UI/ShoppingEditor.lua)
--- Turned off with the "Cheapest materials" option.
+-- Turned off with the "Cheapest materials" option or its button beside the
+-- window's tabs, and stacked with the other CtrlShiftZed side panels
+-- (UI/SidePanels.lua), under Patron Planner's order queue.
 
 local _, ns = ...
 local L, Util, Skin = ns.L, ns.Util, ns.Skin
@@ -212,6 +214,15 @@ local function Create()
     rows = {}
     for i = 1, MAX_ROWS do rows[i] = CreateRow(i) end
     if ProfessionsFrame then ProfessionsFrame:HookScript("OnHide", function() frame:Hide() end) end
+    -- Placed with the other side panels (UI/SidePanels.lua), under Patron
+    -- Planner's order queue, so it isn't dragged around.
+    frame:RegisterForDrag()
+    ns.SidePanels:Register("auctioncoach.materials", {
+        frame = frame, label = L.MAT_TITLE, tip = L.MAT_BUTTON_TIP, order = 20,
+        pages = { orders = true, recipes = true },
+        isOn = Enabled,
+        toggle = function() Panel:Toggle() end,
+    })
 end
 
 -- Puts the headings and rows under the description, however many lines it
@@ -283,89 +294,9 @@ function Panel:Show(recipeID)
         end
         frame:SetHeight(-Layout(shown) + 12)
     end
-    Panel:Place()
     frame:Show()
-end
-
--- Beside the profession window, or under Patron Planner's order queue when
--- that's showing there too (it moves again when the queue opens or closes).
--- Patron Planner makes its queue whenever its Orders tab first refreshes,
--- before or after this panel shows, so rather than hooking it this checks
--- a few times a second while showing and moves when the queue comes or goes.
-local underQueue = false
-local sinceCheck = 0
-local function QueueShown()
-    local queue = _G.PatronPlannerQueuePanel
-    return queue ~= nil and queue:IsShown()
-end
-
--- The game's Crafting Results log opens in the same spot beside the
--- profession window, under this panel. While the panel shows, the log
--- moves to the right of it (and of the order queue), then goes back.
-local logHome = {}  -- [log] = its own anchor points
-local logOffset
-
-local function Logs()
-    local page = ProfessionsFrame and ProfessionsFrame.CraftingPage
-    local orders = ProfessionsFrame and ProfessionsFrame.OrdersPage
-    local view = orders and orders.OrderView
-    return { page and page.CraftingOutputLog, view and view.CraftingOutputLog }
-end
-
-local function MoveLogs()
-    local right = frame:GetRight()
-    local queue = _G.PatronPlannerQueuePanel
-    if QueueShown() and queue:GetRight() and (not right or queue:GetRight() > right) then right = queue:GetRight() end
-    local edge = ProfessionsFrame:GetRight()
-    if not right or not edge then return end
-    -- No room on screen: it stays where the game puts it.
-    local page = ProfessionsFrame.CraftingPage
-    local craftLog = page and page.CraftingOutputLog
-    if craftLog and right + 6 + craftLog:GetWidth() > UIParent:GetRight() then return end
-    local x = math.floor(right - edge + 6 + 0.5)
-    if x == logOffset then return end
-    logOffset = x
-    for _, log in pairs(Logs()) do
-        if not logHome[log] then
-            local points = {}
-            for i = 1, log:GetNumPoints() do points[i] = { log:GetPoint(i) } end
-            logHome[log] = points
-        end
-        log:ClearAllPoints()
-        log:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", x, 0)
-    end
-end
-
-local function RestoreLogs()
-    logOffset = nil
-    for log, points in pairs(logHome) do
-        log:ClearAllPoints()
-        for _, p in ipairs(points) do log:SetPoint(unpack(p)) end
-    end
-    logHome = {}
-end
-
-function Panel:Place()
-    if not frame then return end
-    if not frame.watchingQueue then
-        frame.watchingQueue = true
-        frame:HookScript("OnUpdate", function(_, elapsed)
-            sinceCheck = sinceCheck + elapsed
-            if sinceCheck < 0.2 then return end
-            sinceCheck = 0
-            if QueueShown() ~= underQueue then Panel:Place() end
-            MoveLogs()
-        end)
-        frame:HookScript("OnHide", RestoreLogs)
-    end
-    local queue = _G.PatronPlannerQueuePanel
-    underQueue = QueueShown()
-    frame:ClearAllPoints()
-    if underQueue then
-        frame:SetPoint("TOPLEFT", queue, "BOTTOMLEFT", 0, -6)
-    else
-        frame:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 6, 0)
-    end
+    -- Its height changed with what it holds: the side panels move to fit.
+    ns.SidePanels:Layout()
 end
 
 -- The recipe the profession window is showing.
@@ -390,6 +321,13 @@ end
 
 local function RefreshSoon()
     Util.Debounce("materialPanel", 0.2, Refresh)
+end
+
+-- Its button beside the profession window's tabs: the same as the
+-- "Cheapest materials" option.
+function Panel:Toggle()
+    ns.db.settings.materialPicker = not Enabled()
+    if Enabled() then Refresh() else Panel:Hide() end
 end
 
 if EventRegistry and EventRegistry.RegisterCallback then

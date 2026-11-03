@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- **Cheapest materials stacks with the other side panels:** it no longer overlaps Patron Planner's order queue or Alt Inventory's Other characters. They stack beside the profession window, the order queue on top, and a panel that doesn't fit starts a new column. The Crafting Results log moves out of the way of all of them.
+- **A button beside the profession window's tabs** turns Cheapest materials on and off, the same as its option. A gold line means it's on.
+
 ## 1.1.0
 
 - **Profit now counts your crafting stats:** the Craft list, Today's Plan, tooltips and the profit under each recipe now include what multicraft and resourcefulness add on average, with your character's own chances on that recipe. Hover for how much each adds. The concentration line also counts ingenuity's refund. A recipe picks up your stats the next time you open that profession's window on that character. What a proc is worth is an average, not a promise.

@@ -653,6 +653,7 @@ L.OPT_MAT_PICKER_TIP = "Beside the profession window, list each quality you can 
 
 -- Cheapest materials (UI/MaterialPanel.lua)
 L.MAT_TITLE = "Cheapest materials"
+L.MAT_BUTTON_TIP = "The cheapest mix of material qualities for each quality of the selected recipe, with cost and profit."
 L.MAT_SUB = "The cheapest mix of material qualities for each quality, at what they sell for."
 L.MAT_SUB_GEAR = "The cheapest mix of material qualities for each quality. Every quality is the same item on the AH, so there's no profit to show."
 L.MAT_NO_PRICE = "Some materials have no price yet. Scan the Auction House first."
