@@ -379,10 +379,17 @@ ns.Events:On("AUCTION_HOUSE_SHOW", function()
     if wait > 0 and not FullScan:IsRunning() then
         Util.Print(L.SCAN_AUTO_LATER:format(Util.FormatDuration(wait)))
     end
-    autoScanTimer = C_Timer.NewTimer(wait + 1, function()
+    -- Not while the Sell tab is showing: a post right after the scan's
+    -- request fails with "You're doing that too fast" (Scan/ItemCheck.lua).
+    local function Due()
+        if ns.AHSelling and ns.AHSelling() then
+            autoScanTimer = C_Timer.NewTimer(3, Due)
+            return
+        end
         autoScanTimer = nil
         FullScan:Start(false)
-    end)
+    end
+    autoScanTimer = C_Timer.NewTimer(wait + 1, Due)
 end)
 
 ns.Events:On("AUCTION_HOUSE_CLOSED", function()

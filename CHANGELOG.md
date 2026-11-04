@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2
+
+- **Renamed characters no longer show twice:** a renamed character kept its old name as a second character, so its gold counted twice. Auction Coach now spots the rename when you log in on that character and moves the old name's gold history, ledger and recipes to the new name.
+- **`/ac renamed OldName`:** for a character renamed before this version, type it once on the renamed character to do the same by hand.
+- **Fixed "You're doing that too fast" when posting just after opening the Auction House:** the check of your own listings (which runs when the desktop app's prices are fresh) searched in the background while you were selling, and a post straight after one of its searches was refused. It now waits while the Sell tab is open and stops once you post. The automatic full scan also waits until you leave the Sell tab.
+
 ## 1.2.1
 
 - Fixed: an error on item tooltips and in the Craft list ("attempt to index field 'CraftStats'") since 1.1.0, so crafting profit didn't show. Multicraft, resourcefulness and ingenuity now count as 1.1.0 described.

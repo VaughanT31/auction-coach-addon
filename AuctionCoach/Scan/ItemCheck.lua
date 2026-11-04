@@ -146,12 +146,30 @@ local function Ready()
     return not C_AuctionHouse.IsThrottledMessageSystemReady or C_AuctionHouse.IsThrottledMessageSystemReady()
 end
 
+-- Posting shares the game's AH request limit with searches, so a search
+-- just before the player clicks Post makes the post fail with "You're
+-- doing that too fast". Nothing is sent while the Sell tab is showing,
+-- and a post ends the check for this visit.
+local function Selling()
+    local ah = AuctionHouseFrame
+    if not ah then return false end
+    for _, frame in ipairs({ ah.ItemSellFrame, ah.CommoditiesSellFrame }) do
+        if frame and frame:IsVisible() then return true end
+    end
+    return false
+end
+ns.AHSelling = Selling
+
 local function Step()
     if not running then return end
     if not ns.Compat.IsAuctionHouseOpen() then return Stop() end
     local nextItem = queue[1]
     if not nextItem then
         running = false
+        return
+    end
+    if Selling() then
+        C_Timer.After(1, Step)
         return
     end
     if Ready() then
@@ -213,6 +231,15 @@ for _, name in ipairs({ "SendSearchQuery", "SendBrowseQuery", "SendSellSearchQue
     if C_AuctionHouse[name] then
         hooksecurefunc(C_AuctionHouse, name, function()
             if running and not sending then Stop() end
+        end)
+    end
+end
+
+-- A post, by the player or the repost list, ends it for this visit.
+for _, name in ipairs({ "PostItem", "PostCommodity" }) do
+    if C_AuctionHouse[name] then
+        hooksecurefunc(C_AuctionHouse, name, function()
+            if running then Stop() end
         end)
     end
 end

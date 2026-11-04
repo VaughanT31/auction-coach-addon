@@ -253,5 +253,6 @@ end)
 ns.Events:On("PLAYER_LOGIN", function()
     ns.charKey = UnitName("player") .. "-" .. GetNormalizedRealmName()
     ns.realmGroup = ns.Compat.GetRealmGroupKey()
+    if ns.Renames then ns.Renames:OnLogin() end
     ns.Events:Fire("AC_LOGIN")
 end)

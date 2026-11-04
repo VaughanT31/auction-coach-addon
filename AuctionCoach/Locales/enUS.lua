@@ -622,6 +622,15 @@ L.GOLD_TIP = "Gold on each character the last time they logged in, and in the wa
 -- Gold tracking (0.7.0)
 L.HELP_DESTROY = "/ac destroy - what Auction Coach has learned about milling, prospecting and disenchanting"
 L.HELP_GOLD = "/ac gold - your gold and AH sales over time"
+
+-- Renamed characters (1.2.2)
+L.HELP_RENAMED = "/ac renamed OldName - on a renamed character, fold its old name into it (gold, ledger, recipes)"
+L.RENAMED_USAGE = "Log in on the renamed character and type /ac renamed OldName (or OldName-Realm)."
+L.RENAMED_NONE = "No saved character called %s."
+L.RENAMED_MANY = "More than one %s, use Name-Realm."
+L.RENAMED_SELF = "That's the character you're on. Type the old name, from before the rename."
+L.RENAMED_DONE = "%s is now part of %s. Its gold no longer counts twice."
+L.RENAMED_AUTO = "%s was renamed to %s, so its history now carries on under the new name."
 L.GOLD_HISTORY_BUTTON = "History"
 L.WAY_COMING = "On the way by mail"
 L.WAY_WAITING = "Waiting in your mailbox"

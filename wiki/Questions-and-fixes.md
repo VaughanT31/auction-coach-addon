@@ -2,6 +2,10 @@
 
 *Answers to the things people ask most.*
 
+**I renamed a character and now it shows twice, with its gold counted twice.**
+
+Log in on the renamed character. From 1.2.2 Auction Coach spots the rename itself and moves the old name's gold history, ledger and recipes to the new name. If the old name was saved before 1.2.2, type `/ac renamed OldName` once on the renamed character.
+
 **Does it post or buy for me?**
 
 No, never. It only gives advice. Every click is yours.

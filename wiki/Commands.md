@@ -9,6 +9,7 @@
 | `/ac auctions` | See which of your auctions are undercut |
 | `/ac accounting` | Where your gold comes from and goes |
 | `/ac gold` | Your gold and AH sales over time |
+| `/ac renamed OldName` | After a character rename, fold the old name into the new one (only needed once, for characters saved before 1.2.2) |
 | `/ac gph` | Gold per hour for a farming session (`/ac gph start`, `pause`, `stop`) |
 | `/ac repost` | Open the repost list at the Auction House |
 | `/ac sell` | See and change your sell lists |

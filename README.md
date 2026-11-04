@@ -107,6 +107,7 @@ From then on the app starts with Windows and keeps prices fresh. WoW loads new p
 | `/ac plan` | Open Today's Plan |
 | `/ac auctions` | See which of your auctions are undercut |
 | `/ac gold` | Your gold and AH sales over time |
+| `/ac renamed OldName` | After a character rename, fold the old name into the new one |
 | `/ac accounting` | Where your gold comes from and goes |
 | `/ac repost` | Open the repost list at the Auction House |
 | `/ac export` | A string for your report on the website |
