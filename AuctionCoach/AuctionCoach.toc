@@ -2,13 +2,14 @@
 ## Title: Auction Coach
 ## Notes: Plain-English Auction House advice: what your stuff is worth and what to sell.
 ## Author: CtrlShift_Zed
-## Version: 1.2.3
+## Version: 1.2.4
 ## Category: CtrlShift_Zed
 ## SavedVariables: AuctionCoachDB
 ## OptionalDeps: AuctionCoach_Data
 ## IconTexture: Interface\AddOns\AuctionCoach\Media\icon
 ## AddonCompartmentFunc: AuctionCoach_OnAddonCompartmentClick
 ## X-License: MIT
+## X-Curse-Project-ID: 1727979
 
 Locales\enUS.lua
 

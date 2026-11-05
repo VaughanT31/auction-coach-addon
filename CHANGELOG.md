@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4
+
+- **Update checks in addon managers:** the addon now carries its CurseForge project ID, so addon managers that read it can match it to CurseForge and tell you when an update is out.
+
 ## 1.2.3
 
 - **Fixed an error when putting an item in the sell box** ("attempt to compare table with number" in Phrases.lua). It happened on items with a shared "usually sells in" time, and because it struck while the game was still setting up the sell box, it could leave posting half set up and lead to "You're doing that too fast". The price helper now draws a moment after the game is done, so an error there can never get in the way of posting.
