@@ -38,6 +38,12 @@ local VIEWS = { "known", "learnable", "all" }
 
 local Column = ns.Skin.Columns(COLUMNS)
 
+-- The recipe last clicked: kept highlighted, and scrolled back into view when
+-- a fresh price (from searching it at the AH) moves it in the list.
+-- shownAt is the place it had last time, so scrolling by hand isn't undone.
+local selected, shownAt
+local ScrollToSelected
+
 local function CharName(charKey)
     return (charKey:match("^[^-]+")) or charKey
 end
@@ -120,11 +126,22 @@ local function ShowRowTooltip(row)
             m.each and Util.FormatMoney(m.each * m.n) or L.LUMBER_NO_PRICE_SHORT, 1, 1, 1, 1, 1, 1)
     end
     if e.cost then tip:AddDoubleLine(L.LUMBER_MAT_TOTAL, Util.FormatMoney(e.cost), 0.75, 0.75, 0.75, 1, 1, 1) end
+    if e.each then
+        tip:AddDoubleLine(L.LUMBER_LOWEST_NOW, Util.FormatMoney(e.each), 0.75, 0.75, 0.75, 1, 1, 1)
+    end
+    if e.usual and e.usual ~= e.each then
+        tip:AddDoubleLine(L.LUMBER_USUAL, Util.FormatMoney(e.usual), 0.75, 0.75, 0.75, 1, 1, 1)
+    end
+    if e.undercut then tip:AddLine(L.LUMBER_UNDERCUT, 1, 0.82, 0, true) end
     if e.value then
         tip:AddDoubleLine(L.LUMBER_SELLS_AFTER_CUT, Util.FormatMoney(e.value), 0.75, 0.75, 0.75, 1, 1, 1)
     end
     if e.salesPerDay then
         tip:AddLine(L.LUMBER_SALES:format(Rate(e.salesPerDay)), 0.75, 0.75, 0.75)
+    end
+
+    if e.lowestAt and e.lowestAt > 0 then
+        tip:AddLine(L.LUMBER_LOWEST_SEEN:format(Util.FormatAge(e.lowestAt)), 0.75, 0.75, 0.75)
     end
 
     tip:AddLine(" ")
@@ -141,6 +158,7 @@ end
 local function CreateRow(parent, index)
     local row = CreateFrame("Button", nil, parent)
     row:SetHeight(ROW_HEIGHT)
+    row.index = index
     row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
     row:SetPoint("RIGHT")
     ns.Skin.RowBand(row)
@@ -160,14 +178,20 @@ local function CreateRow(parent, index)
     local highlight = row:CreateTexture(nil, "HIGHLIGHT")
     highlight:SetAllPoints()
     highlight:SetColorTexture(1, 1, 1, 0.08)
+    row.selected = row:CreateTexture(nil, "BACKGROUND", nil, 1)
+    row.selected:SetAllPoints()
+    row.selected:SetColorTexture(1, 0.82, 0, 0.12)
 
     row:SetScript("OnEnter", ShowRowTooltip)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row:SetScript("OnClick", function(self)
         local e = self.entry
-        if e and Compat.ShowAtAuctionHouse(e.key, Util.NamedLink(e.key), e.each) then
+        if not e then return end
+        selected, shownAt = e.spellID, self.index
+        if Compat.ShowAtAuctionHouse(e.key, Util.NamedLink(e.key), e.each) then
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
         end
+        ns.MainWindow:Refresh()
     end)
     return row
 end
@@ -180,6 +204,7 @@ local function SetRow(row, e)
     row.lumber:SetText(e.lumber .. (icon and (" |T" .. icon .. ":14:14|t") or ""))
     row.cost:SetText(Money(e.cost))
     row.sells:SetText(Money(e.each))
+    if e.undercut then row.sells:SetTextColor(1, 0.82, 0) else row.sells:SetTextColor(1, 1, 1) end
     row.per:SetText(Money(e.perLumber))
     row.day:SetText(Rate(e.salesPerDay))
     if e.salesPerDay and e.salesPerDay < ns.LumberCrafting.MIN_SALES then
@@ -193,6 +218,7 @@ local function SetRow(row, e)
     local sc = STATUS_COLORS[e.status]
     row.status:SetText(L["LUMBER_STATUS_" .. e.status:upper()])
     row.status:SetTextColor(sc[1], sc[2], sc[3])
+    row.selected:SetShown(e.spellID == selected)
     row:Show()
 end
 
@@ -282,6 +308,7 @@ local function Build(panel)
     content:SetSize(1, 1)
     scroll:SetScrollChild(content)
     scroll:SetScript("OnSizeChanged", function(_, width) content:SetWidth(width) end)
+    panel.scroll = scroll
     panel.content = content
     panel.rows = {}
 
@@ -289,6 +316,26 @@ local function Build(panel)
     panel.empty:SetPoint("TOPLEFT", scroll, "TOPLEFT", 4, -8)
     panel.empty:SetPoint("RIGHT", -30, 0)
     panel.empty:SetJustifyH("LEFT")
+end
+
+-- Brings the clicked recipe back into view when the list re-sorts and moves it.
+ScrollToSelected = function(panel, rows)
+    if not selected then return end
+    local index
+    for i, e in ipairs(rows) do
+        if e.spellID == selected then index = i break end
+    end
+    if not index or index == shownAt then return end
+    shownAt = index
+    -- The scroll range only updates after the content's new height is laid out.
+    C_Timer.After(0, function()
+        local scroll = panel.scroll
+        local top = (index - 1) * ROW_HEIGHT
+        local now, height = scroll:GetVerticalScroll(), scroll:GetHeight()
+        if top < now or top + ROW_HEIGHT > now + height then
+            scroll:SetVerticalScroll(math.min(math.max(0, top - ROW_HEIGHT * 2), scroll:GetVerticalScrollRange()))
+        end
+    end)
 end
 
 local function Refresh(panel, reason)
@@ -317,6 +364,7 @@ local function Refresh(panel, reason)
         panel.rows[i]:Hide()
     end
     panel.content:SetHeight(math.max(1, #rows * ROW_HEIGHT))
+    ScrollToSelected(panel, rows)
 end
 
 ns.MainWindow:AddTab({ name = L.TAB_LUMBER, Build = Build, Refresh = Refresh })

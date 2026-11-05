@@ -1,15 +1,21 @@
 -- Auction Coach - Lumber Crafting: is a lumber recipe worth crafting?
 --
 -- Lumber is Warbound, so it has no AH price and isn't counted as a cost.
--- It is the real limit instead: you only have so much of it. So recipes
--- are ranked by gold per lumber:
+-- It is the real limit instead: you only have so much of it. So each
+-- recipe shows the gold per lumber:
 --
---   (what the decor sells for after the AH cut - the other materials) / lumber used
+--   (the decor's lowest listing after the AH cut - the other materials) / lumber used
+--
+-- The list is sorted by how many of the decor sell a day, fastest first:
+-- what sells is what's worth spending lumber on.
 --
 -- The other materials are priced like Craft or sell does (Advice/Crafting.lua):
 -- the cheapest quality in each slot, at its AH value or a vendor's price.
--- The decor is valued at its market value or the lowest listing when that's
--- lower. Every recipe in Data/LumberRecipes.lua is priced, known or not.
+-- The decor is valued at its lowest listing right now (a search at the AH
+-- beats the desktop app's hourly price), since a new post has to match or
+-- undercut it. Its usual lowest price is kept to show when someone is
+-- selling well under it. Every recipe in Data/LumberRecipes.lua is priced,
+-- known or not.
 --
 -- Verdicts:
 --   WORTH     makes gold and sells at least once a day
@@ -27,8 +33,8 @@ ns.LumberCrafting = LumberCrafting
 -- Sells at least this many a day to count as worth it.
 LumberCrafting.MIN_SALES = 1
 
-local RANK = { WORTH = 1, SLOW = 2, LOSS = 3, NO_MATS = 4, NO_PRICE = 5 }
-LumberCrafting.RANK = RANK
+-- The lowest listing is this far under the usual lowest: someone undercut hard.
+LumberCrafting.UNDERCUT = 0.8
 
 local cache
 
@@ -82,9 +88,13 @@ function LumberCrafting.Evaluate(spellID, recipe)
     }
     e.status, e.chars = LumberCrafting.Status(spellID, recipe)
     e.cost, e.materials = LumberCrafting.Materials(recipe)
-    local each, price = ns.Crafting.SellPriceOf(recipe.o)
+    local price = ns.Prices:Get(tostring(recipe.o))
+    local each = price and ((price.min and price.min > 0) and price.min or price.value) or nil
     e.each = each
+    e.usual = price and (price.usualMin or price.value)
+    e.undercut = each and e.usual and each < e.usual * LumberCrafting.UNDERCUT or false
     e.salesPerDay = price and price.salesPerDay
+    e.lowestAt = price and price.minAt
     if e.recipeItem then
         local recipePrice = ns.Prices:Get(tostring(e.recipeItem))
         e.recipePrice = recipePrice and recipePrice.value
@@ -115,14 +125,17 @@ function LumberCrafting.Evaluate(spellID, recipe)
     return e
 end
 
+-- Most sold a day first; no sales data last. Ties: more gold per lumber.
 local function Sort(a, b)
-    if RANK[a.verdict] ~= RANK[b.verdict] then return RANK[a.verdict] < RANK[b.verdict] end
-    if (a.perLumber or 0) ~= (b.perLumber or 0) then return (a.perLumber or 0) > (b.perLumber or 0) end
+    local sa, sb = a.salesPerDay or -1, b.salesPerDay or -1
+    if sa ~= sb then return sa > sb end
+    local pa, pb = a.perLumber or -math.huge, b.perLumber or -math.huge
+    if pa ~= pb then return pa > pb end
     if a.expansion ~= b.expansion then return a.expansion > b.expansion end
     return a.name < b.name
 end
 
--- Every lumber recipe priced, best gold per lumber first.
+-- Every lumber recipe priced, most sold a day first.
 function LumberCrafting:All()
     if cache then return cache end
     local list = {}

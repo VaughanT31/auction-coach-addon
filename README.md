@@ -56,7 +56,7 @@ Two more views on the same tab:
 
 ### Lumber Crafting
 
-The **Lumber** tab lists every profession recipe that uses lumber, from every expansion and every profession, including ones none of your characters know. Lumber is Warbound, so it never sells on the Auction House, but you only have so much. So recipes are ranked by the **gold each lumber makes** after the other materials and the AH cut, with a verdict (Worth it, Slow seller, Not worth it) and how many of the decor sell a day.
+The **Lumber** tab lists every profession recipe that uses lumber, from every expansion and every profession, including ones none of your characters know. Lumber is Warbound, so it never sells on the Auction House, but you only have so much. The list is sorted by how many of the decor sell a day, most first, with its lowest listing right now, the **gold each lumber makes** at that price after the other materials and the AH cut, and a verdict (Worth it, Slow seller, Not worth it).
 
 Each recipe shows whether one of your characters knows it, who could learn it, and where it's learned. Hover a recipe to see the materials, and how much of that lumber you have across your characters and the warband bank. Filter by Known, Known + can learn or All, and by lumber type.
 
@@ -143,7 +143,7 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 - Prices for more realms in both EU and US.
 
 **Just added: 1.3.0**
-- Lumber Crafting: every lumber recipe, known or not, ranked by the gold each lumber makes, with where to learn it and how much lumber you have.
+- Lumber Crafting: every lumber recipe, known or not, most sold first, with the gold each lumber makes, with where to learn it and how much lumber you have.
 
 **Added in 1.1.0**
 - Profit counts what multicraft and resourcefulness add on average, with your own stats, and gold per hour shows your rate for each gathering profession.

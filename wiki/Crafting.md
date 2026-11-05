@@ -25,11 +25,13 @@ Season sparks aren't counted as a crafting cost.
 
 The **Lumber** tab (`/ac lumber`) lists every profession recipe that uses lumber, from every expansion and every profession, including ones none of your characters know.
 
-Lumber is Warbound, so it never sells on the Auction House and isn't counted as a cost. But you only have so much, so recipes are ranked by the **gold each lumber makes**: what the decor sells for after the AH cut, less the other materials at their cheapest quality, divided by the lumber it takes.
+Lumber is Warbound, so it never sells on the Auction House and isn't counted as a cost. But you only have so much, so each recipe shows the **gold each lumber makes**: the decor's lowest listing right now after the AH cut, less the other materials at their cheapest quality, divided by the lumber it takes. The list is sorted by how many of the decor sell a day, most first.
+
+**Lowest now** is the cheapest listing: from the desktop app's hourly prices, or fresher when you search the item at the Auction House. It turns amber when someone is selling well under the usual price; hover for the usual lowest.
 
 - **Worth it:** makes gold and sells at least once a day.
 - **Slow seller:** makes gold, but sells less than once a day.
-- **Not worth it:** the other materials cost more than the decor sells for. Craft it for your own house instead.
+- **Not worth it:** at the lowest listing, the other materials cost more than the decor makes. Craft it for your own house instead.
 - **Not on AH** or **No price:** nobody is selling the decor, or a material has no price yet.
 
 **A day** is how many of that decor sell a day, in amber when it's less than one. The **Recipe** column says whether one of your characters knows it, can learn it (has the profession), or no one can. Hover a row for the materials, how much of that lumber you have across your characters and the warband bank, and where the recipe is learned: the trainer, or the recipe item that teaches it with its AH price. Open each crafter's profession window once so Auction Coach knows their recipes and the game's own "where to learn it" text. The warband bank's lumber is counted when you open a bank.
