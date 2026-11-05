@@ -1,15 +1,20 @@
 # Changelog
 
+## 1.3.1
+
+- **Lumber tab sorted by sales a day:** the decor that sells the most a day comes first, so the lumber goes where it sells. Ties go to the one that makes more gold per lumber.
+- **Lowest now instead of the usual price:** the price column showed what the decor usually sells for, even when someone had undercut it far below that. It now shows the lowest listing right now (fresher still when you search it at the Auction House), and gold per lumber and the verdict use that price. It turns amber when someone is selling well under the usual price; hover for both prices.
+
 ## 1.3.0
 
 - **New Lumber tab, Lumber Crafting:** every profession recipe that uses lumber, from every expansion and every profession, including ones none of your characters know. For each one you see:
   - the lumber it takes
   - what the other materials cost, at the cheapest quality
-  - the decor's lowest listing right now, amber when someone is selling well under the usual price (hover for the usual lowest)
+  - what the decor sells for
   - the **gold each lumber makes**
   - how many sell a day (amber when it's less than one a day)
   - a verdict: Worth it, Slow seller, Not worth it, or no price yet
-- **Most sold first, with gold per lumber:** the list is sorted by how many of each decor sell a day. Lumber is Warbound, so it never sells on the Auction House and costs nothing there, but you only have so much, so each recipe shows what each lumber earns at the lowest listing, after the other materials and the AH cut.
+- **Ranked by gold per lumber:** lumber is Warbound, so it never sells on the Auction House and costs nothing there, but you only have so much. Recipes are ranked by what each lumber earns after the other materials and the AH cut.
 - **Known, can learn, or no one:** each recipe shows whether a character knows it, which characters have the profession to learn it, and where it's learned (trainer, or the recipe that teaches it with its AH price). Open a crafter's profession window once and the game's own "where to learn it" text replaces the general one.
 - **Your lumber:** hover a recipe to see how much of that lumber you have across your characters and the warband bank, and how many crafts that makes. The warband bank's lumber is read when you open a bank.
 - **Filters:** Known, Known + can learn, or All, and one lumber type at a time. `/ac lumber` opens the tab. Click a row at the Auction House to see that decor's listings. Searching it gives a fresh price and the list re-sorts, so the row you clicked stays highlighted and is scrolled back into view if it moved. Hover a row for when its lowest listing was last seen.
