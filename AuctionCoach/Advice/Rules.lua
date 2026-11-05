@@ -250,7 +250,7 @@ function Rules:ForLink(link)
     if ns.Flips then better, whyNot = ns.Flips.BetterRealm(key) end
     if better then
         Add(Phrases.BetterRealm(better), "good")
-        local wait = Phrases.SellTime(better.salesPerDay, better.listed, better.realm)
+        local wait = Phrases.RealmSellTime(better.salesPerDay, better.listed, better.realm)
         if wait then Add(wait, "muted") end
     elseif whyNot then
         -- Explains a missing "sells for more on" line: always on items you

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3
+
+- **Fixed an error when putting an item in the sell box** ("attempt to compare table with number" in Phrases.lua). It happened on items with a shared "usually sells in" time, and because it struck while the game was still setting up the sell box, it could leave posting half set up and lead to "You're doing that too fast". The price helper now draws a moment after the game is done, so an error there can never get in the way of posting.
+- **Collecting mail no longer leaves Auction House mail behind:** opening a mail to mark it read was taken as that mail being collected, so the next one could start too soon and the server refused it. Each mail is now taken only once its gold or items have actually gone.
+- **More than 50 mails:** the inbox only lists 50 at a time. Instead of stopping there, collecting now waits up to a minute for the rest to arrive and carries on.
+
 ## 1.2.2
 
 - **Renamed characters no longer show twice:** a renamed character kept its old name as a second character, so its gold counted twice. Auction Coach now spots the rename when you log in on that character and moves the old name's gold history, ledger and recipes to the new name.

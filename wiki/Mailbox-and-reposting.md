@@ -4,7 +4,7 @@
 
 ### The inbox
 
-At the mailbox, every mail is in one searchable list, with one click to collect all Auction House mail or just one kind. Each sale shows how many sold and the gold after the AH cut.
+At the mailbox, every mail is in one searchable list, with one click to collect all Auction House mail or just one kind. With more than 50 mails, it waits for the rest to arrive (up to a minute) and carries on. Each sale shows how many sold and the gold after the AH cut.
 
 ![The Auction Coach inbox](https://ctrlshiftzed.com/assets/img/shots/ac-mailbox.webp)
 *The Auction Coach inbox*

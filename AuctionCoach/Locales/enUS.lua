@@ -284,6 +284,7 @@ L.MAILP_ALL_TIP = "Collect all Auction House mail: sales, cancelled, expired, bo
 L.MAILP_COLLECTING = "Collecting %d of %d..."
 L.MAILP_DONE = "Done: %d collected."
 L.MAILP_DONE_MORE = "Done: %d collected. More mail is waiting and shows up within a minute."
+L.MAILP_WAITING_MORE = "%d collected. Waiting for the rest of your mail to arrive (up to a minute)..."
 L.MAILP_BAGS_FULL = "Stopped: your bags are full (%d collected)."
 L.MAILP_STUCK = "Stopped: the mailbox didn't answer. Try again in a moment."
 L.MAIL_SALES = "(%d sales)"

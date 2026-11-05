@@ -176,10 +176,15 @@ local function HookSellFrames()
     for _, sellFrame in ipairs(SellFrames()) do
         if sellFrame and sellFrame.SetItem then
             hooked = true
+            -- On the next frame, outside Blizzard's SetPostItem: an error
+            -- here would otherwise stop the rest of it and leave the sell
+            -- box half set up.
             hooksecurefunc(sellFrame, "SetItem", function(frame, itemLocation)
-                if frame:IsShown() then
-                    PostHelper:Show(frame, itemLocation)
-                end
+                C_Timer.After(0, function()
+                    if frame:IsShown() then
+                        PostHelper:Show(frame, itemLocation)
+                    end
+                end)
             end)
             sellFrame:HookScript("OnHide", function(frame)
                 if current and current.sellFrame == frame then PostHelper:Hide() end

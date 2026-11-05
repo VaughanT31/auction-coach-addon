@@ -618,7 +618,7 @@ function Phrases.SellListRow(row, money)
     money = money or Util.FormatMoney
     local lines = { row.there and L.SELLV_TIP_THERE:format(money(row.there), row.realm)
         or L.SELLV_TIP_NO_PRICE:format(row.realm) }
-    local wait = Phrases.SellTime(row.salesPerDay, row.listed, row.realm)
+    local wait = Phrases.RealmSellTime(row.salesPerDay, row.listed, row.realm)
     if wait then lines[#lines + 1] = wait end
     lines[#lines + 1] = L.SELLV_TIP_HOW:format(row.realm)
     return lines
@@ -627,7 +627,7 @@ end
 -- How long it takes to sell on a realm (1.0.10): everything listed there
 -- now plus yours, at the pace it sells. "Sells 30 a day" with 120 listed
 -- is days, not hours. nil without a sales pace.
-function Phrases.SellTime(salesPerDay, listed, realm)
+function Phrases.RealmSellTime(salesPerDay, listed, realm)
     if not salesPerDay or salesPerDay <= 0 then return nil end
     local days = ((listed or 0) + 1) / salesPerDay
     local wait
@@ -658,7 +658,7 @@ function Phrases.Flip(f, money)
             speed,
         }
     end
-    local wait = Phrases.SellTime(f.salesPerDay, f.listed, f.sellRealm)
+    local wait = Phrases.RealmSellTime(f.salesPerDay, f.listed, f.sellRealm)
     if wait then lines[#lines + 1] = wait end
     if f.own then
         lines[#lines + 1] = L.OWN_HOW:format(f.count, money(f.profit))

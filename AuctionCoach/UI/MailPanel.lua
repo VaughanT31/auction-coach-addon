@@ -43,6 +43,9 @@ local STEP_DELAY = 0.3
 -- No inbox update this long after taking a mail: try again, a few times.
 local STEP_TIMEOUT = 3
 local MAX_TRIES = 3
+-- The inbox lists 50 mails; the rest arrive when the server next sends the
+-- mailbox (about a minute). A run waits this long for them before stopping.
+local MORE_WAIT = 75
 local MAX_ATTACHMENTS = ATTACHMENTS_MAX_RECEIVE or 16
 
 -- The kind buttons, in order. "all" (Collect all AH mail) is every kind but "other".
@@ -240,16 +243,42 @@ Step = function()
     if not index then
         local shown, total = GetInboxNumItems()
         if skipped then return Stop(L.MAILP_BAGS_FULL:format(run.taken)) end
-        return Stop((total or shown) > shown and L.MAILP_DONE_MORE:format(run.taken) or L.MAILP_DONE:format(run.taken))
+        if (total or shown) > shown then
+            -- More mail than the inbox lists: wait for the server to send
+            -- the rest, then carry on (MAIL_INBOX_UPDATE below).
+            run.waitingMore = shown
+            if run.timer then run.timer:Cancel() end
+            SetStatus(L.MAILP_WAITING_MORE:format(run.taken))
+            CheckInbox()
+            run.timer = C_Timer.NewTimer(MORE_WAIT, function()
+                if run then run.timer = nil; Stop(L.MAILP_DONE_MORE:format(run.taken)) end
+            end)
+            return
+        end
+        return Stop(L.MAILP_DONE:format(run.taken))
     end
     if not run.trying then
         run.trying, run.tries = true, 0
-        run.taken = math.min(run.taken + 1, run.total)
+        run.taken = run.taken + 1
+        run.total = math.max(run.total, run.taken)
     end
+    -- What the inbox looked like before taking, so reading the mail (which
+    -- also updates the inbox) isn't mistaken for it being taken.
+    local _, _, _, _, m, _, _, items = GetInboxHeaderInfo(index)
+    run.target = { index = index, count = GetInboxNumItems(), money = m or 0, hasItem = items }
     SetStatus(L.MAILP_COLLECTING:format(run.taken, run.total))
     MailPanel:Refresh()
     Take(index, money, hasItem)
     Wait()
+end
+
+-- True once the mail being taken has gone or lost its gold or items.
+local function TargetTaken()
+    local t = run and run.target
+    if not t then return true end
+    if GetInboxNumItems() ~= t.count then return true end
+    local _, _, _, _, m, _, _, items = GetInboxHeaderInfo(t.index)
+    return (m or 0) ~= t.money or items ~= t.hasItem
 end
 
 function MailPanel:Collect(kind)
@@ -278,8 +307,18 @@ function MailPanel:TakeOne(mail)
 end
 
 ns.Events:On("MAIL_INBOX_UPDATE", function()
-    if run then
-        run.trying = false
+    if run and run.waitingMore then
+        -- Only once new mail has come in, so a reply with the same mail
+        -- doesn't start a loop of asking.
+        if GetInboxNumItems() > run.waitingMore then
+            run.waitingMore = nil
+            if run.timer then run.timer:Cancel() end
+            run.timer = C_Timer.NewTimer(STEP_DELAY, function()
+                if run then run.timer = nil; Step() end
+            end)
+        end
+    elseif run and run.trying and TargetTaken() then
+        run.trying, run.target = false, nil
         if run.timer then run.timer:Cancel() end
         run.timer = C_Timer.NewTimer(STEP_DELAY, function()
             if run then run.timer = nil; Step() end
@@ -293,7 +332,7 @@ end)
 ns.Events:On("UI_ERROR_MESSAGE", function(_, _, message)
     if run and (message == ERR_INV_FULL or message == ERR_ITEM_MAX_COUNT) then
         -- That mail wasn't taken: carry on with the gold only.
-        run.bagsFull, run.trying = true, false
+        run.bagsFull, run.trying, run.target = true, false, nil
         run.taken = math.max(0, run.taken - 1)
         if run.timer then run.timer:Cancel() end
         run.timer = C_Timer.NewTimer(STEP_DELAY, function()
