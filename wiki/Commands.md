@@ -7,6 +7,7 @@
 | `/ac` | Open or close the Auction Coach window |
 | `/ac plan` | Open Today's Plan |
 | `/ac auctions` | See which of your auctions are undercut |
+| `/ac lumber` | See which lumber recipes are worth crafting |
 | `/ac accounting` | Where your gold comes from and goes |
 | `/ac gold` | Your gold and AH sales over time |
 | `/ac renamed OldName` | After a character rename, fold the old name into the new one (only needed once, for characters saved before 1.2.2) |

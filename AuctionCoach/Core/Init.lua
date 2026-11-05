@@ -70,6 +70,10 @@ local DEFAULTS = {
         planSkipChars = {},
         -- Main window tabs hidden in the options, its size and place (UI/MainWindow.lua).
         hiddenTabs = {},
+        -- Lumber Crafting tab: "known", "learnable" or "all", and one lumber
+        -- type's item ID or nil for every type (UI/LumberTab.lua).
+        lumberView = "all",
+        lumberType = nil,
         minimapHide = false,
         minimapAngle = 200,
     },
@@ -99,6 +103,11 @@ local DEFAULTS = {
     destroy = {},
     -- Recipes each character knows, for craft or sell (Data/Recipes.lua).
     recipes = {},
+    -- Lumber Crafting (Data/Lumber.lua): lumber each character holds and
+    -- the warband bank's, lumber recipes each character knows, when each
+    -- character's profession was last read, and the game's "where to learn
+    -- it" text per recipe.
+    lumber = { chars = {}, warband = {}, known = {}, read = {}, sources = {} },
 }
 
 -- MIGRATIONS[n] upgrades a database from version n - 1 to version n.

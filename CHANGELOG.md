@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0
+
+- **New Lumber tab, Lumber Crafting:** every profession recipe that uses lumber, from every expansion and every profession, including ones none of your characters know. For each one you see:
+  - the lumber it takes
+  - what the other materials cost, at the cheapest quality
+  - what the decor sells for
+  - the **gold each lumber makes**
+  - how many sell a day (amber when it's less than one a day)
+  - a verdict: Worth it, Slow seller, Not worth it, or no price yet
+- **Ranked by gold per lumber:** lumber is Warbound, so it never sells on the Auction House and costs nothing there, but you only have so much. Recipes are ranked by what each lumber earns after the other materials and the AH cut.
+- **Known, can learn, or no one:** each recipe shows whether a character knows it, which characters have the profession to learn it, and where it's learned (trainer, or the recipe that teaches it with its AH price). Open a crafter's profession window once and the game's own "where to learn it" text replaces the general one.
+- **Your lumber:** hover a recipe to see how much of that lumber you have across your characters and the warband bank, and how many crafts that makes. The warband bank's lumber is read when you open a bank.
+- **Filters:** Known, Known + can learn, or All, and one lumber type at a time. `/ac lumber` opens the tab. Click a row at the Auction House to see that decor's listings.
+
 ## 1.2.4
 
 - **Update checks in addon managers:** the addon now carries its CurseForge project ID, so addon managers that read it can match it to CurseForge and tell you when an update is out.

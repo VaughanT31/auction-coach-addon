@@ -54,6 +54,7 @@ local function ViewingOwn()
     if Call(trade.IsTradeSkillLinked) or Call(trade.IsTradeSkillGuild) or Call(trade.IsNPCCrafting) then return false end
     return true
 end
+Recipes.ViewingOwn = ViewingOwn
 
 -- A season's Spark: the required slot you pick a "modifying" reagent into
 -- (the Spark slot on crafted gear), rather than a basic material. Sparks

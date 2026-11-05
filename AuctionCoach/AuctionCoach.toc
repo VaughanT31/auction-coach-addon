@@ -2,7 +2,7 @@
 ## Title: Auction Coach
 ## Notes: Plain-English Auction House advice: what your stuff is worth and what to sell.
 ## Author: CtrlShift_Zed
-## Version: 1.2.4
+## Version: 1.3.0
 ## Category: CtrlShift_Zed
 ## SavedVariables: AuctionCoachDB
 ## OptionalDeps: AuctionCoach_Data
@@ -37,6 +37,8 @@ Data\Repost.lua
 Data\SellLists.lua
 Data\Ledger.lua
 Data\Renames.lua
+Data\LumberRecipes.lua
+Data\Lumber.lua
 
 Scan\FullScan.lua
 Scan\ItemCheck.lua
@@ -51,6 +53,7 @@ Advice\Deals.lua
 Advice\Flips.lua
 Advice\CraftStats.lua
 Advice\Crafting.lua
+Advice\LumberCrafting.lua
 Advice\MaterialPicker.lua
 Advice\Auctions.lua
 Advice\WhySelling.lua
@@ -70,6 +73,7 @@ UI\RecipeValue.lua
 UI\SessionWindow.lua
 UI\AuctionsTab.lua
 UI\AccountingTab.lua
+UI\LumberTab.lua
 UI\AuctionsColumn.lua
 UI\AuctionsColumn.xml
 UI\GoldHistoryWindow.lua
