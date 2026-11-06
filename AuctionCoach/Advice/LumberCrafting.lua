@@ -169,6 +169,27 @@ function LumberCrafting:List(view, lumberID)
     return rows, { worth = worth, shown = #rows, total = #all }
 end
 
+-- The recipe that makes a decor item key, priced, or nil.
+function LumberCrafting:ForOutput(key)
+    for _, e in ipairs(self:All()) do
+        if e.key == key then return e end
+    end
+    return nil
+end
+
+-- The best known recipe for one lumber type: the one that sells the most a
+-- day among those worth crafting, or nil.
+function LumberCrafting:BestFor(lumberID)
+    for _, e in ipairs(self:All()) do
+        if e.status == "known" and e.verdict == "WORTH" then
+            for _, wood in ipairs(e.recipe.w) do
+                if wood[1] == lumberID then return e end
+            end
+        end
+    end
+    return nil
+end
+
 function LumberCrafting:Invalidate()
     cache = nil
 end

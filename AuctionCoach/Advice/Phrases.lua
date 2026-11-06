@@ -402,6 +402,8 @@ function Phrases.PlanShort(step, money)
         return L.PLAN_SHORT_SHOP:format(money(step.price), money(step.max))
     elseif kind == "DESTROY" then
         return L.PLAN_SHORT_DESTROY:format(money(step.gain))
+    elseif kind == "CRAFT" and step.lumber then
+        return L.PLAN_SHORT_LUMBER:format(money(step.gain), BreakUpLargeNumbers(step.lumber))
     elseif kind == "CRAFT" then
         return L.PLAN_SHORT_CRAFT:format(money(step.gain))
     elseif kind == "FAST" then
@@ -480,15 +482,20 @@ function Phrases.PlanDetails(step, money)
         lines[#lines + 1] = table.concat(names, ", ")
         lines[#lines + 1] = L.PLAN_WHY_DESTROY_COUNTED:format(money(step.gold))
     elseif kind == "CRAFT" then
-        lines[#lines + 1] = L.PLAN_WHY_CRAFT:format(step.count, money(step.gain))
-        lines[#lines + 1] = L.PLAN_WHY_CRAFT_MATS
+        if step.lumber then
+            lines[#lines + 1] = L.PLAN_WHY_LUMBER:format(step.count, BreakUpLargeNumbers(step.lumber), money(step.gain))
+            lines[#lines + 1] = L.PLAN_WHY_LUMBER_RANK:format(money(step.craft.perLumber or 0))
+        else
+            lines[#lines + 1] = L.PLAN_WHY_CRAFT:format(step.count, money(step.gain))
+            lines[#lines + 1] = L.PLAN_WHY_CRAFT_MATS
+        end
         if step.sold then
             lines[#lines + 1] = L.PLAN_WHY_SOLD:format(Amount(step.sold), BreakUpLargeNumbers(step.made),
                 ns.Styles:WindowHours(), money(step.gold))
         else
             lines[#lines + 1] = L.PLAN_WHY_UNKNOWN:format(money(step.value))
         end
-        if step.craft.concentration then
+        if step.craft and step.craft.concentration then
             lines[#lines + 1] = L.CRAFT_CONCENTRATION:format(step.craft.concentration.cost or "?",
                 money(step.craft.concentration.extra))
         end
@@ -668,3 +675,69 @@ function Phrases.Flip(f, money)
     end
     return lines
 end
+
+-- ---------------------------------------------------------------------
+-- Lumber Crafting (Advice/LumberCrafting.lua)
+-- ---------------------------------------------------------------------
+
+local function WhoHas(itemID)
+    local parts = {}
+    for _, w in ipairs(ns.Lumber.Where(itemID)) do
+        local who = w.owner == "warband" and L.LUMBER_WARBAND_BANK or Util.ShortName(w.owner)
+        parts[#parts + 1] = who .. " " .. BreakUpLargeNumbers(w.count)
+    end
+    return table.concat(parts, ", ")
+end
+
+-- Tooltip lines for a lumber type or Essence of Lumber: { { text, color }, ... }.
+function Phrases.LumberTooltip(itemID)
+    local lines = {}
+    local owned = ns.Lumber.Owned(itemID)
+    if itemID == ns.Lumber.ESSENCE_ID then
+        lines[#lines + 1] = { text = L.LUMBER_TT_ESSENCE:format(ns.Lumber.ESSENCE_LUMBER), color = "info" }
+        if owned > 0 then
+            lines[#lines + 1] = { text = L.LUMBER_TT_ESSENCE_HAVE:format(BreakUpLargeNumbers(owned),
+                BreakUpLargeNumbers(owned * ns.Lumber.ESSENCE_LUMBER)), color = "good" }
+            lines[#lines + 1] = { text = WhoHas(itemID), color = "muted" }
+        end
+        lines[#lines + 1] = { text = L.LUMBER_TT_ESSENCE_WEEKLY, color = "muted" }
+        return lines
+    end
+    lines[#lines + 1] = { text = L.LUMBER_TT_WARBOUND, color = "muted" }
+    if owned > 0 then
+        lines[#lines + 1] = { text = L.LUMBER_TT_HAVE:format(BreakUpLargeNumbers(owned)), color = "info" }
+        lines[#lines + 1] = { text = WhoHas(itemID), color = "muted" }
+    end
+    local best = ns.LumberCrafting:BestFor(itemID)
+    if best then
+        local name = Util.NamedLink(best.key) or best.name
+        lines[#lines + 1] = { text = L.LUMBER_TT_BEST:format(name, Util.FormatMoney(best.perLumber),
+            Phrases.LumberRate(best.salesPerDay)), color = "good" }
+    else
+        lines[#lines + 1] = { text = L.LUMBER_TT_NONE, color = "muted" }
+    end
+    return lines
+end
+
+function Phrases.LumberRate(perDay)
+    if not perDay then return "?" end
+    if perDay >= 10 then return BreakUpLargeNumbers(math.floor(perDay + 0.5)) end
+    return ("%.1f"):format(perDay)
+end
+
+-- One tooltip line for a decor item that a lumber recipe makes.
+function Phrases.DecorTooltip(e)
+    local who
+    if e.status == "known" then
+        who = L.LUMBER_TT_DECOR_KNOWN:format(Util.ShortName(e.chars[1]))
+    elseif e.status == "learnable" then
+        who = L.LUMBER_TT_DECOR_LEARN:format(Util.ShortName(e.chars[1]))
+    else
+        who = L.LUMBER_TT_DECOR_NONE
+    end
+    if e.perLumber then
+        return L.LUMBER_TT_DECOR:format(e.lumber, Util.FormatMoney(e.perLumber), Phrases.LumberRate(e.salesPerDay), who)
+    end
+    return L.LUMBER_TT_DECOR_NOPRICE:format(e.lumber, who)
+end
+

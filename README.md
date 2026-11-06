@@ -60,6 +60,8 @@ The **Lumber** tab lists every profession recipe that uses lumber, from every ex
 
 Each recipe shows whether one of your characters knows it, who could learn it, and where it's learned. Hover a recipe to see the materials, and how much of that lumber you have across your characters and the warband bank. Filter by Known, Known + can learn or All, and by lumber type.
 
+Today's Plan suggests a lumber craft when you have the lumber and the materials, decor tooltips show their Lumber Crafting line, and lumber and Essence of Lumber tooltips say how much you have, who has it and what it's best used for.
+
 ### Mailbox, reposting and accounting
 
 - **A new inbox:** every mail in one searchable list, with one click to collect all Auction House mail or just one kind. My Stuff shows the gold from your sales still on its way by mail.
@@ -142,7 +144,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added: 1.3.0**
+**Just added: 1.4.0**
+- Lumber crafts in Today's Plan, Lumber Crafting lines on decor and lumber tooltips, and Essence of Lumber counted across your characters.
+
+**Added in 1.3.0**
 - Lumber Crafting: every lumber recipe, known or not, most sold first, with the gold each lumber makes, with where to learn it and how much lumber you have.
 
 **Added in 1.1.0**

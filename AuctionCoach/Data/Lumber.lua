@@ -21,6 +21,12 @@ local Util = ns.Util
 local Lumber = {}
 ns.Lumber = Lumber
 
+-- Essence of Lumber: rare from chopping, one from each weekly housing quest
+-- from Vaeli. The neighborhood lumberjack (Lestia Goldenstrike, Xiz'ro)
+-- trades one for ESSENCE_LUMBER lumber of any type. Counted like lumber.
+Lumber.ESSENCE_ID = 269010
+Lumber.ESSENCE_LUMBER = 20
+
 local bankOpen = false
 
 local function Call(fn, ...)
@@ -60,7 +66,9 @@ function Lumber:ScanCounts()
     if not ns.db or not ns.charKey then return end
     local data = ns.db.lumber
     local mine = {}
-    for _, itemID in ipairs(Data().lumber) do
+    local ids = { Lumber.ESSENCE_ID }
+    for _, itemID in ipairs(Data().lumber) do ids[#ids + 1] = itemID end
+    for _, itemID in ipairs(ids) do
         local own = Count(itemID, false)
         if own > 0 then mine[itemID] = own end
         -- The warband bank's count is only sure while a bank is open.
@@ -71,6 +79,33 @@ function Lumber:ScanCounts()
     end
     data.chars[ns.charKey] = mine
     ns.Events:Fire("AC_LUMBER_CHANGED")
+end
+
+-- Where an item (lumber or Essence) is: { { owner = charKey or "warband", count }, ... },
+-- most first.
+function Lumber.Where(itemID)
+    local data = ns.db and ns.db.lumber
+    local list = {}
+    if not data then return list end
+    for charKey, counts in pairs(data.chars) do
+        if (counts[itemID] or 0) > 0 then list[#list + 1] = { owner = charKey, count = counts[itemID] } end
+    end
+    if (data.warband[itemID] or 0) > 0 then list[#list + 1] = { owner = "warband", count = data.warband[itemID] } end
+    table.sort(list, function(a, b)
+        if a.count ~= b.count then return a.count > b.count end
+        return a.owner < b.owner
+    end)
+    return list
+end
+
+-- Whether an item ID is one of the lumber types.
+local lumberSet
+function Lumber.IsLumber(itemID)
+    if not lumberSet then
+        lumberSet = {}
+        for _, id in ipairs(Data().lumber) do lumberSet[id] = true end
+    end
+    return lumberSet[itemID] == true
 end
 
 -- Lumber of one type held across characters and the warband bank.

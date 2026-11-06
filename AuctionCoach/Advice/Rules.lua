@@ -217,6 +217,14 @@ function Rules:ForLink(link)
         return lines
     end
 
+    -- Lumber and Essence of Lumber are Warbound, so they never have a price:
+    -- say what they're good for instead (Lumber Crafting).
+    local itemID = Util.ItemIDFromKey(key)
+    if itemID and ns.Lumber and (ns.Lumber.IsLumber(itemID) or itemID == ns.Lumber.ESSENCE_ID) then
+        for _, line in ipairs(Phrases.LumberTooltip(itemID)) do Add(line.text, line.color) end
+        return lines
+    end
+
     local price = ns.Prices:Get(key)
     if not price or not price.value then
         Add(Phrases.NoPrice(), "muted")
@@ -288,6 +296,8 @@ function Rules:ForLink(link)
 
     local craft = ns.Crafting:ForOutput(key)
     if craft then Add(Phrases.CraftTooltip(craft), craft.profit > 0 and "good" or "muted") end
+    local decor = ns.LumberCrafting and ns.LumberCrafting:ForOutput(key)
+    if decor then Add(Phrases.DecorTooltip(decor), decor.verdict == "WORTH" and "good" or "muted") end
 
     local wanted = ns.Shopping:Get(key)
     if wanted then

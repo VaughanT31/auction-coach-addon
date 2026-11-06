@@ -147,6 +147,11 @@ local function ShowRowTooltip(row)
     tip:AddLine(" ")
     tip:AddLine(L.LUMBER_OWNED:format(BreakUpLargeNumbers(e.owned), ItemName(e.lumberID, ""), BreakUpLargeNumbers(e.crafts or 0)),
         0.75, 0.75, 0.75, true)
+    local essence = ns.Lumber.Owned(ns.Lumber.ESSENCE_ID)
+    if essence > 0 then
+        tip:AddLine(L.LUMBER_ESSENCE_LINE:format(BreakUpLargeNumbers(essence),
+            BreakUpLargeNumbers(essence * ns.Lumber.ESSENCE_LUMBER)), 0.6, 0.75, 1, true)
+    end
     AddSource(e)
     tip:Show()
 end

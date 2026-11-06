@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- **Lumber crafts in Today's Plan:** when this character knows a decor recipe that's worth crafting and you have the lumber (on this character or in the warband bank) and the other materials, the plan suggests crafting it, the best seller first. It says how much lumber it uses and what it makes over the other materials.
+- **Decor tooltips:** any decor a lumber recipe makes now shows its Lumber Crafting line: the lumber it takes, gold per lumber, how many sell a day, and whether one of your characters knows it or can learn it.
+- **Lumber tooltips:** lumber is Warbound, so instead of "no price" its tooltip now says how much you have, who has it, and the best decor you know to craft with it.
+- **Essence of Lumber:** counted across your characters and the warband bank. Its tooltip says each one trades for 20 lumber of any type at your neighborhood lumberjack, how much lumber yours is worth, who has it, and that the weekly housing quests from Vaeli give one. The Lumber tab counts it too.
+
 ## 1.3.1
 
 - **Lumber tab sorted by sales a day:** the decor that sells the most a day comes first, so the lumber goes where it sells. Ties go to the one that makes more gold per lumber.

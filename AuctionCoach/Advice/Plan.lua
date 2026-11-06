@@ -506,6 +506,64 @@ function Plan.CraftCandidates(list)
     return reserved
 end
 
+-- Lumber crafts for this character (Advice/LumberCrafting.lua): known decor
+-- recipes worth crafting, while this character and the warband bank hold the
+-- lumber and the other materials. Lumber is Warbound and never sells, so the
+-- gain is what the decor makes over the other materials. Shares MAX_CRAFT_STEPS
+-- with the other crafts, and reserves the other materials it uses.
+function Plan.LumberCandidates(list, reserved)
+    if not ns.LumberCrafting or Plan:CharacterLeftOut() then return end
+    local known = ns.db.lumber and ns.db.lumber.known[ns.charKey]
+    if not known or not next(known) then return end
+    local steps = 0
+    for _, step in ipairs(list) do
+        if step.kind == "CRAFT" then steps = steps + 1 end
+    end
+    local hidden = HiddenItems()
+    local left = CraftingMaterials()
+    for key, count in pairs(reserved) do left[key] = (left[key] or 0) - count end
+    local mine = ns.db.lumber.chars[ns.charKey] or {}
+    local wood = {}
+    for itemID, count in pairs(mine) do wood[itemID] = count end
+    for itemID, count in pairs(ns.db.lumber.warband or {}) do wood[itemID] = (wood[itemID] or 0) + count end
+    for _, e in ipairs(ns.LumberCrafting:All()) do
+        if steps >= MAX_CRAFT_STEPS then break end
+        if known[e.spellID] and e.verdict == "WORTH" and not hidden[e.key] and e.profit >= CRAFT_MIN_PROFIT then
+            local crafts = e.recipe.r and #e.recipe.r > 0 and ns.Crafting.Possible(e.recipe, left) or math.huge
+            for _, w in ipairs(e.recipe.w) do crafts = math.min(crafts, math.floor((wood[w[1]] or 0) / w[2])) end
+            local made = e.recipe.q or 1
+            local wanted, first = ExpectedSold(math.huge, e.salesPerDay)
+            if first and first < FAST_ENOUGH then crafts = 0 end
+            if crafts > 0 and crafts < math.huge then
+                crafts = wanted and math.min(crafts, math.max(1, math.floor(wanted / made))) or math.min(crafts, UNKNOWN_CRAFTS)
+                if e.recipe.r and #e.recipe.r > 0 then
+                    for key, count in pairs(ns.Crafting.Uses(e.recipe, crafts, left)) do
+                        left[key] = left[key] - count
+                        reserved[key] = (reserved[key] or 0) + count
+                    end
+                end
+                local lumber = 0
+                for _, w in ipairs(e.recipe.w) do
+                    wood[w[1]] = wood[w[1]] - w[2] * crafts
+                    lumber = lumber + w[2] * crafts
+                end
+                local total = crafts * made
+                local sold = ExpectedSold(total, e.salesPerDay)
+                local each = e.value / made
+                steps = steps + 1
+                list[#list + 1] = {
+                    id = "CRAFT:L" .. tostring(e.spellID), kind = "CRAFT", key = e.key, recipeID = e.spellID,
+                    count = crafts, made = total, sold = sold, craft = e, lumber = lumber,
+                    gain = e.profit * crafts, value = e.value * crafts,
+                    gold = math.floor(each * (sold or total * UNKNOWN_SPEED_FACTOR)),
+                    seconds = COST.CRAFT + COST.CRAFT_EACH * crafts, ah = true,
+                    fast = Fast(e.key, e.salesPerDay),
+                }
+            end
+        end
+    end
+end
+
 -- What's left of an item once crafting has taken its share: a copy with
 -- the smaller count, or nil when it's all used.
 local function AfterCrafting(item, reserved)
@@ -641,6 +699,7 @@ function Plan:Build(minutes)
     result.hidden = Plan:HiddenCount()
     -- Crafts first: the materials they use aren't posted as well.
     local reserved = Plan.CraftCandidates(candidates)
+    Plan.LumberCandidates(candidates, reserved)
     for _, listed in ipairs(leftOut and {} or ns.Sell:List().items) do
       local item = not hidden[listed.key] and AfterCrafting(listed, reserved)
       if item then

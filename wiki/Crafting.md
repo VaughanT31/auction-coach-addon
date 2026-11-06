@@ -38,6 +38,10 @@ Lumber is Warbound, so it never sells on the Auction House and isn't counted as 
 
 Use **Show** to pick Known, Known + can learn or All, and **Lumber** for one lumber type.
 
+**Today's Plan** suggests a lumber craft when the character you're on knows a decor recipe worth crafting and you have the lumber (on that character or in the warband bank) and the other materials.
+
+**Tooltips:** decor shows its Lumber Crafting line (lumber, gold per lumber, sales a day, who knows it). Lumber shows how much you have, who has it and the best decor you know for it. **Essence of Lumber** shows how many you have and who has them: each one trades for 20 lumber of any type at your neighborhood lumberjack (Lestia Goldenstrike or Xiz'ro). It's rare from chopping trees, and the weekly housing quests from Vaeli give one each.
+
 ### Crafting orders
 
 Commission from crafting orders you fill for other players is counted as crafting-order income in [Accounting](Accounting.md).
