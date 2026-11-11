@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Side panels can be moved:** Shift-drag Cheapest materials (or any side panel) by its title to move the whole column beside the profession window, and Shift-right-click to put it back. The spot is remembered. On WoW Forever the panels also start past the profession tabs on the window's right edge instead of covering them.
+
 ## 1.4.0
 
 - **Lumber crafts in Today's Plan:** when this character knows a decor recipe that's worth crafting and you have the lumber (on this character or in the warband bank) and the other materials, the plan suggests crafting it, the best seller first. It says how much lumber it uses and what it makes over the other materials.

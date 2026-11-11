@@ -10,6 +10,12 @@
 -- window's tabs turns each panel on and off, and the game's Crafting Results
 -- log moves to the right of the panels while any show.
 --
+-- The column starts past anything tab-sized sticking out of the window's
+-- right edge (WoW Forever's profession tabs sit there). Shift-drag any panel
+-- to move the whole column; Shift-right-click one to put it back. The move
+-- is saved in every registered addon's store, so it survives whichever of
+-- them is installed.
+--
 --   SidePanels:Register(id, {
 --       frame = frame,          the panel; placed here while it shows
 --       label = "Order queue",  its button
@@ -18,13 +24,14 @@
 --       pages = { orders = true, recipes = true },  where its button shows
 --       isOn = function() return true end,          the addon's own setting
 --       toggle = function() end,  turns it on or off; the addon refreshes it
+--       store = function() return MyAddonDB end,    a saved table for the move
 --   })
 --   SidePanels:Layout()         after a panel changes what it holds (shows,
 --                               hides and size changes are hooked)
 
 local _, ns = ...
 
-local VERSION = 1
+local VERSION = 2
 local SidePanels = _G.CtrlShiftZedSidePanels
 if SidePanels and (SidePanels.version or 0) >= VERSION then
     ns.SidePanels = SidePanels
@@ -37,6 +44,12 @@ ns.SidePanels = SidePanels
 
 local GAP = 6
 local MARGIN = 10
+-- Narrower than this and sticking out past the window's right edge by at
+-- least TAB_MIN_OUT counts as a tab to clear. The close button only pokes
+-- out a few pixels; the Crafting Results log and other panels are wider.
+local TAB_MAX_WIDTH = 80
+local TAB_MIN_OUT = 12
+local SAVE_KEY = "czSidePanelOffset"
 
 local function Window()
     return _G.ProfessionsFrame
@@ -64,8 +77,109 @@ function SidePanels:Register(id, info)
         frame:HookScript("OnHide", function() SidePanels:QueueLayout() end)
         frame:HookScript("OnSizeChanged", function() SidePanels:QueueLayout() end)
     end
+    self:AttachDrag(frame)
     self:Hook()
     self:QueueLayout()
+end
+
+-- Moving the column ----------------------------------------------------------
+
+-- The column's move from where it would sit, in the window's units: the live
+-- drag while one is going, else the saved one from the first store that has it.
+function SidePanels:Offset()
+    if self.live then return self.live.x, self.live.y end
+    if not self.saved then
+        for _, panel in ipairs(self.list) do
+            local ok, store = pcall(panel.store or function() end)
+            local saved = ok and type(store) == "table" and store[SAVE_KEY]
+            if type(saved) == "table" then
+                self.saved = { x = tonumber(saved.x) or 0, y = tonumber(saved.y) or 0 }
+                break
+            end
+        end
+    end
+    if self.saved then return self.saved.x, self.saved.y end
+    return 0, 0
+end
+
+function SidePanels:SaveOffset(x, y)
+    x, y = math.floor(x + 0.5), math.floor(y + 0.5)
+    self.saved = { x = x, y = y }
+    for _, panel in ipairs(self.list) do
+        local ok, store = pcall(panel.store or function() end)
+        if ok and type(store) == "table" then
+            store[SAVE_KEY] = (x ~= 0 or y ~= 0) and { x = x, y = y } or nil
+        end
+    end
+end
+
+function SidePanels:EndDrag()
+    if not self.drag then return end
+    if self.live then self:SaveOffset(self.live.x, self.live.y) end
+    self.drag, self.live = nil, nil
+    if self.driver then self.driver:Hide() end
+    self:QueueLayout()
+end
+
+-- Follows the cursor while a drag is going, moving every panel with it.
+function SidePanels:Driver()
+    if self.driver then return self.driver end
+    self.driver = CreateFrame("Frame")
+    self.driver:Hide()
+    self.driver:SetScript("OnUpdate", function()
+        local drag, window = SidePanels.drag, Window()
+        if not (drag and window and IsMouseButtonDown("LeftButton")) then return SidePanels:EndDrag() end
+        local cx, cy = GetCursorPosition()
+        local scale = window:GetEffectiveScale()
+        SidePanels.live = { x = drag.x + (cx - drag.cx) / scale, y = drag.y + (cy - drag.cy) / scale }
+        SidePanels:Layout()
+    end)
+    return self.driver
+end
+
+function SidePanels:AttachDrag(frame)
+    if frame.czSidePanelDrag then return end
+    frame.czSidePanelDrag = true
+    frame:EnableMouse(true)
+    frame:HookScript("OnMouseDown", function(_, button)
+        if not IsShiftKeyDown() then return end
+        if button == "RightButton" then
+            SidePanels:SaveOffset(0, 0)
+            SidePanels:QueueLayout()
+        elseif button == "LeftButton" then
+            local x, y = SidePanels:Offset()
+            local cx, cy = GetCursorPosition()
+            SidePanels.drag = { x = x, y = y, cx = cx, cy = cy }
+            SidePanels:Driver():Show()
+        end
+    end)
+    frame:HookScript("OnMouseUp", function() SidePanels:EndDrag() end)
+end
+
+-- How far tab-sized frames stick out past the window's right edge, in screen
+-- units: its children and their children, skipping the panels themselves.
+function SidePanels:TabsClearance(window)
+    local scale = window:GetEffectiveScale()
+    local edge, top, bottom = window:GetRight(), window:GetTop(), window:GetBottom()
+    if not (edge and top and bottom) then return 0 end
+    edge, top, bottom = edge * scale, top * scale, bottom * scale
+    local most = 0
+    local function check(frame, depth)
+        if frame.czSidePanel or frame == self.strip or not frame:IsShown() then return end
+        local l, r, t, b = frame:GetLeft(), frame:GetRight(), frame:GetTop(), frame:GetBottom()
+        if l and r and t and b then
+            local s = frame:GetEffectiveScale()
+            l, r, t, b = l * s, r * s, t * s, b * s
+            if r - l <= TAB_MAX_WIDTH * s and r - edge >= TAB_MIN_OUT * s and t > bottom and b < top then
+                most = math.max(most, r - edge)
+            end
+        end
+        if depth < 2 then
+            for _, child in ipairs({ frame:GetChildren() }) do check(child, depth + 1) end
+        end
+    end
+    for _, child in ipairs({ window:GetChildren() }) do check(child, 1) end
+    return most
 end
 
 -- Once per frame at most, after whatever showed or hid has settled.
@@ -111,14 +225,17 @@ function SidePanels:Layout()
     local top, edge = window:GetTop(), window:GetRight()
     self.right = nil
     if top and edge then
+        local dx, dy = self:Offset()
+        local clear = #shown > 0 and self:TabsClearance(window) or 0
         top, edge = top * scale, edge * scale
-        local x, y, columnWidth, first = edge + GAP * scale, top, 0, true
+        local columnTop = top + dy * scale
+        local x, y, columnWidth, first = edge + clear + (GAP + dx) * scale, columnTop, 0, true
         for _, panel in ipairs(shown) do
             local frame = panel.frame
             local s = frame:GetEffectiveScale()
             local width, height = frame:GetWidth() * s, frame:GetHeight() * s
             if not first and y - height < MARGIN * scale then
-                x, y, columnWidth, first = x + columnWidth + GAP * scale, top, 0, true
+                x, y, columnWidth, first = x + columnWidth + GAP * scale, columnTop, 0, true
             end
             frame:ClearAllPoints()
             frame:SetPoint("TOPLEFT", window, "TOPRIGHT", (x - edge) / s, (y - top) / s)
@@ -211,6 +328,7 @@ function SidePanels:Button(panel)
         GameTooltip:AddLine(p.label, 1, 0.82, 0)
         if p.tip then GameTooltip:AddLine(p.tip, 1, 1, 1, true) end
         GameTooltip:AddLine(p.isOn() and "Click to hide it." or "Click to show it.", 0.6, 0.6, 0.6)
+        GameTooltip:AddLine("Shift-drag a panel to move them all, Shift-right-click to put them back.", 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -251,3 +369,6 @@ function SidePanels:RefreshButtons()
     self.strip:SetWidth(math.max(1, width))
     self.strip:SetShown(#here > 0)
 end
+
+-- Panels an older copy registered before this one loaded get the drag too.
+for _, panel in ipairs(SidePanels.list) do SidePanels:AttachDrag(panel.frame) end

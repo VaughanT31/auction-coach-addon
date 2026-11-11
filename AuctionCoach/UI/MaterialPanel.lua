@@ -222,6 +222,7 @@ local function Create()
         pages = { orders = true, recipes = true },
         isOn = Enabled,
         toggle = function() Panel:Toggle() end,
+        store = function() return ns.db end,
     })
 end
 
