@@ -144,7 +144,10 @@ What is coming, roughly in order. Plans change with feedback, so there are no da
 **Now**
 - Prices for more realms in both EU and US.
 
-**Just added: 1.4.0**
+**Just added: 1.5.0**
+- Side panels beside the profession window can be moved with Shift-drag, and on WoW Forever they no longer cover the profession tabs.
+
+**Added in 1.4.0**
 - Lumber crafts in Today's Plan, Lumber Crafting lines on decor and lumber tooltips, and Essence of Lumber counted across your characters.
 
 **Added in 1.3.0**
