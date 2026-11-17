@@ -17,7 +17,7 @@ Profit includes what multicraft and resourcefulness add on average, using your c
 
 Beside the profession window, Auction Coach shows each quality you can make with the cheapest mix of material qualities that gets there, its cost and profit. **Use** fills the recipe in. The **+** on a row adds that craft's materials to your shopping list, less what you already have.
 
-The **Cheapest materials** button beside the profession window's tabs turns the panel on and off. The panel stacks with the other CtrlShiftZed side panels (Patron Planner's order queue, Auction Coach's Cheapest materials, Alt Inventory's Other characters) instead of covering them, the order queue on top. A button for each sits beside the window's tabs: a gold line means it's on.
+The **Cheapest materials** button beside the profession window's tabs turns the panel on and off. The panel stacks with the other CtrlShiftZed side panels (Patron Planner's order queue, Auction Coach's Cheapest materials, Alt Inventory's Other characters) instead of covering them, the order queue on top. A button for each sits beside the window's tabs: a gold line means it's on. Shift-drag a panel by its title to move the whole column, and Shift-right-click it to put it back; the spot is remembered. On WoW Forever the panels start past the profession tabs on the window's right edge.
 
 Season sparks aren't counted as a crafting cost.
 
