@@ -60,7 +60,7 @@ The **Lumber** tab lists every profession recipe that uses lumber, from every ex
 
 Each recipe shows whether one of your characters knows it, who could learn it, and where it's learned. Hover a recipe to see the materials, and how much of that lumber you have across your characters and the warband bank. Filter by Known, Known + can learn or All, and by lumber type.
 
-Today's Plan suggests a lumber craft when you have the lumber and the materials, decor tooltips show their Lumber Crafting line, and lumber and Essence of Lumber tooltips say how much you have, who has it and what it's best used for.
+Today's Plan suggests a lumber craft when you have the lumber and the materials, decor tooltips show their Lumber Crafting line, and lumber and Essence of Lumber tooltips say how much you have, who has it and what it's best used for. When you can't make a recipe yet, its tooltip says how much lumber one craft is short and whether your Essence of Lumber covers it, and the top of the tab names the best seller you know but can't make yet, with what it's missing.
 
 ### Mailbox, reposting and accounting
 

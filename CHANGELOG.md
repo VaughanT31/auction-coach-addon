@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0
+
+- **Lumber shortfall:** on the Lumber tab, a recipe you can't make yet now says in its tooltip how much lumber one craft is short, across every lumber type it takes, and whether your Essence of Lumber covers it (each trades for 20 lumber of any type), or how much you'd still be short after trading.
+- **Best seller you can't make yet:** the top of the Lumber tab names the best-selling recipe one of your characters knows that's worth crafting but you don't have the lumber for, how much it's short, and how many Essence of Lumber to trade when that covers it.
+
 ## 1.5.0
 
 - **Side panels can be moved:** Shift-drag Cheapest materials (or any side panel) by its title to move the whole column beside the profession window, and Shift-right-click to put it back. The spot is remembered. On WoW Forever the panels also start past the profession tabs on the window's right edge instead of covering them.

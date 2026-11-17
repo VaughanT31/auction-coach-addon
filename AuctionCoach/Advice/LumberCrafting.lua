@@ -125,6 +125,39 @@ function LumberCrafting.Evaluate(spellID, recipe)
     return e
 end
 
+-- Lumber missing for `count` crafts, over every lumber type the recipe
+-- takes: total, and how much Essence of Lumber covers it (each trades for
+-- ESSENCE_LUMBER lumber of any type). Returns nil when nothing is missing.
+-- { short, essence, essenceLumber, essenceNeeded, covered }
+function LumberCrafting.Shortfall(e, count)
+    count = count or 1
+    local short = 0
+    for _, wood in ipairs(e.recipe.w) do
+        short = short + math.max(0, wood[2] * count - ns.Lumber.Owned(wood[1]))
+    end
+    if short <= 0 then return nil end
+    local essence = ns.Lumber.Owned(ns.Lumber.ESSENCE_ID)
+    local per = ns.Lumber.ESSENCE_LUMBER
+    return {
+        short = short,
+        essence = essence,
+        essenceLumber = essence * per,
+        essenceNeeded = math.ceil(short / per),
+        covered = essence * per >= short,
+    }
+end
+
+-- The best-selling recipe a character knows, worth crafting, that you
+-- don't have the lumber for: (e, shortfall), or nil.
+function LumberCrafting:BestShort()
+    for _, e in ipairs(self:All()) do
+        if e.status == "known" and e.verdict == "WORTH" and (e.crafts or 0) == 0 then
+            local need = LumberCrafting.Shortfall(e, 1)
+            if need then return e, need end
+        end
+    end
+end
+
 -- Most sold a day first; no sales data last. Ties: more gold per lumber.
 local function Sort(a, b)
     local sa, sb = a.salesPerDay or -1, b.salesPerDay or -1

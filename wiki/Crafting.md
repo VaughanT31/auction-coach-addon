@@ -42,6 +42,8 @@ Use **Show** to pick Known, Known + can learn or All, and **Lumber** for one lum
 
 **Tooltips:** decor shows its Lumber Crafting line (lumber, gold per lumber, sales a day, who knows it). Lumber shows how much you have, who has it and the best decor you know for it. **Essence of Lumber** shows how many you have and who has them: each one trades for 20 lumber of any type at your neighborhood lumberjack (Lestia Goldenstrike or Xiz'ro). It's rare from chopping trees, and the weekly housing quests from Vaeli give one each.
 
+**Short of lumber:** When you can't make a recipe yet, its tooltip says how much lumber one craft is short and whether your Essence of Lumber covers it, and the top of the tab names the best seller you know but can't make yet, with what it's missing.
+
 ### Crafting orders
 
 Commission from crafting orders you fill for other players is counted as crafting-order income in [Accounting](Accounting.md).

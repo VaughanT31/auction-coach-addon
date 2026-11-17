@@ -148,7 +148,17 @@ local function ShowRowTooltip(row)
     tip:AddLine(L.LUMBER_OWNED:format(BreakUpLargeNumbers(e.owned), ItemName(e.lumberID, ""), BreakUpLargeNumbers(e.crafts or 0)),
         0.75, 0.75, 0.75, true)
     local essence = ns.Lumber.Owned(ns.Lumber.ESSENCE_ID)
-    if essence > 0 then
+    local need = (e.crafts or 0) == 0 and ns.LumberCrafting.Shortfall(e, 1)
+    if need then
+        -- What one craft still needs, and whether Essence of Lumber covers it.
+        tip:AddLine(L.LUMBER_SHORT_ONE:format(BreakUpLargeNumbers(need.short)), 1, 0.6, 0.3, true)
+        if need.covered then
+            tip:AddLine(L.LUMBER_SHORT_COVERED:format(BreakUpLargeNumbers(need.essenceNeeded)), 0.4, 1, 0.4, true)
+        elseif need.essence > 0 then
+            tip:AddLine(L.LUMBER_SHORT_PART:format(BreakUpLargeNumbers(need.essence),
+                BreakUpLargeNumbers(need.short - need.essenceLumber)), 0.6, 0.75, 1, true)
+        end
+    elseif essence > 0 then
         tip:AddLine(L.LUMBER_ESSENCE_LINE:format(BreakUpLargeNumbers(essence),
             BreakUpLargeNumbers(essence * ns.Lumber.ESSENCE_LUMBER)), 0.6, 0.75, 1, true)
     end
@@ -350,7 +360,15 @@ local function Refresh(panel, reason)
     local rows, counts = ns.LumberCrafting:List(view, s.lumberType)
 
     panel.title:SetText(L.LUMBER_TITLE:format(counts.worth, counts.shown))
-    panel.sub:SetText(L.LUMBER_SUB)
+    -- The best seller you know but can't make yet, and what it's missing.
+    local best, need = ns.LumberCrafting:BestShort()
+    if best then
+        local cover = need.covered and L.LUMBER_BEST_COVERED:format(BreakUpLargeNumbers(need.essenceNeeded))
+            or (need.essence > 0 and L.LUMBER_BEST_PART:format(BreakUpLargeNumbers(need.short - need.essenceLumber)) or "")
+        panel.sub:SetText(L.LUMBER_SUB .. "\n" .. L.LUMBER_BEST_SHORT:format(best.name, BreakUpLargeNumbers(need.short)) .. cover)
+    else
+        panel.sub:SetText(L.LUMBER_SUB)
+    end
     panel.bar.view:SetText(L.LUMBER_VIEW_BUTTON:format(L["LUMBER_VIEW_" .. view:upper()]))
     local typeName = s.lumberType and C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(s.lumberType)
     panel.bar.type:SetText(L.LUMBER_TYPE_BUTTON:format(typeName or L.LUMBER_TYPE_ALL))
